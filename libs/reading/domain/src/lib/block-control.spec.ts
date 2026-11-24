@@ -6,6 +6,7 @@ import {
   changeBook,
   moveOn,
   pause,
+  restartCycle,
   resume,
   type BlockChanges,
 } from './block-control';
@@ -192,5 +193,52 @@ describe('move the end of the current block (LB-018)', () => {
       ok: false,
       error: 'invalid-end',
     });
+  });
+});
+
+describe('cycles (LB-019)', () => {
+  /** A short plan of two books (Abdías, Filemón), started on 1 December 2026. */
+  const shortJournal = (cyclesTarget: number | null): Journal => {
+    const plan = {
+      ...defaultPlan(day('2026-12-01'), bookCatalog),
+      bookOrder: ['abdias', 'filemon'],
+      cyclesTarget,
+    };
+    return { ...emptyJournal, plan };
+  };
+  const advancedTo = (journal: Journal, today: string): Journal =>
+    apply(journal, {
+      save: advanceBlocks(planOf(journal), journal.blocks, bookCatalog, day(today)),
+      remove: [],
+    });
+
+  it('starts the next cycle on its own once a cycle is complete', () => {
+    const journal = advancedTo(shortJournal(null), '2027-02-01');
+
+    expect(journal.blocks.map((b) => [b.cycle, b.bookId, b.start, b.status])).toEqual([
+      [1, 'abdias', '2026-12-01', 'done'],
+      [1, 'filemon', '2027-01-01', 'done'],
+      [2, 'abdias', '2027-02-01', 'active'],
+    ]);
+  });
+
+  it('stops once the number of cycles is reached', () => {
+    const journal = advancedTo(shortJournal(1), '2027-02-01');
+
+    expect(journal.blocks.map((b) => b.cycle)).toEqual([1, 1]);
+    expect(projectSchedule(planOf(journal), journal.blocks, bookCatalog).every((b) => b.id)).toBe(
+      true,
+    );
+  });
+
+  it('restarts the cycle today with the first book, keeping the history', () => {
+    const journal = advancedTo(shortJournal(null), '2026-12-10');
+
+    const restarted = apply(journal, unwrap(restartCycle(journal, day('2026-12-10'), bookCatalog)));
+
+    expect(restarted.blocks.map((b) => [b.cycle, b.bookId, b.start, b.end, b.status])).toEqual([
+      [1, 'abdias', '2026-12-01', '2026-12-09', 'done'],
+      [2, 'abdias', '2026-12-10', '2026-12-31', 'active'],
+    ]);
   });
 });

@@ -203,11 +203,15 @@ describe('TodayPage — feedback (LB-012 review)', () => {
     expect(journal.journal.logs).toHaveLength(1);
   });
 
-  it('says the cycle is finished when the plan started but no block is running', async () => {
+  it('says the journey is finished when every cycle is read (LB-019)', async () => {
     const { fixture, journal } = await setup('2026-12-03', { started: true });
     journal.journal = {
       ...journal.journal,
-      plan: journal.journal.plan && { ...journal.journal.plan, bookOrder: ['abdias'] },
+      plan: journal.journal.plan && {
+        ...journal.journal.plan,
+        bookOrder: ['abdias'],
+        cyclesTarget: 1,
+      },
       blocks: [
         {
           id: '1:abdias:2026-11-01',
@@ -223,7 +227,7 @@ describe('TodayPage — feedback (LB-012 review)', () => {
     await fixture.componentInstance['busy'](() => Promise.resolve());
     await settle(fixture);
 
-    expect(screen.getByText(/Terminaste tu ciclo de lectura/)).toBeTruthy();
+    expect(screen.getByText(/Terminaste tu recorrido de lectura/)).toBeTruthy();
   });
 
   it('keeps the buttons usable and shows an error when saving fails', async () => {

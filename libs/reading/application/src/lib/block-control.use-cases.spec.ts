@@ -90,3 +90,37 @@ describe('ControlCurrentBlock (LB-018)', () => {
     expect(await control.resume()).toEqual({ ok: false, error: 'not-paused' });
   });
 });
+
+describe('cycles (LB-019)', () => {
+  it('restarts the cycle and Plan shows cycle 2 from its first book', async () => {
+    const { control, schedule, today } = await setup();
+
+    await control.restartCycle();
+
+    const view = await schedule.execute();
+    expect(view).toMatchObject({ cycle: 2, cyclesTarget: null, complete: false });
+    expect(view?.entries[0]).toMatchObject({ bookName: 'Abdías', state: 'current' });
+    expect((await today.execute())?.bookName).toBe('Abdías');
+  });
+
+  it('says the journey is complete once every cycle is read', async () => {
+    const journal = new InMemoryJournal();
+    const clock = new FixedClock('2026-12-01');
+    await new StartDefaultPlan(journal, journal, clock).execute('today');
+    journal.journal = {
+      ...journal.journal,
+      plan: journal.journal.plan && {
+        ...journal.journal.plan,
+        bookOrder: ['abdias'],
+        cyclesTarget: 1,
+      },
+    };
+    clock.set('2027-01-05');
+    await new AdvanceBlocks(journal, journal, clock).execute();
+
+    expect(await new GetSchedule(journal, clock).execute()).toMatchObject({
+      cycle: 1,
+      complete: true,
+    });
+  });
+});

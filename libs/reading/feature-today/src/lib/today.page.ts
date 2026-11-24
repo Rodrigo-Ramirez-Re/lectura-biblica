@@ -368,7 +368,8 @@ interface LastLog {
           </p>
         } @else {
           <p class="mt-section" i18n="@@reading.today.cycle-finished">
-            Terminaste tu ciclo de lectura. Muy pronto podrás empezar otro desde Plan.
+            Terminaste tu recorrido de lectura. Para leer de nuevo, reinicia el ciclo en Editar
+            plan.
           </p>
         }
       } @else {

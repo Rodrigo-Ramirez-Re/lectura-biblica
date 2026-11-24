@@ -1,7 +1,7 @@
 import type { BookCatalog } from '@lectura/catalog-domain';
 import { LocalDate, err, ok, type Result } from '@lectura/shared-kernel';
 import type { BlockRecord, BlockStatus, Journal, PlanRecord } from './journal';
-import { blockEnd, projectSchedule, recordOf } from './schedule';
+import { blockEnd, currentCycle, projectSchedule, recordOf } from './schedule';
 
 export type BlockControlError =
   'no-plan' | 'no-active-block' | 'not-available' | 'not-paused' | 'invalid-end';
@@ -136,6 +136,30 @@ export function resume(
     save: paused ? [startBlock(resumed, paused.bookId, paused.cycle, start, catalog)] : [],
     remove: [],
     plan: resumed,
+  });
+}
+
+/**
+ * Starts the next cycle today with the first book of the order (LB-019). The current book ends as
+ * read in its cycle; a pause ends too. Every previous block and log stays in the history.
+ */
+export function restartCycle(
+  journal: Journal,
+  today: LocalDate,
+  catalog: BookCatalog,
+): Result<BlockChanges, BlockControlError> {
+  const { plan } = journal;
+  if (!plan) return err('no-plan');
+  const block = activeBlock(journal.blocks, today);
+  const from = block ? effectiveDay(journal, block, today) : today;
+  const closed = block ? close(block, from, 'done') : { save: [], remove: [] };
+  const first = plan.bookOrder.find((bookId) => !plan.excluded.includes(bookId));
+  if (!first) return err('no-plan');
+  const cycle = currentCycle(journal.blocks) + 1;
+  return ok({
+    save: [...closed.save, startBlock(plan, first, cycle, from, catalog)],
+    remove: closed.remove,
+    plan: plan.pausedSince ? { ...plan, pausedSince: null } : undefined,
   });
 }
 

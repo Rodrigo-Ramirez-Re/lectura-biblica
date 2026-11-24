@@ -1,8 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { GetPlan, UpdatePlan, type UpdatePlanError } from '@lectura/reading-application';
+import {
+  ControlCurrentBlock,
+  GetPlan,
+  UpdatePlan,
+  type UpdatePlanError,
+} from '@lectura/reading-application';
 import { planSettings, type PlanSettings } from '@lectura/reading-domain';
 import { ButtonComponent, FormControlDirective, FormFieldComponent } from '@lectura/ui-components';
+import { CyclesSection } from './cycles-section';
 import { DurationSection } from './duration-section';
 import { OrderSection } from './order-section';
 import { PaceSection } from './pace-section';
@@ -21,6 +27,7 @@ import { PaceSection } from './pace-section';
     PaceSection,
     DurationSection,
     OrderSection,
+    CyclesSection,
   ],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reading.editor.title">Editar plan</h1>
@@ -40,6 +47,11 @@ import { PaceSection } from './pace-section';
         <lb-pace-section [pace]="plan" (changed)="patch($event)" />
         <lb-duration-section [block]="plan.defaultBlock" (changed)="patch($event)" />
         <lb-order-section [order]="plan" (changed)="patch($event)" />
+        <lb-cycles-section
+          [cyclesTarget]="plan.cyclesTarget"
+          (changed)="patch($event)"
+          (restart)="restartCycle()"
+        />
 
         @if (error(); as message) {
           <p role="alert" class="font-semibold text-danger">{{ message }}</p>
@@ -59,6 +71,7 @@ import { PaceSection } from './pace-section';
 export class PlanEditorPage {
   private readonly updatePlan = inject(UpdatePlan);
   private readonly router = inject(Router);
+  private readonly control = inject(ControlCurrentBlock);
 
   protected readonly draft = signal<PlanSettings | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -93,6 +106,11 @@ export class PlanEditorPage {
     this.saving.set(false);
     if (result.ok) await this.router.navigateByUrl('/plan');
     else this.error.set(this.messages[result.error]);
+  }
+
+  protected async restartCycle(): Promise<void> {
+    const result = await this.control.restartCycle();
+    if (result.ok) await this.router.navigateByUrl('/');
   }
 
   protected asText(event: Event): string {

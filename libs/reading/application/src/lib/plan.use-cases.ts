@@ -1,6 +1,7 @@
 import { bookCatalog, type BookCatalog } from '@lectura/catalog-domain';
 import {
   advanceBlocks,
+  currentCycle,
   defaultPlan,
   projectSchedule,
   type JournalReader,
@@ -80,6 +81,11 @@ export interface ScheduleView {
   readonly end: LocalDate;
   /** Calendar months the cycle spans. */
   readonly months: number;
+  /** The cycle being read, from 1, and the plan's number of cycles (null: no limit). */
+  readonly cycle: number;
+  readonly cyclesTarget: number | null;
+  /** Every cycle the plan asks for is read and nothing is left to start (LB-019). */
+  readonly complete: boolean;
 }
 
 function stateOf(block: ScheduledBlock, today: LocalDate): BlockState {
@@ -101,18 +107,32 @@ export class GetSchedule {
     const { plan, blocks } = await this.reader.load();
     if (!plan) return null;
     const today = this.clock.today();
-    const entries = projectSchedule(plan, blocks, this.catalog).map((block) => ({
-      key: `${block.bookId}:${block.start.toString()}`,
-      blockId: block.id,
-      bookId: block.bookId,
-      bookName: this.catalog.find(block.bookId)?.name ?? block.bookId,
-      start: block.start,
-      end: block.end,
-      state: stateOf(block, today),
-    }));
+    const cycle = currentCycle(blocks);
+    const projected = projectSchedule(plan, blocks, this.catalog);
+    const complete = projected.every((block) => block.id && block.end.isBefore(today));
+    const entries = projected
+      .filter((block) => block.cycle === cycle)
+      .map((block) => ({
+        key: `${block.bookId}:${block.start.toString()}`,
+        blockId: block.id,
+        bookId: block.bookId,
+        bookName: this.catalog.find(block.bookId)?.name ?? block.bookId,
+        start: block.start,
+        end: block.end,
+        state: stateOf(block, today),
+      }));
     if (!entries.length) return null;
     const start = entries[0].start;
     const end = entries[entries.length - 1].end;
-    return { plan, entries, start, end, months: start.monthsSpannedUntil(end) };
+    return {
+      plan,
+      entries,
+      start,
+      end,
+      months: start.monthsSpannedUntil(end),
+      cycle,
+      cyclesTarget: plan.cyclesTarget,
+      complete,
+    };
   }
 }

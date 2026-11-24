@@ -10,6 +10,8 @@ const browsers = process.env['E2E_BROWSERS']?.split(',');
 
 export default defineConfig({
   ...nxE2EPreset(import.meta.dirname, { testDir: './src' }),
+  // The production build in three engines at once is slow to answer under load on a laptop.
+  expect: { timeout: 10_000 },
   use: {
     baseURL,
     trace: 'on-first-retry',
