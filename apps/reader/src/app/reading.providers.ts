@@ -1,5 +1,14 @@
 import { inject, type Provider } from '@angular/core';
-import { AdvanceBlocks, GetSchedule, StartDefaultPlan } from '@lectura/reading-application';
+import { BOOK_SECTIONS } from '@lectura/catalog-util-book-sections';
+import {
+  AdvanceBlocks,
+  GetBookProgress,
+  GetSchedule,
+  GetToday,
+  LogReading,
+  StartDefaultPlan,
+  UndoReading,
+} from '@lectura/reading-application';
 import { JournalReader, JournalWriter } from '@lectura/reading-domain';
 import { IndexedDbJournal } from '@lectura/reading-infrastructure';
 import {
@@ -41,6 +50,27 @@ export function provideReading(): Provider[] {
     {
       provide: GetSchedule,
       useFactory: () => new GetSchedule(inject(JournalReader), inject(Clock)),
+    },
+    { provide: GetToday, useFactory: () => new GetToday(inject(JournalReader), inject(Clock)) },
+    {
+      provide: LogReading,
+      useFactory: () =>
+        new LogReading(
+          inject(JournalReader),
+          inject(JournalWriter),
+          inject(Clock),
+          inject(IdGenerator),
+        ),
+    },
+    { provide: UndoReading, useFactory: () => new UndoReading(inject(JournalWriter)) },
+    { provide: GetBookProgress, useFactory: () => new GetBookProgress(inject(JournalReader)) },
+    {
+      provide: BOOK_SECTIONS,
+      multi: true,
+      useValue: {
+        order: 10,
+        load: () => import('@lectura/reading-feature-today').then((m) => m.BookProgressSection),
+      },
     },
   ];
 }

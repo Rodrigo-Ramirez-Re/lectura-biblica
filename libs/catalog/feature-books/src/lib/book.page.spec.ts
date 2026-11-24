@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { render, screen } from '@testing-library/angular';
-import { BOOK_SECTIONS } from './book-sections';
+import { BOOK_SECTIONS } from '@lectura/catalog-util-book-sections';
 import { BookPage } from './book.page';
 
 @Component({
@@ -19,7 +19,7 @@ class FirstSection {
 class SecondSection {}
 
 async function renderBook(bookId: string, withSections = false) {
-  await render(BookPage, {
+  const { fixture } = await render(BookPage, {
     inputs: { bookId },
     providers: [
       provideRouter([]),
@@ -28,17 +28,18 @@ async function renderBook(bookId: string, withSections = false) {
             {
               provide: BOOK_SECTIONS,
               multi: true,
-              useValue: { order: 2, component: SecondSection },
+              useValue: { order: 2, load: async () => SecondSection },
             },
             {
               provide: BOOK_SECTIONS,
               multi: true,
-              useValue: { order: 1, component: FirstSection },
+              useValue: { order: 1, load: async () => FirstSection },
             },
           ]
         : []),
     ],
   });
+  await fixture.whenStable();
 }
 
 describe('BookPage (LB-009)', () => {

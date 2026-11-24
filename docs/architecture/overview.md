@@ -67,4 +67,4 @@ Ports are `InjectionToken`s (or abstract classes) declared in `domain`/`applicat
 
 ## Book page extension point
 
-The book page renders an ordered list of **book sections** registered through a multi-provider token (`BOOK_SECTIONS`). Phase 1 registers the reading-progress section; the study module (phase 5) adds its own section without touching the page.
+The book page renders an ordered list of **book sections** registered through a multi-provider token (`BOOK_SECTIONS`, in `libs/catalog/util-book-sections`). Each section is `{ order, load }`, where `load` dynamically imports its component, so a section ships with its own lazy feature. Phase 1 registers "Tu lectura" (reading context); the study module (phase 5) adds its own section without touching the page.

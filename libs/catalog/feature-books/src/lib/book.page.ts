@@ -1,9 +1,17 @@
 import { NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+  type Type,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { bookCatalog } from '@lectura/catalog-domain';
+import { BOOK_SECTIONS, loadBookSections } from '@lectura/catalog-util-book-sections';
 import { ButtonComponent } from '@lectura/ui-components';
-import { BOOK_SECTIONS } from './book-sections';
 
 @Component({
   selector: 'lb-book-page',
@@ -23,8 +31,8 @@ import { BOOK_SECTIONS } from './book-sections';
       </dl>
 
       <div class="mt-section flex flex-col gap-section">
-        @for (section of sections; track section.component) {
-          <ng-container *ngComponentOutlet="section.component; inputs: { bookId: book.id }" />
+        @for (section of sections(); track section) {
+          <ng-container *ngComponentOutlet="section; inputs: { bookId: book.id }" />
         }
       </div>
     } @else {
@@ -49,7 +57,11 @@ export class BookPage {
       ? $localize`:@@catalog.testament.old:Antiguo Testamento`
       : $localize`:@@catalog.testament.new:Nuevo Testamento`,
   );
-  protected readonly sections = [...(inject(BOOK_SECTIONS, { optional: true }) ?? [])].sort(
-    (a, b) => a.order - b.order,
-  );
+  protected readonly sections = signal<Type<unknown>[]>([]);
+
+  constructor() {
+    void loadBookSections(inject(BOOK_SECTIONS, { optional: true }) ?? []).then((sections) =>
+      this.sections.set(sections),
+    );
+  }
 }
