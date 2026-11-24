@@ -1,0 +1,5 @@
+{
+  "appName": "Lectura bíblica",
+  "shortName": "Lectura",
+  "donation": { "enabled": false, "label": "", "url": "" }
+}

@@ -2,7 +2,7 @@
 id: LB-006
 title: App shell
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: [LB-004, LB-005]
 ---
@@ -66,9 +66,17 @@ Install help and donation (phase 4); real content of Hoy, Plan and Libros (later
 
 ## Open questions
 
-- [ ] Icons — _Recommendation:_ inline SVG icons (Lucide, ISC licence) copied as Angular components, no icon font or runtime dependency.
+- [x] Icons — _Recommendation (adopted):_ inline SVG icons (Lucide, ISC licence) copied as Angular components, no icon font or runtime dependency.
 
 ## Decisions
+
+- The theme choice lives in `localStorage` (`lectura-biblica.theme`), not IndexedDB: it is read synchronously by an inline script in `index.html` before the first paint, so a forced theme never flashes, and it is a device preference, so it is not part of backups. Data model updated.
+- Hoy, Plan and Libros show a placeholder screen until LB-009, LB-011 and LB-012 replace them.
+- Icons (`lb-icon`: today, plan, books, about, check) are inline SVG after Lucide (ISC) in `ui-components`.
+- The skip link focuses `<main>` in code: a `#fragment` link would resolve against the base href and leave the screen.
+- Focus moves to the screen heading on every navigation except the first load.
+- The WebKit run checks the skip link by DOM order: WebKit only tabs to links when the platform setting allows it.
+- Every screen gets an axe scan (WCAG 2.2 A/AA) in e2e.
 
 ## Definition of done
 

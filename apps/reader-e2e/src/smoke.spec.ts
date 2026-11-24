@@ -9,7 +9,7 @@ test.describe('Workspace scaffold (LB-001)', () => {
 
     await page.goto('./');
 
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lectura bíblica');
+    await expect(page.getByRole('banner')).toContainText('Lectura bíblica');
     expect(errors).toEqual([]);
   });
 
