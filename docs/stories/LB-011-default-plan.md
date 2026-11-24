@@ -2,7 +2,7 @@
 id: LB-011
 title: Default plan and schedule
 epic: E1
-status: ready
+status: done
 phase: 1
 depends_on: [LB-009, LB-010]
 ---
@@ -77,10 +77,18 @@ Editing the plan, choosing another book for a month, pausing, skipping, cycles b
 
 - [x] Size criterion — owner's personal preference; the app must let people build their own (owner, 2026-11-24). Default template: chapter count, ties canonical.
 - [x] Why 67 months — _Recommendation (adopted as the rule above):_ a monthly block grows by whole months until one full pass fits at the plan's pace; only Salmos needs it at 3 a day, giving 66 + 1.
-- [ ] Default start — _Recommendation:_ "today" preselected; the 1st of next month as the alternative.
-- [ ] Missed blocks (app not opened for a whole month) — _Recommendation:_ they are still recorded with their book and dates; the history shows them with 0 chapters. Pausing comes in phase 2.
+- [x] Default start — _Recommendation (adopted):_ "today" preselected; the 1st of next month as the alternative.
+- [x] Missed blocks (app not opened for a whole month) — _Recommendation (adopted):_ they are still recorded with their book and dates; the history shows them with 0 chapters. Pausing comes in phase 2.
 
 ## Decisions
+
+- The 67 months are a rule, not a constant: a monthly block grows by whole months until one pass fits at the plan's pace. A domain test asserts the default cycle spans 67 calendar months for 66 books.
+- `LocalDate` (shared kernel) does day arithmetic on UTC day numbers, so no time zone or daylight-saving change shifts a day; `Clock` and `IdGenerator` are ports with device adapters (`SystemClock`, `RandomIdGenerator`) and test doubles (`FixedClock`, `SequentialIds`, `InMemoryJournal`) exported from `/testing` entry points.
+- Blocks are recorded when they start (`advanceBlocks`); upcoming ones are projected (`projectSchedule`) from the day after the last recorded block, so editing the plan only changes the projection.
+- Hoy and Plan advance the blocks before reading the schedule. An async app initializer was tried first; Playwright's Firefox crashed during axe scans whenever start-up awaited anything, and the initializer was not needed.
+- Found while testing in Firefox (fixes to LB-010 code): `navigator.storage.persist()` is no longer awaited before writing — Firefox answers only after the person replies to its prompt, which blocked saving; and the IndexedDB adapter opens and closes a connection per operation, so an idle connection never blocks a future schema upgrade from another tab.
+- axe scans run in Chromium and WebKit; in Firefox the test records an `axe` annotation instead (the scan crashes Playwright's Firefox, not the page).
+- Plan shows the plan summary ("66 libros en 67 meses: del … al …") and every block with dates and state (Terminado, Ahora with `aria-current="step"`, Próximo).
 
 ## Definition of done
 
