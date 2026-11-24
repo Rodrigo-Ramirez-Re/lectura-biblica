@@ -2,6 +2,7 @@ import { bookCatalog, type BookCatalog } from '@lectura/catalog-domain';
 import {
   chapterSpans,
   createReadingLog,
+  dailyPace,
   nextChapter,
   passes,
   passesThatFit,
@@ -24,7 +25,9 @@ export interface TodayView {
   readonly start: LocalDate;
   readonly end: LocalDate;
   readonly today: LocalDate;
-  readonly chaptersPerDay: number;
+  /** Chapters the plan expects today; 0 on a rest day. */
+  readonly todayPace: number;
+  readonly restDay: boolean;
   /** Chapters still expected today; 0 once the day's pace is met. No debt carries over. */
   readonly dueChapters: number;
   /** Where the next reading starts and what the due chapters cover. */
@@ -59,7 +62,8 @@ export class GetToday {
     const blockLogs = logs.filter((log) => log.blockId === block.id);
     const read = totalChapters(blockLogs);
     const readToday = totalChapters(blockLogs.filter((log) => log.date === today.toString()));
-    const due = Math.max(plan.chaptersPerDay - readToday, 0);
+    const todayPace = dailyPace(plan, today);
+    const due = Math.max(todayPace - readToday, 0);
     const next = nextChapter(read, book.chapters);
     const start = parse(block.start);
     const end = parse(block.end);
@@ -71,13 +75,14 @@ export class GetToday {
       start,
       end,
       today,
-      chaptersPerDay: plan.chaptersPerDay,
+      todayPace,
+      restDay: todayPace === 0,
       dueChapters: due,
       dueSpans: chapterSpans(next, due, book.chapters),
       nextChapter: next,
       readToday,
       passesInBlock: passes(read, book.chapters),
-      passesThatFit: passesThatFit(start, end, plan.chaptersPerDay, book.chapters),
+      passesThatFit: passesThatFit(start, end, plan, book.chapters),
     };
   }
 }

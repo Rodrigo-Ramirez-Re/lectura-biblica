@@ -10,6 +10,8 @@ const day = (iso: string) => {
   return parsed.value;
 };
 
+const threeADay = { chaptersPerDay: 3, restDays: [], paceByWeekday: null };
+
 const plan = (start = '2026-12-01') => defaultPlan(day(start), bookCatalog);
 
 describe('default plan (LB-011)', () => {
@@ -55,19 +57,19 @@ describe('default plan (LB-011)', () => {
 
 describe('monthly blocks (LB-011)', () => {
   it('end with the calendar month', () => {
-    expect(monthlyBlockEnd(day('2026-12-01'), 1, 3).toString()).toBe('2026-12-31');
+    expect(monthlyBlockEnd(day('2026-12-01'), 1, threeADay).toString()).toBe('2026-12-31');
   });
 
   it('end with the month even when they start mid-month', () => {
-    expect(monthlyBlockEnd(day('2026-11-24'), 1, 3).toString()).toBe('2026-11-30');
+    expect(monthlyBlockEnd(day('2026-11-24'), 1, threeADay).toString()).toBe('2026-11-30');
   });
 
   it('grow by whole months until one pass fits: Salmos takes two at 3 a day', () => {
-    expect(monthlyBlockEnd(day('2032-03-01'), 150, 3).toString()).toBe('2032-04-30');
+    expect(monthlyBlockEnd(day('2032-03-01'), 150, threeADay).toString()).toBe('2032-04-30');
   });
 
   it('fit Isaías in February at 3 a day', () => {
-    expect(monthlyBlockEnd(day('2027-02-01'), 66, 3).toString()).toBe('2027-02-28');
+    expect(monthlyBlockEnd(day('2027-02-01'), 66, threeADay).toString()).toBe('2027-02-28');
   });
 });
 
@@ -217,5 +219,15 @@ describe('plan validation v2 (LB-014)', () => {
     expect(
       validatePlan({ ...plan(), defaultBlock: { unit: 'days', value: 0 } }, bookCatalog),
     ).toEqual({ ok: false, error: 'invalid-duration' });
+  });
+});
+
+describe('blocks follow the pace (LB-015)', () => {
+  it('grow until one pass fits counting only reading days', () => {
+    // Isaías (66) in February 2027 at 3 a day: 84 chapters fit; resting on Sundays leaves 72.
+    expect(monthlyBlockEnd(day('2027-02-01'), 66, threeADay).toString()).toBe('2027-02-28');
+    expect(monthlyBlockEnd(day('2027-02-01'), 80, { ...threeADay, restDays: [0] }).toString()).toBe(
+      '2027-03-31',
+    );
   });
 });
