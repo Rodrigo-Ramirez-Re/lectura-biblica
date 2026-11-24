@@ -9,7 +9,7 @@ async function openOn(page: Page, day: string, path = './') {
 
 async function startToday(page: Page) {
   await page.getByRole('button', { name: 'Empezar' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Abdías' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Abdías', exact: true })).toBeVisible();
 }
 
 test.describe('Default plan (LB-011)', () => {
@@ -28,7 +28,9 @@ test.describe('Default plan (LB-011)', () => {
 
     await page.reload();
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Abdías' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Abdías', exact: true }),
+    ).toBeVisible();
   });
 
   test('starts on the 1st of next month', async ({ page }) => {
@@ -46,7 +48,9 @@ test.describe('Default plan (LB-011)', () => {
 
     await openOn(page, '2026-12-02');
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Filemón' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Filemón', exact: true }),
+    ).toBeVisible();
   });
 
   test('shows the cycle book by book on Plan', async ({ page }) => {
@@ -83,6 +87,8 @@ test.describe('Default plan offline (LB-010, LB-011)', () => {
     await context.setOffline(true);
     await page.reload();
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Abdías' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Abdías', exact: true }),
+    ).toBeVisible();
   });
 });

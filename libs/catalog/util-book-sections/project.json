@@ -1,0 +1,17 @@
+{
+  "name": "catalog-util-book-sections",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/catalog/util-book-sections/src",
+  "projectType": "library",
+  "tags": ["type:util", "scope:catalog"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/catalog/util-book-sections/tsconfig.lib.json",
+          "tsc --noEmit -p libs/catalog/util-book-sections/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}

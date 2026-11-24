@@ -2,7 +2,7 @@
 id: LB-012
 title: Today and one-tap logging
 epic: E2
-status: ready
+status: done
 phase: 1
 depends_on: [LB-011]
 ---
@@ -79,10 +79,18 @@ Editing or deleting logs other than undo, notes, rest days (phase 2); pace and s
 
 ## Open questions
 
-- [ ] Missed days — _Recommendation:_ no debt carries over in phase 1: each day shows the plan's pace. Being behind is shown by the pace metric in phase 3.
-- [ ] Past-day range — _Recommendation:_ a past-day log starts where the reading currently is (the next chapter), like any other log.
+- [x] Missed days — _Recommendation (adopted):_ no debt carries over in phase 1: each day shows the plan's pace. Being behind is shown by the pace metric in phase 3.
+- [x] Past-day range — _Recommendation (adopted):_ a past-day log starts where the reading currently is (the next chapter), like any other log.
 
 ## Decisions
+
+- Today's reading is said the way a person would: "Salmos 4–6", "Rut 4 y Rut 1–2", "Abdías 1, 3 veces" (`describeReading`, i18n-marked).
+- "Ya leí" logs exactly what is due. "Otra cantidad u otro día" (collapsed) takes a day of the active block up to today and an amount; it also serves to read more after the day is done.
+- No debt carries over: each day expects the plan's pace minus what was logged that day. Being behind will be the pace metric (phase 3).
+- A log starts where the block's reading is (its total chapters), whatever its date, so past-day logs continue the same sequence.
+- "Deshacer" stays for 10 seconds in a polite live region after each log; editing other logs is phase 2.
+- Progress on Hoy: complete passes in the block, the current pass as a progress bar ("Vuelta actual: 4 de 150 capítulos") and how many passes fit at the plan's pace.
+- The book page section "Tu lectura" (passes across every block of the book) is registered by the app through `BOOK_SECTIONS`. The token moved to `libs/catalog/util-book-sections` and sections register a dynamic `load()`: lint forbids static imports of lazy-loaded libraries, which would have put the screens in the initial bundle.
 
 ## Definition of done
 
