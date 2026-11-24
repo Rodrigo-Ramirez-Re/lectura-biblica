@@ -102,3 +102,28 @@ test.describe('Plan editor — durations and goals (LB-016)', () => {
     await expect(page.getByText('¡Cumpliste tu meta de 3 vueltas!')).toBeVisible();
   });
 });
+
+test.describe('Plan editor — book order (LB-017)', () => {
+  test('a template and a book left out change the upcoming blocks only', async ({ page }) => {
+    await openEditor(page);
+
+    await page.getByRole('button', { name: 'Canónico' }).click();
+    await page.getByRole('checkbox', { name: /Génesis/ }).uncheck();
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+
+    await expect(page.getByText('Orden: Canónico; sin 1 libro')).toBeVisible();
+    const blocks = page.getByRole('region', { name: 'Libro por libro' }).getByRole('listitem');
+    await expect(blocks).toHaveCount(65);
+    await expect(blocks.nth(0)).toContainText('Abdías');
+    await expect(blocks.nth(1)).toContainText('Éxodo');
+  });
+
+  test('moves a book with the keyboard', async ({ page }) => {
+    await openEditor(page);
+
+    await page.getByRole('button', { name: 'Subir Filemón' }).focus();
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByText('Filemón ahora es el 1 de 66')).toBeAttached();
+  });
+});

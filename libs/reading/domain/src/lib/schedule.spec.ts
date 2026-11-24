@@ -280,3 +280,21 @@ describe('block durations (LB-016)', () => {
     ).toBeNull();
   });
 });
+
+describe('order changes (LB-017)', () => {
+  it('keeps books already read in place and leaves excluded books out', () => {
+    const recorded = advanceBlocks(plan(), [], bookCatalog, day('2027-01-10'));
+    const reordered = {
+      ...plan(),
+      bookOrder: [...plan().bookOrder].reverse(),
+      excluded: ['salmos'],
+    };
+
+    const blocks = projectSchedule(reordered, recorded, bookCatalog);
+
+    expect(blocks.slice(0, 2).map((block) => block.bookId)).toEqual(['abdias', 'filemon']);
+    expect(blocks[2].bookId).toBe('isaias');
+    expect(blocks.map((block) => block.bookId)).not.toContain('salmos');
+    expect(blocks).toHaveLength(65);
+  });
+});

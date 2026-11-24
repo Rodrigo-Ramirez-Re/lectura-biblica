@@ -2,7 +2,7 @@
 id: LB-017
 title: Book order
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-015]
 ---
@@ -57,9 +57,15 @@ Choosing another book for the current block (LB-018).
 
 ## Open questions
 
-- [ ] Drag and drop — _Recommendation:_ "Subir" / "Bajar" buttons only: accessible with keyboard and screen readers, and fine on a phone. Drag can come later.
+- [x] Drag and drop — _Recommendation (adopted):_ "Subir" / "Bajar" buttons only: accessible with keyboard and screen readers, and fine on a phone. Drag can come later.
 
 ## Decisions
+
+- Order templates live in the catalog domain: "De menor a mayor", "Canónico" and the new "Nuevo Testamento primero" (New Testament, then Old, canonical inside each).
+- The editor lists the books in the plan's order with a checkbox (in or out) and "Subir" / "Bajar" buttons named after the book; a polite live region announces "Filemón ahora es el 1 de 66".
+- Books already recorded in the cycle keep their place; the order and the exclusions only reshape the upcoming blocks.
+- Plan names the template the order matches, or "Orden personalizado", and how many books are left out.
+- Leaving every book out is refused with "Deja al menos un libro en el plan".
 
 ## Definition of done
 

@@ -4,6 +4,7 @@ import { GetPlan, UpdatePlan, type UpdatePlanError } from '@lectura/reading-appl
 import { planSettings, type PlanSettings } from '@lectura/reading-domain';
 import { ButtonComponent, FormControlDirective, FormFieldComponent } from '@lectura/ui-components';
 import { DurationSection } from './duration-section';
+import { OrderSection } from './order-section';
 import { PaceSection } from './pace-section';
 
 /**
@@ -19,6 +20,7 @@ import { PaceSection } from './pace-section';
     FormControlDirective,
     PaceSection,
     DurationSection,
+    OrderSection,
   ],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reading.editor.title">Editar plan</h1>
@@ -37,6 +39,7 @@ import { PaceSection } from './pace-section';
 
         <lb-pace-section [pace]="plan" (changed)="patch($event)" />
         <lb-duration-section [block]="plan.defaultBlock" (changed)="patch($event)" />
+        <lb-order-section [order]="plan" (changed)="patch($event)" />
 
         @if (error(); as message) {
           <p role="alert" class="font-semibold text-danger">{{ message }}</p>
