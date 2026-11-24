@@ -1,6 +1,6 @@
 import type { BookCatalog } from '@lectura/catalog-domain';
 import { LocalDate } from '@lectura/shared-kernel';
-import type { BlockRecord, PlanRecord } from './journal';
+import type { BlockRecord, BlockStatus, PlanRecord } from './journal';
 import { chaptersBetween, type Pace } from './pace';
 
 /** A block of the schedule: recorded once it started, projected while still to come. */
@@ -11,6 +11,8 @@ export interface ScheduledBlock {
   readonly end: LocalDate;
   /** Set when the block is recorded. */
   readonly id: string | null;
+  /** The recorded status; null for a projected block. */
+  readonly status: BlockStatus | null;
 }
 
 const date = (iso: string) => {
@@ -56,16 +58,22 @@ export function defaultGoal(plan: Pick<PlanRecord, 'defaultBlock'>): number | nu
   return plan.defaultBlock.unit === 'passes' ? plan.defaultBlock.value : null;
 }
 
+/** Books whose block counts as read in its cycle; replaced and paused ones go back to the queue. */
+const READ: readonly BlockStatus[] = ['active', 'done', 'skipped'];
+
 /**
- * The first cycle: recorded blocks as they happened, then the rest of the plan's order projected
- * from the day after the last recorded block. Editing the plan only changes the projection.
+ * The current cycle: its recorded blocks as they happened (whatever their status), then the books
+ * of the plan's order still to read, projected from the day after the last recorded block. Editing
+ * the plan only changes the projection.
  */
 export function projectSchedule(
   plan: PlanRecord,
   recorded: readonly BlockRecord[],
   catalog: BookCatalog,
 ): ScheduledBlock[] {
-  const past: ScheduledBlock[] = [...recorded]
+  const cycle = Math.max(1, ...recorded.map((block) => block.cycle));
+  const past: ScheduledBlock[] = recorded
+    .filter((block) => block.cycle === cycle)
     .sort((a, b) => a.start.localeCompare(b.start))
     .map((block) => ({
       bookId: block.bookId,
@@ -73,25 +81,32 @@ export function projectSchedule(
       start: date(block.start),
       end: date(block.end),
       id: block.id,
+      status: block.status,
     }));
 
-  const done = new Set(past.map((block) => block.bookId));
-  let start = past.length ? past[past.length - 1].end.plusDays(1) : date(plan.startDate);
+  const read = new Set(
+    past.filter((block) => READ.includes(block.status ?? 'active')).map((block) => block.bookId),
+  );
+  const lastEnd = recorded
+    .map((block) => block.end)
+    .sort()
+    .at(-1);
+  let start = lastEnd ? date(lastEnd).plusDays(1) : date(plan.startDate);
   const upcoming: ScheduledBlock[] = [];
   for (const bookId of plan.bookOrder) {
-    if (done.has(bookId) || plan.excluded.includes(bookId)) continue;
+    if (read.has(bookId) || plan.excluded.includes(bookId)) continue;
     const book = catalog.find(bookId);
     if (!book) continue;
     const end = blockEnd(start, book.chapters, plan);
-    upcoming.push({ bookId, cycle: 1, start, end, id: null });
+    upcoming.push({ bookId, cycle, start, end, id: null, status: null });
     start = end.plusDays(1);
   }
   return [...past, ...upcoming];
 }
 
 /**
- * Records every block that has started by `today` and settles statuses: the block containing
- * today is active, earlier ones are done. Returns only the records that are new or changed.
+ * Records every projected block that has started by `today` and closes the active block once it
+ * has ended. Nothing new starts while the plan is paused. Returns only new or changed records.
  */
 export function advanceBlocks(
   plan: PlanRecord,
@@ -99,26 +114,33 @@ export function advanceBlocks(
   catalog: BookCatalog,
   today: LocalDate,
 ): BlockRecord[] {
-  const changes: BlockRecord[] = [];
+  const changes: BlockRecord[] = recorded
+    .filter((block) => block.status === 'active' && date(block.end).isBefore(today))
+    .map((block) => ({ ...block, status: 'done' as const }));
+  if (plan.pausedSince) return changes;
+
   for (const block of projectSchedule(plan, recorded, catalog)) {
-    if (block.start.isAfter(today)) break;
-    const status = block.end.isBefore(today) ? 'done' : 'active';
-    const existing = recorded.find((record) => record.id === block.id);
-    if (existing) {
-      if (existing.status !== status) changes.push({ ...existing, status });
-      continue;
-    }
-    changes.push({
-      id: blockId(block),
-      cycle: block.cycle,
-      bookId: block.bookId,
-      start: block.start.toString(),
-      end: block.end.toString(),
-      goalPasses: defaultGoal(plan),
-      status,
-    });
+    if (block.id || block.start.isAfter(today)) continue;
+    changes.push(recordOf(block, plan, block.end.isBefore(today) ? 'done' : 'active'));
   }
   return changes;
+}
+
+/** The record of a projected block when it starts. */
+export function recordOf(
+  block: Pick<ScheduledBlock, 'cycle' | 'bookId' | 'start' | 'end'>,
+  plan: Pick<PlanRecord, 'defaultBlock'>,
+  status: BlockStatus,
+): BlockRecord {
+  return {
+    id: blockId(block),
+    cycle: block.cycle,
+    bookId: block.bookId,
+    start: block.start.toString(),
+    end: block.end.toString(),
+    goalPasses: defaultGoal(plan),
+    status,
+  };
 }
 
 /**

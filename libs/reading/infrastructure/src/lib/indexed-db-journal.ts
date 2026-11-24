@@ -64,6 +64,10 @@ export class IndexedDbJournal extends JournalReader implements JournalWriter {
     });
   }
 
+  removeBlock(id: string): Promise<void> {
+    return this.write((db) => db.delete('blocks', id));
+  }
+
   addLog(log: ReadingLogRecord): Promise<void> {
     return this.write(async (db) => void (await db.put('logs', log)));
   }

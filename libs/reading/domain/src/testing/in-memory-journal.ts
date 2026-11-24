@@ -30,6 +30,13 @@ export class InMemoryJournal extends JournalReader implements JournalWriter {
     };
   }
 
+  async removeBlock(id: string): Promise<void> {
+    this.journal = {
+      ...this.journal,
+      blocks: this.journal.blocks.filter((block) => block.id !== id),
+    };
+  }
+
   async addLog(log: ReadingLogRecord): Promise<void> {
     this.journal = { ...this.journal, logs: [...this.journal.logs, log] };
   }

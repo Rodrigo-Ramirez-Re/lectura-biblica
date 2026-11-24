@@ -51,7 +51,7 @@ import { describeDuration, describeOrder, describePace } from './plan-text';
             Libro por libro
           </h2>
           <ol class="mt-2 flex flex-col">
-            @for (entry of view.entries; track entry.bookId) {
+            @for (entry of view.entries; track entry.key) {
               <li
                 class="flex items-center justify-between gap-3 border-b border-border px-2 py-2"
                 [class.bg-surface-subtle]="entry.state === 'current'"
@@ -70,6 +70,27 @@ import { describeDuration, describeOrder, describePace } from './plan-text';
                       class="text-body-sm text-on-surface-muted"
                       i18n="@@reading.plan.state-done"
                       >Terminado</span
+                    >
+                  }
+                  @case ('skipped') {
+                    <span
+                      class="text-body-sm text-on-surface-muted"
+                      i18n="@@reading.plan.state-skipped"
+                      >Saltado</span
+                    >
+                  }
+                  @case ('replaced') {
+                    <span
+                      class="text-body-sm text-on-surface-muted"
+                      i18n="@@reading.plan.state-replaced"
+                      >Cambiado</span
+                    >
+                  }
+                  @case ('paused') {
+                    <span
+                      class="text-body-sm text-on-surface-muted"
+                      i18n="@@reading.plan.state-paused"
+                      >En pausa</span
                     >
                   }
                   @case ('current') {

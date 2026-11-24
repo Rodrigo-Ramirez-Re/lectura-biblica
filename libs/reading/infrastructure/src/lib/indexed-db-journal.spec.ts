@@ -85,6 +85,15 @@ describe('IndexedDbJournal (LB-010)', () => {
     expect((await journal.load()).blocks).toEqual([{ ...block, status: 'done' }]);
   });
 
+  it('removes a block (LB-018)', async () => {
+    const journal = new IndexedDbJournal(new FakeStorageGuard());
+    await journal.saveBlocks([block]);
+
+    await journal.removeBlock('b1');
+
+    expect((await journal.load()).blocks).toEqual([]);
+  });
+
   it('removes a log', async () => {
     const journal = new IndexedDbJournal(new FakeStorageGuard());
     await journal.addLog(log);

@@ -14,6 +14,8 @@ export default defineConfig(() => ({
   //  plugins: [],
   // },
   test: {
+    // The editor lists the 66 books; role queries over that many controls take seconds in jsdom.
+    testTimeout: 20_000,
     name: 'reading-feature-plan',
     watch: false,
     globals: true,

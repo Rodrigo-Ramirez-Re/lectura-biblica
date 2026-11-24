@@ -7,6 +7,7 @@ export abstract class JournalReader {
 export abstract class JournalWriter {
   abstract savePlan(plan: PlanRecord): Promise<void>;
   abstract saveBlocks(blocks: readonly BlockRecord[]): Promise<void>;
+  abstract removeBlock(id: string): Promise<void>;
   abstract addLog(log: ReadingLogRecord): Promise<void>;
   abstract removeLog(id: string): Promise<void>;
   abstract saveSettings(settings: SettingsRecord): Promise<void>;
