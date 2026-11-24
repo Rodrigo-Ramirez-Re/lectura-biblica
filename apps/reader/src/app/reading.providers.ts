@@ -6,6 +6,7 @@ import {
   DeleteAllData,
   ExportBackup,
   GetBookProgress,
+  GetPlan,
   GetSchedule,
   GetToday,
   ImportBackup,
@@ -13,6 +14,7 @@ import {
   PreviewBackup,
   StartDefaultPlan,
   UndoReading,
+  UpdatePlan,
 } from '@lectura/reading-application';
 import { JournalReader, JournalWriter } from '@lectura/reading-domain';
 import { IndexedDbJournal } from '@lectura/reading-infrastructure';
@@ -85,6 +87,11 @@ export function provideReading(): Provider[] {
     {
       provide: CheckBackupReminder,
       useFactory: () => new CheckBackupReminder(inject(JournalReader), inject(Clock)),
+    },
+    { provide: GetPlan, useFactory: () => new GetPlan(inject(JournalReader)) },
+    {
+      provide: UpdatePlan,
+      useFactory: () => new UpdatePlan(inject(JournalReader), inject(JournalWriter)),
     },
   ];
 }

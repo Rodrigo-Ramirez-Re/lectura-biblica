@@ -13,6 +13,11 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('@lectura/reading-feature-plan').then((m) => m.PlanPage),
   },
   {
+    path: 'plan/editar',
+    title: $localize`:@@reading.editor.title:Editar plan`,
+    loadComponent: () => import('@lectura/reading-feature-plan').then((m) => m.PlanEditorPage),
+  },
+  {
     path: 'libros',
     loadChildren: () => import('@lectura/catalog-feature-books').then((m) => m.bookRoutes),
   },

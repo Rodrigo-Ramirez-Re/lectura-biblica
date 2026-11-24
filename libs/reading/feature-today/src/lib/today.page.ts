@@ -106,6 +106,11 @@ interface LastLog {
             >
               Ya leí
             </button>
+          } @else if (view.restDay && view.readToday === 0) {
+            <p class="font-semibold" i18n="@@reading.today.rest-day">Hoy es día de descanso.</p>
+            <p class="text-body-sm text-on-surface-muted" i18n="@@reading.today.rest-day-hint">
+              Si quieres leer de todos modos, regístralo en «Otra cantidad u otro día».
+            </p>
           } @else {
             <p class="flex items-center gap-2 font-semibold text-success">
               <lb-icon name="check" />
@@ -390,7 +395,7 @@ export class TodayPage {
     this.backupDue.set(backupDue);
     this.schedule.set(schedule);
     this.today.set(today);
-    if (today) this.amount.set(today.dueChapters || today.chaptersPerDay);
+    if (today) this.amount.set(today.dueChapters || today.todayPace || 1);
     this.loaded.set(true);
   }
 }

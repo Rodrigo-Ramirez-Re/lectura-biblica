@@ -2,7 +2,7 @@
 id: LB-015
 title: Plan editor — pace and rest days
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-014]
 ---
@@ -70,9 +70,16 @@ Durations, order, cycles, templates (later sections of the editor).
 
 ## Open questions
 
-- [ ] Where is "Editar plan"? — _Recommendation:_ a button on Plan, under the summary.
+- [x] Where is "Editar plan"? — _Recommendation (adopted):_ a button on Plan, under the summary.
 
 ## Decisions
+
+- The pace of a day is `dailyPace(plan, day)`: the weekday's amount when the plan has a pace per weekday, otherwise the daily pace unless it is a rest day. Block extension and "passes that fit" add up `chaptersBetween`, so rest days read nothing.
+- The editor (`/plan/editar`) keeps a draft of the plan settings and saves everything with "Guardar cambios"; "Cancelar" goes back to Plan without saving. Later sections are components that patch the draft.
+- Switching to "Distinto cada día" starts from what the same-pace settings expected each day, so the switch alone changes nothing. In that mode 0 means rest.
+- On a rest day Hoy says "Hoy es día de descanso" and expects nothing; reading anyway goes through "Otra cantidad u otro día".
+- Plan describes the pace in words ("3 capítulos al día; descanso: domingo" or each weekday's amount, Monday first).
+- Recorded blocks keep their dates when the pace changes; only upcoming blocks are projected again.
 
 ## Definition of done
 

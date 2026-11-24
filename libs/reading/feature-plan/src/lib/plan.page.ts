@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { AdvanceBlocks, GetSchedule, type ScheduleView } from '@lectura/reading-application';
 import { ButtonComponent, CardComponent } from '@lectura/ui-components';
+import { describePace } from './plan-text';
 
 @Component({
   selector: 'lb-plan-page',
@@ -25,12 +26,7 @@ import { ButtonComponent, CardComponent } from '@lectura/ui-components';
         <section lbCard aria-labelledby="plan-summary" class="mt-section">
           <h2 id="plan-summary" class="text-heading-2">{{ view.plan.name }}</h2>
           <ul class="flex flex-col gap-1">
-            <li i18n="@@reading.plan.pace">
-              {view.plan.chaptersPerDay, plural,
-                =1 {1 capítulo al día}
-                other {{{ view.plan.chaptersPerDay }} capítulos al día}
-              }
-            </li>
+            <li>{{ pace(view) }}</li>
             <li i18n="@@reading.plan.block">Un libro por mes, leído las veces que quepan</li>
             <li i18n="@@reading.plan.order">De menor a mayor número de capítulos</li>
             <li i18n="@@reading.plan.cycle">
@@ -39,6 +35,15 @@ import { ButtonComponent, CardComponent } from '@lectura/ui-components';
               {{ view.end.toDate() | date: "d 'de' MMMM 'de' y" }}
             </li>
           </ul>
+          <a
+            lbButton
+            variant="secondary"
+            class="self-start"
+            routerLink="editar"
+            i18n="@@reading.plan.edit"
+          >
+            Editar plan
+          </a>
         </section>
 
         <section class="mt-section" aria-labelledby="plan-blocks">
@@ -103,6 +108,10 @@ export class PlanPage {
   protected readonly schedule = signal<ScheduleView | null>(null);
   protected readonly loaded = signal(false);
   protected readonly failed = signal(false);
+
+  protected pace(view: ScheduleView): string {
+    return describePace(view.plan);
+  }
 
   constructor() {
     void this.load();

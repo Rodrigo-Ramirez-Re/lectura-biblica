@@ -15,6 +15,8 @@ const day = (iso: string) => {
   return parsed.value;
 };
 
+const threeADay = { chaptersPerDay: 3, restDays: [], paceByWeekday: null };
+
 const salmos: BlockRecord = {
   id: 'b1',
   cycle: 1,
@@ -74,8 +76,11 @@ describe('next chapter and passes (LB-012)', () => {
   });
 
   it('tells how many passes fit in a block at the plan pace', () => {
-    expect(passesThatFit(day('2026-12-01'), day('2026-12-31'), 3, 1)).toBe(93);
-    expect(passesThatFit(day('2032-03-01'), day('2032-04-30'), 3, 150)).toBeCloseTo(1.22, 2);
+    expect(passesThatFit(day('2026-12-01'), day('2026-12-31'), threeADay, 1)).toBe(93);
+    expect(passesThatFit(day('2032-03-01'), day('2032-04-30'), threeADay, 150)).toBeCloseTo(
+      1.22,
+      2,
+    );
   });
 });
 

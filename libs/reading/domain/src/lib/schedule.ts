@@ -1,6 +1,7 @@
 import type { BookCatalog } from '@lectura/catalog-domain';
 import { LocalDate } from '@lectura/shared-kernel';
 import type { BlockRecord, PlanRecord } from './journal';
+import { chaptersBetween, type Pace } from './pace';
 
 /** A block of the schedule: recorded once it started, projected while still to come. */
 export interface ScheduledBlock {
@@ -20,12 +21,12 @@ const date = (iso: string) => {
 
 /**
  * A monthly block runs to the end of its calendar month and grows by whole months until one pass
- * of the book fits at the plan's pace. At 3 a day only Salmos needs it (150 chapters, 50 days),
- * which is why the default cycle lasts 67 months for 66 books.
+ * of the book fits at the plan's pace (rest days read nothing). At 3 a day only Salmos needs it
+ * (150 chapters, 50 days), which is why the default cycle lasts 67 months for 66 books.
  */
-export function monthlyBlockEnd(start: LocalDate, chapters: number, chaptersPerDay: number) {
+export function monthlyBlockEnd(start: LocalDate, chapters: number, pace: Pace) {
   let end = start.endOfMonth();
-  while ((start.daysUntil(end) + 1) * chaptersPerDay < chapters) end = end.plusDays(1).endOfMonth();
+  while (chaptersBetween(pace, start, end) < chapters) end = end.plusDays(1).endOfMonth();
   return end;
 }
 
@@ -55,7 +56,7 @@ export function projectSchedule(
     if (done.has(bookId) || plan.excluded.includes(bookId)) continue;
     const book = catalog.find(bookId);
     if (!book) continue;
-    const end = monthlyBlockEnd(start, book.chapters, plan.chaptersPerDay);
+    const end = monthlyBlockEnd(start, book.chapters, plan);
     upcoming.push({ bookId, cycle: 1, start, end, id: null });
     start = end.plusDays(1);
   }

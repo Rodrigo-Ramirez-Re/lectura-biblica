@@ -1,5 +1,6 @@
 import { err, ok, type LocalDate, type Result } from '@lectura/shared-kernel';
 import type { BlockRecord, ReadingLogRecord } from './journal';
+import { chaptersBetween, type Pace } from './pace';
 
 /** Consecutive chapters of one pass, e.g. Salmos 4–6. `from === to` for a single chapter. */
 export interface ChapterSpan {
@@ -51,10 +52,10 @@ export const totalChapters = (logs: readonly ReadingLogRecord[]) =>
 export function passesThatFit(
   start: LocalDate,
   end: LocalDate,
-  chaptersPerDay: number,
+  pace: Pace,
   bookChapters: number,
 ): number {
-  return ((start.daysUntil(end) + 1) * chaptersPerDay) / bookChapters;
+  return chaptersBetween(pace, start, end) / bookChapters;
 }
 
 export type LogError = 'invalid-amount' | 'outside-block' | 'in-the-future';
