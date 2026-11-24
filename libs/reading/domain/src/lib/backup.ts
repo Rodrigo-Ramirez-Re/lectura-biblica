@@ -1,0 +1,158 @@
+import { err, ok, type LocalDate, type Result } from '@lectura/shared-kernel';
+import {
+  SCHEMA_VERSION,
+  type BlockRecord,
+  type Journal,
+  type NoteRecord,
+  type PlanRecord,
+  type ReadingLogRecord,
+} from './journal';
+
+export const BACKUP_APP = 'lectura-biblica';
+
+/** The JSON file a person keeps (docs/architecture/data-model.md). */
+export interface BackupDocument extends Journal {
+  readonly schemaVersion: number;
+  readonly app: typeof BACKUP_APP;
+  readonly exportedAt: string;
+}
+
+export type BackupError = 'not-json' | 'not-a-backup' | 'newer-version' | 'invalid';
+
+export interface BackupSummary {
+  readonly planName: string | null;
+  readonly logs: number;
+  readonly firstDate: string | null;
+  readonly lastDate: string | null;
+  readonly exportedAt: string;
+}
+
+export function toBackup(journal: Journal, exportedAt: Date): BackupDocument {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    app: BACKUP_APP,
+    exportedAt: exportedAt.toISOString(),
+    settings: journal.settings,
+    plan: journal.plan,
+    blocks: journal.blocks,
+    logs: journal.logs,
+    notes: journal.notes,
+  };
+}
+
+/**
+ * Upgrades a document of an older `schemaVersion` one step at a time. Version 1 is the first;
+ * the next change of the stored shape adds `1: (doc) => …` here, with a test importing a v1 file.
+ */
+const migrations: Record<number, (document: Record<string, unknown>) => Record<string, unknown>> =
+  {};
+
+/** Reads a backup file. Anything that is not a complete, valid backup is rejected as a whole. */
+export function parseBackup(text: string): Result<BackupDocument, BackupError> {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return err('not-json');
+  }
+  if (!isObject(data) || data['app'] !== BACKUP_APP || !Number.isInteger(data['schemaVersion']))
+    return err('not-a-backup');
+
+  let version = data['schemaVersion'] as number;
+  if (version > SCHEMA_VERSION) return err('newer-version');
+  let document: Record<string, unknown> = data;
+  while (version < SCHEMA_VERSION) {
+    const migrate = migrations[version];
+    if (!migrate) return err('invalid');
+    document = migrate(document);
+    version++;
+  }
+  return isValidDocument(document) ? ok(document) : err('invalid');
+}
+
+export function summarize(backup: BackupDocument): BackupSummary {
+  const dates = backup.logs.map((log) => log.date).sort();
+  return {
+    planName: backup.plan?.name ?? null,
+    logs: backup.logs.length,
+    firstDate: dates[0] ?? null,
+    lastDate: dates[dates.length - 1] ?? null,
+    exportedAt: backup.exportedAt,
+  };
+}
+
+const REMINDER_MIN_DAYS = 7;
+const REMINDER_AFTER_DAYS = 30;
+
+/**
+ * A backup is due once there are logs on at least 7 days and none was ever exported, or the last
+ * export is more than 30 days old (LB-013).
+ */
+export function isBackupDue(journal: Journal, today: LocalDate): boolean {
+  const { lastBackupAt } = journal.settings;
+  if (!lastBackupAt) return new Set(journal.logs.map((log) => log.date)).size >= REMINDER_MIN_DAYS;
+  const lastDay = lastBackupAt.slice(0, 10);
+  return today.plusDays(-REMINDER_AFTER_DAYS).toString() > lastDay;
+}
+
+// --- validation -------------------------------------------------------------------------------
+
+type Shape = Record<string, unknown>;
+
+const isObject = (value: unknown): value is Shape =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+const isText = (value: unknown): value is string => typeof value === 'string';
+const isDay = (value: unknown) => isText(value) && /^\d{4}-\d{2}-\d{2}$/.test(value);
+const isCount = (value: unknown, min = 0) =>
+  typeof value === 'number' && Number.isInteger(value) && value >= min;
+const isTextList = (value: unknown) => Array.isArray(value) && value.every(isText);
+const listOf = (value: unknown, check: (item: Shape) => boolean) =>
+  Array.isArray(value) && value.every((item) => isObject(item) && check(item));
+
+const isPlan = (plan: Shape): plan is Shape & PlanRecord =>
+  isText(plan['name']) &&
+  isDay(plan['startDate']) &&
+  isCount(plan['chaptersPerDay'], 1) &&
+  Array.isArray(plan['restDays']) &&
+  (plan['restDays'] as unknown[]).every((day) => isCount(day) && (day as number) <= 6) &&
+  isTextList(plan['bookOrder']) &&
+  isTextList(plan['excluded']) &&
+  isObject(plan['defaultBlock']) &&
+  (plan['cyclesTarget'] === null || isCount(plan['cyclesTarget'], 1));
+
+const isBlock = (block: Shape): block is Shape & BlockRecord =>
+  isText(block['id']) &&
+  isCount(block['cycle'], 1) &&
+  isText(block['bookId']) &&
+  isDay(block['start']) &&
+  isDay(block['end']) &&
+  (block['goalPasses'] === null || isCount(block['goalPasses'], 1)) &&
+  (block['status'] === 'active' || block['status'] === 'done');
+
+const isLog = (log: Shape): log is Shape & ReadingLogRecord =>
+  isText(log['id']) &&
+  isDay(log['date']) &&
+  isText(log['blockId']) &&
+  isText(log['bookId']) &&
+  isCount(log['startChapter'], 1) &&
+  isCount(log['chaptersRead'], 1);
+
+const isNote = (note: Shape): note is Shape & NoteRecord =>
+  isText(note['id']) &&
+  (note['blockId'] === null || isText(note['blockId'])) &&
+  isText(note['bookId']) &&
+  isDay(note['date']) &&
+  isText(note['text']);
+
+function isValidDocument(document: Shape): document is Shape & BackupDocument {
+  const settings = document['settings'];
+  return (
+    isText(document['exportedAt']) &&
+    isObject(settings) &&
+    (settings['lastBackupAt'] === null || isText(settings['lastBackupAt'])) &&
+    (document['plan'] === null || (isObject(document['plan']) && isPlan(document['plan']))) &&
+    listOf(document['blocks'], isBlock) &&
+    listOf(document['logs'], isLog) &&
+    listOf(document['notes'], isNote)
+  );
+}

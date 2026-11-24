@@ -1,4 +1,4 @@
-import { Clock, IdGenerator, LocalDate } from '../lib/local-date';
+import { Clock, FileSaver, IdGenerator, LocalDate } from '../lib/local-date';
 
 /** A clock stopped on a given day, for tests. */
 export class FixedClock extends Clock {
@@ -12,6 +12,10 @@ export class FixedClock extends Clock {
     return parsed.value;
   }
 
+  now(): Date {
+    return new Date(`${this.day}T12:00:00.000Z`);
+  }
+
   set(day: string): void {
     this.day = day;
   }
@@ -23,5 +27,14 @@ export class SequentialIds extends IdGenerator {
 
   next(): string {
     return `id-${++this.count}`;
+  }
+}
+
+/** Keeps saved files in memory, for tests. */
+export class InMemoryFileSaver extends FileSaver {
+  readonly files: { fileName: string; content: string; type: string }[] = [];
+
+  save(fileName: string, content: string, type: string): void {
+    this.files.push({ fileName, content, type });
   }
 }

@@ -1,7 +1,9 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   AdvanceBlocks,
+  CheckBackupReminder,
   GetSchedule,
   GetToday,
   LogReading,
@@ -33,6 +35,7 @@ interface LastLog {
 @Component({
   selector: 'lb-today-page',
   imports: [
+    RouterLink,
     DatePipe,
     DecimalPipe,
     ButtonComponent,
@@ -47,6 +50,29 @@ interface LastLog {
     <h1 class="font-display text-heading-1" i18n="@@reading.today.title">Hoy</h1>
 
     @if (loaded()) {
+      @if (backupDue() && !reminderDismissed()) {
+        <section lbCard aria-labelledby="backup-reminder" class="mt-section border border-accent">
+          <h2 id="backup-reminder" class="text-heading-3" i18n="@@reading.reminder.title">
+            Haz un respaldo
+          </h2>
+          <p i18n="@@reading.reminder.text">
+            Tus datos viven solo en este dispositivo. Exporta un respaldo de vez en cuando para no
+            perderlos.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <a lbButton routerLink="/acerca" i18n="@@reading.reminder.go">Ir a Respaldo</a>
+            <button
+              lbButton
+              variant="ghost"
+              type="button"
+              (click)="reminderDismissed.set(true)"
+              i18n="@@reading.reminder.later"
+            >
+              Ahora no
+            </button>
+          </div>
+        </section>
+      }
       @if (today(); as view) {
         <section lbCard aria-labelledby="current-book" class="mt-section">
           <p class="text-body-sm text-on-surface-muted" i18n="@@reading.today.book-of-block">
@@ -244,6 +270,7 @@ export class TodayPage {
   private readonly startPlan = inject(StartDefaultPlan);
   private readonly logReading = inject(LogReading);
   private readonly undoReading = inject(UndoReading);
+  private readonly checkBackup = inject(CheckBackupReminder);
 
   protected readonly options = this.startPlan.options();
   protected readonly choice = signal<StartChoice>('today');
@@ -254,6 +281,9 @@ export class TodayPage {
   protected readonly amount = signal(3);
   protected readonly date = signal(this.options.today.toString());
   protected readonly lastLog = signal<LastLog | null>(null);
+  protected readonly backupDue = signal(false);
+  /** "Ahora no" hides the reminder until the app is opened again. */
+  protected readonly reminderDismissed = signal(false);
   private undoTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
@@ -315,10 +345,12 @@ export class TodayPage {
   // Blocks that started while the app was closed are recorded before anything is read.
   private async load(): Promise<void> {
     await this.advanceBlocks.execute();
-    const [schedule, today] = await Promise.all([
+    const [schedule, today, backupDue] = await Promise.all([
       this.getSchedule.execute(),
       this.getToday.execute(),
+      this.checkBackup.execute(),
     ]);
+    this.backupDue.set(backupDue);
     this.schedule.set(schedule);
     this.today.set(today);
     if (today) this.amount.set(today.dueChapters || today.chaptersPerDay);

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { StorageGuard } from '@lectura/shared-kernel';
+import { BackupPanel } from '@lectura/reading-feature-backup';
 import { CardComponent } from '@lectura/ui-components';
 import { appSettings } from '../app-config';
 import { ThemeService, type ThemeChoice } from '../theme/theme';
 
 @Component({
   selector: 'lb-about-page',
-  imports: [CardComponent],
+  imports: [CardComponent, BackupPanel],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reader.about.title">Acerca de</h1>
 
@@ -41,6 +42,8 @@ import { ThemeService, type ThemeChoice } from '../theme/theme';
           </p>
         }
       </section>
+
+      <lb-backup-panel />
 
       <section lbCard aria-labelledby="about-theme">
         <h2 id="about-theme" class="text-heading-2" i18n="@@reader.about.theme-heading">

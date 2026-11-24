@@ -99,6 +99,13 @@ export class LocalDate {
 /** Where "today" comes from; tests use a fixed one (docs/conventions/testing.md). */
 export abstract class Clock {
   abstract today(): LocalDate;
+  /** The current instant, for timestamps such as a backup's export time. */
+  abstract now(): Date;
+}
+
+/** Saves a file to the person's device (a download in the browser). */
+export abstract class FileSaver {
+  abstract save(fileName: string, content: string, type: string): void;
 }
 
 /** Random ids generated on the device for stored records. */

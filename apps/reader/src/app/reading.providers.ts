@@ -2,21 +2,27 @@ import { inject, type Provider } from '@angular/core';
 import { BOOK_SECTIONS } from '@lectura/catalog-util-book-sections';
 import {
   AdvanceBlocks,
+  CheckBackupReminder,
+  DeleteAllData,
+  ExportBackup,
   GetBookProgress,
   GetSchedule,
   GetToday,
+  ImportBackup,
   LogReading,
+  PreviewBackup,
   StartDefaultPlan,
   UndoReading,
 } from '@lectura/reading-application';
 import { JournalReader, JournalWriter } from '@lectura/reading-domain';
 import { IndexedDbJournal } from '@lectura/reading-infrastructure';
 import {
+  BrowserFileSaver,
   BrowserStorageGuard,
   RandomIdGenerator,
   SystemClock,
 } from '@lectura/shared-infrastructure-browser';
-import { Clock, IdGenerator, StorageGuard } from '@lectura/shared-kernel';
+import { Clock, FileSaver, IdGenerator, StorageGuard } from '@lectura/shared-kernel';
 
 /** Binds the reading ports to the device adapters and exposes the use cases to the screens. */
 export function provideReading(): Provider[] {
@@ -24,6 +30,7 @@ export function provideReading(): Provider[] {
     { provide: StorageGuard, useFactory: () => new BrowserStorageGuard() },
     { provide: Clock, useFactory: () => new SystemClock() },
     { provide: IdGenerator, useFactory: () => new RandomIdGenerator() },
+    { provide: FileSaver, useFactory: () => new BrowserFileSaver() },
     { provide: IndexedDbJournal, useFactory: () => new IndexedDbJournal(inject(StorageGuard)) },
     { provide: JournalReader, useExisting: IndexedDbJournal },
     { provide: JournalWriter, useExisting: IndexedDbJournal },
@@ -71,6 +78,23 @@ export function provideReading(): Provider[] {
         order: 10,
         load: () => import('@lectura/reading-feature-today').then((m) => m.BookProgressSection),
       },
+    },
+    {
+      provide: ExportBackup,
+      useFactory: () =>
+        new ExportBackup(
+          inject(JournalReader),
+          inject(JournalWriter),
+          inject(Clock),
+          inject(FileSaver),
+        ),
+    },
+    { provide: PreviewBackup, useFactory: () => new PreviewBackup() },
+    { provide: ImportBackup, useFactory: () => new ImportBackup(inject(JournalWriter)) },
+    { provide: DeleteAllData, useFactory: () => new DeleteAllData(inject(JournalWriter)) },
+    {
+      provide: CheckBackupReminder,
+      useFactory: () => new CheckBackupReminder(inject(JournalReader), inject(Clock)),
     },
   ];
 }

@@ -1,5 +1,7 @@
+import { provideRouter } from '@angular/router';
 import {
   AdvanceBlocks,
+  CheckBackupReminder,
   GetSchedule,
   GetToday,
   LogReading,
@@ -13,15 +15,25 @@ import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { TodayPage } from './today.page';
 
-async function setup(today = '2026-11-24', options: { started?: boolean } = {}) {
+/** `started` starts the plan today; `daysLogged` starts it on 1 December and logs that many days. */
+async function setup(
+  today = '2026-11-24',
+  options: { started?: boolean; daysLogged?: number } = {},
+) {
   const journal = new InMemoryJournal();
-  const clock = new FixedClock(today);
+  const clock = new FixedClock(options.daysLogged ? '2026-12-01' : today);
   const ids = new SequentialIds();
   const startPlan = new StartDefaultPlan(journal, journal, clock, ids);
-  if (options.started) await startPlan.execute('today');
+  if (options.started || options.daysLogged) await startPlan.execute('today');
+  clock.set(today);
+  const logReading = new LogReading(journal, journal, clock, ids);
+  for (let d = 0; d < (options.daysLogged ?? 0); d++)
+    await logReading.execute({ chapters: 3, date: clock.today().plusDays(-d) });
   const result = await render(TodayPage, {
     providers: [
+      provideRouter([]),
       provideSpanishLocale(),
+      { provide: CheckBackupReminder, useValue: new CheckBackupReminder(journal, clock) },
       { provide: AdvanceBlocks, useValue: new AdvanceBlocks(journal, journal, clock, ids) },
       { provide: GetSchedule, useValue: new GetSchedule(journal, clock) },
       { provide: GetToday, useValue: new GetToday(journal, clock) },
@@ -150,5 +162,23 @@ describe('TodayPage — reading (LB-012)', () => {
     expect(progress.textContent).toContain('Aún no completas una vuelta');
     expect(screen.getByRole('progressbar', { name: 'Vuelta actual' })).toBeTruthy();
     expect(progress.textContent).toContain('caben 93 vueltas');
+  });
+});
+
+describe('TodayPage — backup reminder (LB-013)', () => {
+  it('does not remind before 7 days of reading', async () => {
+    await setup('2026-12-06', { daysLogged: 6 });
+
+    expect(screen.queryByRole('region', { name: 'Haz un respaldo' })).toBeNull();
+  });
+
+  it('reminds after 7 days of reading without a backup, until "Ahora no"', async () => {
+    const { user } = await setup('2026-12-07', { daysLogged: 7 });
+
+    const reminder = screen.getByRole('region', { name: 'Haz un respaldo' });
+    expect(reminder.textContent).toContain('Exporta un respaldo');
+    await user.click(screen.getByRole('button', { name: 'Ahora no' }));
+
+    expect(screen.queryByRole('region', { name: 'Haz un respaldo' })).toBeNull();
   });
 });
