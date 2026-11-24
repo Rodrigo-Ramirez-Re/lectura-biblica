@@ -2,7 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { getReadyUrl, workspaceRoot } from '@nx/devkit';
 
-const isCI = !!process.env['CI'];
 // With BASE_URL (e.g. a check against the published site) no local server is started.
 const baseURL = process.env['BASE_URL'] || getReadyUrl('http://localhost:4210');
 // Narrows the engines for a quick local run (E2E_BROWSERS=chromium); unset runs all.
@@ -17,7 +16,8 @@ export default defineConfig({
   webServer: process.env['BASE_URL']
     ? undefined
     : {
-        command: isCI ? 'npx nx run reader:serve-static' : 'npx nx run reader:serve',
+        // The production build: only it has the service worker.
+        command: 'npx nx run reader:serve-static',
         url: getReadyUrl('http://localhost:4210'),
         reuseExistingServer: true,
         cwd: workspaceRoot,
