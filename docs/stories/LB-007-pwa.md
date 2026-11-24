@@ -1,0 +1,74 @@
+---
+id: LB-007
+title: Installable, offline PWA
+epic: E0
+status: ready
+phase: 1
+depends_on: [LB-006]
+---
+
+# LB-007 — Installable and offline PWA with update notice
+
+## Story
+
+**As a** reader
+**I want** to install the app on my phone and use it without connection
+**So that** I can log my reading anywhere, and get new versions without losing anything
+
+## Context
+
+[[product/spec#8. PWA and deployment|spec §8]], [[architecture/adr/0002-static-pwa-on-github-pages|ADR 0002]].
+
+## Acceptance criteria
+
+```gherkin
+Feature: PWA
+
+  Scenario: Installable
+    Then the manifest has name, short_name, lang "es", relative start_url and scope "./",
+      display standalone, theme and background colours, 192 and 512 px icons and a maskable icon,
+      and the page links an apple-touch-icon and the iOS home-screen meta tags
+
+  Scenario: Offline
+    Given I opened the app once
+    When the network is offline and I reload
+    Then the app loads and every screen works
+
+  Scenario: Update notice
+    Given a new version has been deployed
+    When the app detects it
+    Then I see "Hay una versión nueva" with a "Recargar" button, and nothing reloads until I press it
+
+  Scenario: Data survives an update
+    Given I have data and I press "Recargar"
+    Then the new version opens with my data intact
+
+  Scenario: No third-party requests
+    Then the app makes no request outside its own origin and path
+```
+
+## Out of scope
+
+Install help screen (phase 4); push notifications (not in v1).
+
+## Technical notes
+
+- `@angular/service-worker` with `ngsw-config.json` (prefetch the whole app); register with `registrationStrategy: 'registerWhenStable:30000'`.
+- Update notice component listens to `SwUpdate.versionUpdates` (`VERSION_READY`) and calls `activateUpdate()` then `document.location.reload()` only on click; `unrecoverable` state shows a reload message too.
+- Icons generated from one SVG source with a script in `tools/`.
+- e2e: offline with `context.setOffline(true)` against the production build.
+
+## Open questions
+
+- [ ] App icon — _Recommendation:_ a simple open-book glyph on the primary colour, generated as SVG (no third-party art).
+
+## Decisions
+
+## Definition of done
+
+- [ ] All scenarios covered by tests (unit/component/e2e)
+- [ ] Lint, boundaries, tests, build green
+- [ ] `lb-review` passed
+- [ ] Accessible (keyboard + axe) and i18n-marked
+- [ ] Works offline on the sub-path build
+- [ ] Docs updated

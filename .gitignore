@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+tmp/
+out-tsc/
+storybook-static/
+
+# Caches
+.nx/
+.angular/
+.eslintcache
+.vitest/
+coverage/
+playwright-report/
+test-results/
+
+# Environment & secrets — only *.example files are committed
+.env
+.env.*
+!.env.example
+
+# Obsidian: vault config is shared, per-user workspace state is not
+docs/.obsidian/workspace*.json
+docs/.obsidian/cache
+docs/.trash/
+
+# Claude Code: shared skills/settings are committed, local overrides are not
+.claude/settings.local.json
+
+# IDE / OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+__screenshots__/
+vitest.config.*.timestamp*

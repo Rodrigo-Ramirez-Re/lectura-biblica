@@ -1,0 +1,73 @@
+---
+id: LB-010
+title: Local storage and data-safety notice
+epic: E1
+status: ready
+phase: 1
+depends_on: [LB-006]
+---
+
+# LB-010 — Local storage and data-safety notice
+
+## Story
+
+**As a** reader
+**I want** my data kept on my device and to know how to protect it
+**So that** I never lose my reading history by surprise
+
+## Context
+
+[[architecture/adr/0003-local-first-indexeddb|ADR 0003]], [[architecture/data-model|data model]].
+
+## Acceptance criteria
+
+```gherkin
+Feature: Local storage
+
+  Scenario: Survives reloads
+    Given I saved settings or reading data
+    When I close and reopen the app, online or offline
+    Then the data is there
+
+  Scenario: Persistent storage
+    When the app first stores data
+    Then it asks the browser for persistent storage, and Acerca de shows whether it was granted
+
+  Scenario: Data-safety notice
+    Given I open the app for the first time
+    Then a short notice says my data lives only on this device, that some browsers (Safari) may delete it
+      if I don't use the app for a while, and that installing the app and exporting backups protects it
+    And after "Entendido" it doesn't show again
+
+  Scenario: Storage unavailable
+    Given IndexedDB is not available (private mode in some browsers)
+    Then the app says it cannot save on this device instead of failing silently
+
+  Scenario: Shared origin
+    Then the database is named "lectura-biblica", independent of the URL path
+```
+
+## Out of scope
+
+Backup files (LB-013).
+
+## Technical notes
+
+- `libs/reading/infrastructure` (type:infrastructure, scope:reading) with `idb`: database `lectura-biblica` v1, stores `settings`, `plan`, `blocks` (index `cycle`), `logs` (indexes `date`, `blockId`, `bookId`), `notes`.
+- Ports in `reading/domain`/`application`: `SettingsRepository`, `PlanRepository`, `BlockRepository`, `ReadingLogRepository`, `StorageGuard` (persist + estimate). In-memory fakes for tests; adapters tested with `fake-indexeddb`.
+- Settings (theme, notice acknowledged, last backup) move here from LB-006's temporary store if one exists.
+
+## Open questions
+
+- None.
+
+## Decisions
+
+## Definition of done
+
+- [ ] All scenarios covered by tests (unit/integration/e2e)
+- [ ] Lint, boundaries, tests, build green
+- [ ] `lb-review` passed
+- [ ] Accessible (keyboard + axe) and i18n-marked
+- [ ] Works offline on the sub-path build
+- [ ] Docs updated
