@@ -14,8 +14,8 @@ async function renderFor(bookId: string, chapters: number[]) {
   const journal = new InMemoryJournal();
   const clock = new FixedClock('2026-12-01');
   const ids = new SequentialIds();
-  await new StartDefaultPlan(journal, journal, clock, ids).execute('today');
-  await new AdvanceBlocks(journal, journal, clock, ids).execute();
+  await new StartDefaultPlan(journal, journal, clock).execute('today');
+  await new AdvanceBlocks(journal, journal, clock).execute();
   for (const amount of chapters)
     await new LogReading(journal, journal, clock, ids).execute({ chapters: amount });
 

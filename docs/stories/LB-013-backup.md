@@ -2,7 +2,7 @@
 id: LB-013
 title: Backup export and import
 epic: E2
-status: ready
+status: done
 phase: 1
 depends_on: [LB-012]
 ---
@@ -69,9 +69,17 @@ Plan templates as files (phase 2); CSV export (phase 3).
 
 ## Open questions
 
-- [ ] Validation library — _Recommendation:_ hand-written validators in the domain (no dependency in a framework-free lib; the schema is small).
+- [x] Validation library — _Recommendation (adopted):_ hand-written validators in the domain (no dependency in a framework-free lib; the schema is small).
 
 ## Decisions
+
+- Backups are validated by hand-written checks in `reading-domain` (no dependency in a framework-free lib). Errors: not JSON, not a backup of this app, a newer `schemaVersion` (asks to update the app), or invalid (damaged or incomplete). A rejected file changes nothing.
+- The migration chain lives next to the parser (`migrations[version]`), empty at v1; the next change of the stored shape adds a step and a test importing a v1 file.
+- Import replaces everything in one IndexedDB transaction after a preview (plan, number of logs, first and last date) and an explicit "Reemplazar mis datos".
+- `Clock` gained `now()` for the export instant; files are saved through a `FileSaver` port (`BrowserFileSaver` downloads through a temporary link, which works offline and in installed apps).
+- Reminder on Hoy: logs on 7 different days and no export ever, or the last export over 30 days old. "Ahora no" hides it until the app is opened again; "Ir a Respaldo" opens Acerca de, where the panel lives.
+- "Borrar mis datos" sits collapsed in the panel and needs the word BORRAR; afterwards the app returns to the first-run welcome.
+- Review fix: imports must leave the app loadable. Days must be real calendar days, instants must parse, blocks must not end before they start, and the plan must pass `validatePlan` (known, unique books, at least one not excluded). Blocks and notes must be of known books, and every log must belong to a block in the file. The 30-day reminder counts from the local day of the last export (an evening export in Mexico is already the next day in UTC), and "Ahora no" lasts across screens until the app is opened again.
 
 ## Definition of done
 

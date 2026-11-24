@@ -91,6 +91,7 @@ Editing or deleting logs other than undo, notes, rest days (phase 2); pace and s
 - "Deshacer" stays for 10 seconds in a polite live region after each log; editing other logs is phase 2.
 - Progress on Hoy: complete passes in the block, the current pass as a progress bar ("Vuelta actual: 4 de 150 capítulos") and how many passes fit at the plan's pace.
 - The book page section "Tu lectura" (passes across every block of the book) is registered by the app through `BOOK_SECTIONS`. The token moved to `libs/catalog/util-book-sections` and sections register a dynamic `load()`: lint forbids static imports of lazy-loaded libraries, which would have put the screens in the initial bundle.
+- Review fix: a log that cannot be saved explains why under the day field (outside the block, a future day, an invalid amount); a failing read or write shows an alert and never leaves the buttons disabled; when the plan started but no block is running (the cycle ended), Hoy says the cycle is finished instead of "Tu plan empieza el …".
 
 ## Definition of done
 

@@ -1,3 +1,4 @@
+export * from './lib/backup';
 export * from './lib/journal';
 export * from './lib/journal.port';
 export * from './lib/progress';

@@ -1,7 +1,7 @@
 import { provideRouter } from '@angular/router';
 import { AdvanceBlocks, GetSchedule, StartDefaultPlan } from '@lectura/reading-application';
 import { InMemoryJournal } from '@lectura/reading-domain/testing';
-import { FixedClock, SequentialIds } from '@lectura/shared-kernel/testing';
+import { FixedClock } from '@lectura/shared-kernel/testing';
 import { provideSpanishLocale } from '@lectura/shared-util-i18n';
 import { render, screen, within } from '@testing-library/angular';
 import { PlanPage } from './plan.page';
@@ -9,17 +9,16 @@ import { PlanPage } from './plan.page';
 async function setup(withPlan: boolean) {
   const journal = new InMemoryJournal();
   const clock = new FixedClock('2026-12-01');
-  const ids = new SequentialIds();
   if (withPlan) {
-    await new StartDefaultPlan(journal, journal, clock, ids).execute('today');
+    await new StartDefaultPlan(journal, journal, clock).execute('today');
     clock.set('2027-01-15');
-    await new AdvanceBlocks(journal, journal, clock, ids).execute();
+    await new AdvanceBlocks(journal, journal, clock).execute();
   }
   const result = await render(PlanPage, {
     providers: [
       provideRouter([]),
       provideSpanishLocale(),
-      { provide: AdvanceBlocks, useValue: new AdvanceBlocks(journal, journal, clock, ids) },
+      { provide: AdvanceBlocks, useValue: new AdvanceBlocks(journal, journal, clock) },
       { provide: GetSchedule, useValue: new GetSchedule(journal, clock) },
     ],
   });

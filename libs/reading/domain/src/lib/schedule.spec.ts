@@ -12,10 +12,6 @@ const day = (iso: string) => {
 
 const plan = (start = '2026-12-01') => defaultPlan(day(start), bookCatalog);
 
-let counter = 0;
-const newId = () => `b${++counter}`;
-beforeEach(() => (counter = 0));
-
 describe('default plan (LB-011)', () => {
   it('reads 3 chapters a day, a month per book, fewest chapters first', () => {
     const value = plan();
@@ -138,9 +134,9 @@ describe('schedule (LB-011)', () => {
 
 describe('advancing blocks (LB-011)', () => {
   it('records the first block as active once the plan has started', () => {
-    expect(advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'), newId)).toEqual([
+    expect(advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'))).toEqual([
       {
-        id: 'b1',
+        id: '1:abdias:2026-12-01',
         cycle: 1,
         bookId: 'abdias',
         start: '2026-12-01',
@@ -152,13 +148,13 @@ describe('advancing blocks (LB-011)', () => {
   });
 
   it('records nothing before the plan starts', () => {
-    expect(advanceBlocks(plan(), [], bookCatalog, day('2026-11-30'), newId)).toEqual([]);
+    expect(advanceBlocks(plan(), [], bookCatalog, day('2026-11-30'))).toEqual([]);
   });
 
   it('closes the finished block and starts the next one', () => {
-    const [first] = advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'), newId);
+    const [first] = advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'));
 
-    const changes = advanceBlocks(plan(), [first], bookCatalog, day('2027-01-01'), newId);
+    const changes = advanceBlocks(plan(), [first], bookCatalog, day('2027-01-01'));
 
     expect(changes).toEqual([
       { ...first, status: 'done' },
@@ -167,7 +163,7 @@ describe('advancing blocks (LB-011)', () => {
   });
 
   it('records the blocks of months when the app was not opened, with their book and dates', () => {
-    const changes = advanceBlocks(plan(), [], bookCatalog, day('2027-03-10'), newId);
+    const changes = advanceBlocks(plan(), [], bookCatalog, day('2027-03-10'));
 
     expect(changes.map((block) => [block.bookId, block.status])).toEqual([
       ['abdias', 'done'],
@@ -178,8 +174,18 @@ describe('advancing blocks (LB-011)', () => {
   });
 
   it('changes nothing when everything is up to date', () => {
-    const recorded = advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'), newId);
+    const recorded = advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'));
 
-    expect(advanceBlocks(plan(), recorded, bookCatalog, day('2026-12-20'), newId)).toEqual([]);
+    expect(advanceBlocks(plan(), recorded, bookCatalog, day('2026-12-20'))).toEqual([]);
+  });
+});
+
+describe('block ids (LB-011 review)', () => {
+  it('records the same block with the same id however often it is advanced', () => {
+    const first = advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'));
+    const second = advanceBlocks(plan(), [], bookCatalog, day('2026-12-03'));
+
+    expect(first.map((block) => block.id)).toEqual(['1:abdias:2026-12-01']);
+    expect(second).toEqual(first);
   });
 });

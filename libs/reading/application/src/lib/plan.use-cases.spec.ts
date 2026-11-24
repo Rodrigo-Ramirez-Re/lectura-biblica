@@ -1,16 +1,15 @@
 import { InMemoryJournal } from '@lectura/reading-domain/testing';
-import { FixedClock, SequentialIds } from '@lectura/shared-kernel/testing';
+import { FixedClock } from '@lectura/shared-kernel/testing';
 import { AdvanceBlocks, GetSchedule, StartDefaultPlan } from './plan.use-cases';
 
 function setup(today = '2026-11-24') {
   const journal = new InMemoryJournal();
   const clock = new FixedClock(today);
-  const ids = new SequentialIds();
   return {
     journal,
     clock,
-    start: new StartDefaultPlan(journal, journal, clock, ids),
-    advance: new AdvanceBlocks(journal, journal, clock, ids),
+    start: new StartDefaultPlan(journal, journal, clock),
+    advance: new AdvanceBlocks(journal, journal, clock),
     schedule: new GetSchedule(journal, clock),
   };
 }

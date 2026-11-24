@@ -1,7 +1,9 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   AdvanceBlocks,
+  CheckBackupReminder,
   GetSchedule,
   GetToday,
   LogReading,
@@ -9,6 +11,7 @@ import {
   UndoReading,
   type ScheduleView,
   type StartChoice,
+  type LogReadingError,
   type TodayView,
 } from '@lectura/reading-application';
 import { LocalDate } from '@lectura/shared-kernel';
@@ -21,6 +24,7 @@ import {
   ProgressComponent,
   StepperComponent,
 } from '@lectura/ui-components';
+import { BackupReminderState } from './backup-reminder.state';
 import { describeReading } from './describe-reading';
 
 const UNDO_SECONDS = 10;
@@ -33,6 +37,7 @@ interface LastLog {
 @Component({
   selector: 'lb-today-page',
   imports: [
+    RouterLink,
     DatePipe,
     DecimalPipe,
     ButtonComponent,
@@ -47,6 +52,29 @@ interface LastLog {
     <h1 class="font-display text-heading-1" i18n="@@reading.today.title">Hoy</h1>
 
     @if (loaded()) {
+      @if (backupDue() && !reminderDismissed()) {
+        <section lbCard aria-labelledby="backup-reminder" class="mt-section border border-accent">
+          <h2 id="backup-reminder" class="text-heading-3" i18n="@@reading.reminder.title">
+            Haz un respaldo
+          </h2>
+          <p i18n="@@reading.reminder.text">
+            Tus datos viven solo en este dispositivo. Exporta un respaldo de vez en cuando para no
+            perderlos.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <a lbButton routerLink="/acerca" i18n="@@reading.reminder.go">Ir a Respaldo</a>
+            <button
+              lbButton
+              variant="ghost"
+              type="button"
+              (click)="reminderDismissed.set(true)"
+              i18n="@@reading.reminder.later"
+            >
+              Ahora no
+            </button>
+          </div>
+        </section>
+      }
       @if (today(); as view) {
         <section lbCard aria-labelledby="current-book" class="mt-section">
           <p class="text-body-sm text-on-surface-muted" i18n="@@reading.today.book-of-block">
@@ -99,7 +127,7 @@ interface LastLog {
               Otra cantidad u otro día
             </summary>
             <div class="mt-2 flex flex-col gap-3">
-              <lb-form-field label="Día" i18n-label="@@reading.today.date">
+              <lb-form-field label="Día" i18n-label="@@reading.today.date" [error]="logError()">
                 <input
                   lbControl
                   type="date"
@@ -158,10 +186,16 @@ interface LastLog {
           </p>
         </section>
       } @else if (schedule(); as plan) {
-        <p class="mt-section" i18n="@@reading.today.not-started">
-          Tu plan empieza el {{ plan.start.toDate() | date: "d 'de' MMMM" }} con
-          {{ plan.entries[0].bookName }}.
-        </p>
+        @if (plan.start.isAfter(options.today)) {
+          <p class="mt-section" i18n="@@reading.today.not-started">
+            Tu plan empieza el {{ plan.start.toDate() | date: "d 'de' MMMM" }} con
+            {{ plan.entries[0].bookName }}.
+          </p>
+        } @else {
+          <p class="mt-section" i18n="@@reading.today.cycle-finished">
+            Terminaste tu ciclo de lectura. Muy pronto podrás empezar otro desde Plan.
+          </p>
+        }
       } @else {
         <section lbCard aria-labelledby="welcome-title" class="mt-section">
           <h2 id="welcome-title" class="text-heading-2" i18n="@@reading.welcome.title">
@@ -216,6 +250,17 @@ interface LastLog {
       }
     }
 
+    @if (failed()) {
+      <p
+        role="alert"
+        class="mt-section font-semibold text-danger"
+        i18n="@@reading.today.save-failed"
+      >
+        No se pudieron leer o guardar tus datos en este dispositivo. Revisa que el navegador permita
+        guardar datos e inténtalo de nuevo.
+      </p>
+    }
+
     <div role="status" class="fixed inset-x-0 bottom-20 z-20 px-gutter md:bottom-4">
       @if (lastLog(); as last) {
         <div
@@ -244,6 +289,7 @@ export class TodayPage {
   private readonly startPlan = inject(StartDefaultPlan);
   private readonly logReading = inject(LogReading);
   private readonly undoReading = inject(UndoReading);
+  private readonly checkBackup = inject(CheckBackupReminder);
 
   protected readonly options = this.startPlan.options();
   protected readonly choice = signal<StartChoice>('today');
@@ -254,10 +300,21 @@ export class TodayPage {
   protected readonly amount = signal(3);
   protected readonly date = signal(this.options.today.toString());
   protected readonly lastLog = signal<LastLog | null>(null);
+  protected readonly backupDue = signal(false);
+  protected readonly reminderDismissed = inject(BackupReminderState).dismissed;
+  protected readonly logError = signal<string | undefined>(undefined);
+  protected readonly failed = signal(false);
   private undoTimer?: ReturnType<typeof setTimeout>;
 
+  private readonly logErrors: Record<LogReadingError, string> = {
+    'invalid-amount': $localize`:@@reading.today.error-amount:Escribe cuántos capítulos leíste (1 o más).`,
+    'outside-block': $localize`:@@reading.today.error-outside:Elige un día del libro actual, desde que empezó hasta hoy.`,
+    'in-the-future': $localize`:@@reading.today.error-future:No puedes registrar un día que todavía no llega.`,
+    'no-active-block': $localize`:@@reading.today.error-no-block:No hay un libro activo hoy.`,
+  };
+
   constructor() {
-    void this.load();
+    void this.busy(() => Promise.resolve());
   }
 
   protected due(view: TodayView): string {
@@ -271,7 +328,11 @@ export class TodayPage {
   protected async log(chapters: number, date?: LocalDate): Promise<void> {
     await this.busy(async () => {
       const result = await this.logReading.execute({ chapters, date });
-      if (!result.ok) return;
+      if (!result.ok) {
+        this.logError.set(this.logErrors[result.error]);
+        return;
+      }
+      this.logError.set(undefined);
       const book = this.today()?.bookName;
       const amount = this.chaptersText(chapters);
       this.offerUndo({ id: result.value.id, text: book ? `${book} · ${amount}` : amount });
@@ -307,18 +368,26 @@ export class TodayPage {
 
   private async busy(action: () => Promise<unknown>): Promise<void> {
     this.saving.set(true);
-    await action();
-    await this.load();
-    this.saving.set(false);
+    this.failed.set(false);
+    try {
+      await action();
+      await this.load();
+    } catch {
+      this.failed.set(true);
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   // Blocks that started while the app was closed are recorded before anything is read.
   private async load(): Promise<void> {
     await this.advanceBlocks.execute();
-    const [schedule, today] = await Promise.all([
+    const [schedule, today, backupDue] = await Promise.all([
       this.getSchedule.execute(),
       this.getToday.execute(),
+      this.checkBackup.execute(),
     ]);
+    this.backupDue.set(backupDue);
     this.schedule.set(schedule);
     this.today.set(today);
     if (today) this.amount.set(today.dueChapters || today.chaptersPerDay);

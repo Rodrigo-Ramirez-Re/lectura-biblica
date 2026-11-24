@@ -30,8 +30,9 @@ export function validatePlan(
 ): Result<PlanRecord, PlanError> {
   if (!Number.isInteger(plan.chaptersPerDay) || plan.chaptersPerDay < 1) return err('invalid-pace');
   const unique = new Set(plan.bookOrder);
-  const known = plan.bookOrder.every((id) => catalog.find(id));
-  if (!known || unique.size !== plan.bookOrder.length || unique.size === 0)
+  const known = [...plan.bookOrder, ...plan.excluded].every((id) => catalog.find(id));
+  const remaining = plan.bookOrder.filter((id) => !plan.excluded.includes(id));
+  if (!known || unique.size !== plan.bookOrder.length || remaining.length === 0)
     return err('invalid-order');
   return ok(plan);
 }
