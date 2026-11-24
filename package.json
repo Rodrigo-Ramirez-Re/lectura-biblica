@@ -15,7 +15,8 @@
     "e2e": "nx run-many -t e2e",
     "affected": "nx affected -t lint typecheck test build",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "~2.7.3",
@@ -28,6 +29,11 @@
     "@angular/compiler-cli": "~22.2.0",
     "@angular/language-service": "~22.2.0",
     "@angular/platform-browser-dynamic": "~22.2.0",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@commitlint/lint": "^21.2.4",
+    "@commitlint/load": "^21.2.4",
+    "@commitlint/types": "^21.2.3",
     "@eslint/js": "^9.8.0",
     "@nx/angular": "24.0.6",
     "@nx/devkit": "24.0.6",
@@ -51,7 +57,9 @@
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
+    "husky": "^9.1.7",
     "jsdom": "^27.1.0",
+    "lint-staged": "^17.6.2",
     "nx": "24.0.6",
     "postcss": "^8.5.33",
     "prettier": "^3.8.1",
