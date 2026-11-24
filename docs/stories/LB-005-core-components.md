@@ -2,7 +2,7 @@
 id: LB-005
 title: Core components
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: [LB-003]
 ---
@@ -61,6 +61,11 @@ Charts (phase 3), dialogs and toasts unless a phase 1 screen needs them (added i
 - None.
 
 ## Decisions
+
+- Component tests use Angular Testing Library queries by role and label.
+- Storybook runs on port 4410 and has a "Tema" toolbar that sets `data-theme` like the app will.
+- The stepper announces its value through a polite live region, because focus stays on the − / + button while the value changes.
+- `lb-progress` clamps its value to the maximum, so an extra pass never draws past 100 %.
 
 ## Definition of done
 

@@ -43,6 +43,7 @@ npx playwright install        # once, downloads Chromium, Firefox and WebKit for
 | Task                                 | Command             |
 | ------------------------------------ | ------------------- |
 | Serve the app (localhost:4210)       | `npm start`         |
+| Storybook (localhost:4410)           | `npm run storybook` |
 | Unit tests (all projects)            | `npm test`          |
 | Lint (all projects)                  | `npm run lint`      |
 | Type-check (all projects)            | `npm run typecheck` |
