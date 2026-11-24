@@ -1,6 +1,7 @@
 import { IDBFactory } from 'fake-indexeddb';
 import 'fake-indexeddb/auto';
-import type { Journal } from '@lectura/reading-domain';
+import { planSettings, type Journal } from '@lectura/reading-domain';
+import { openDB } from 'idb';
 import { StorageGuard } from '@lectura/shared-kernel';
 import { IndexedDbJournal } from './indexed-db-journal';
 
@@ -23,6 +24,8 @@ const plan = {
   excluded: [],
   defaultBlock: { unit: 'month' as const, value: 1 },
   cyclesTarget: null,
+  paceByWeekday: null,
+  pausedSince: null,
 };
 const block = {
   id: 'b1',
@@ -54,6 +57,7 @@ describe('IndexedDbJournal (LB-010)', () => {
       blocks: [],
       logs: [],
       notes: [],
+      templates: [],
     });
   });
 
@@ -100,6 +104,7 @@ describe('IndexedDbJournal (LB-010)', () => {
       blocks: [block],
       logs: [{ ...log, id: 'l2' }],
       notes: [],
+      templates: [{ id: 't1', name: 'Mío', settings: planSettings(plan) }],
     };
 
     await journal.replaceAll(replacement);
@@ -127,5 +132,34 @@ describe('IndexedDbJournal (LB-010)', () => {
     await journal.savePlan(plan);
 
     expect((await journal.load()).plan).toEqual(plan);
+  });
+});
+
+describe('database upgrade to v2 (LB-014)', () => {
+  it('keeps the data of a v1 database and fills the new fields', async () => {
+    const v1 = await openDB('lectura-biblica', 1, {
+      upgrade(db) {
+        db.createObjectStore('settings');
+        db.createObjectStore('plan');
+        db.createObjectStore('blocks', { keyPath: 'id' }).createIndex('cycle', 'cycle');
+        const logs = db.createObjectStore('logs', { keyPath: 'id' });
+        logs.createIndex('date', 'date');
+        logs.createIndex('blockId', 'blockId');
+        logs.createIndex('bookId', 'bookId');
+        db.createObjectStore('notes', { keyPath: 'id' });
+      },
+    });
+    const { paceByWeekday, pausedSince, ...v1Plan } = plan;
+    await v1.put('plan', v1Plan, 'current');
+    await v1.put('blocks', block);
+    await v1.put('logs', log);
+    v1.close();
+
+    const journal = await new IndexedDbJournal(new FakeStorageGuard()).load();
+
+    expect(journal.plan).toEqual(plan);
+    expect(journal.blocks).toEqual([block]);
+    expect(journal.logs).toEqual([log]);
+    expect(journal.templates).toEqual([]);
   });
 });

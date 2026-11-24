@@ -189,3 +189,33 @@ describe('block ids (LB-011 review)', () => {
     expect(second).toEqual(first);
   });
 });
+
+describe('plan validation v2 (LB-014)', () => {
+  it('rejects a plan where every day is a rest day', () => {
+    expect(validatePlan({ ...plan(), restDays: [0, 1, 2, 3, 4, 5, 6] }, bookCatalog)).toEqual({
+      ok: false,
+      error: 'no-reading-days',
+    });
+    expect(validatePlan({ ...plan(), paceByWeekday: [0, 0, 0, 0, 0, 0, 0] }, bookCatalog)).toEqual({
+      ok: false,
+      error: 'no-reading-days',
+    });
+  });
+
+  it('rejects a pace per weekday that is not 7 whole numbers', () => {
+    expect(validatePlan({ ...plan(), paceByWeekday: [1, 2, 3] }, bookCatalog)).toEqual({
+      ok: false,
+      error: 'invalid-pace',
+    });
+  });
+
+  it('accepts every duration unit with a positive value', () => {
+    for (const unit of ['month', 'weeks', 'days', 'passes'] as const)
+      expect(validatePlan({ ...plan(), defaultBlock: { unit, value: 2 } }, bookCatalog).ok).toBe(
+        true,
+      );
+    expect(
+      validatePlan({ ...plan(), defaultBlock: { unit: 'days', value: 0 } }, bookCatalog),
+    ).toEqual({ ok: false, error: 'invalid-duration' });
+  });
+});

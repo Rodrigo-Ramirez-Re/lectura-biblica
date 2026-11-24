@@ -2,7 +2,7 @@
 id: LB-014
 title: Data model v2
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-013]
 ---
@@ -59,6 +59,13 @@ Any screen that uses the new fields (LB-015 to LB-022).
 - None.
 
 ## Decisions
+
+- One version bump for all of phase 2: `paceByWeekday`, `pausedSince`, the units `weeks`, `days` and `passes`, the statuses `skipped`, `paused` and `replaced`, and `templates`.
+- The backup migration `1 → 2` fills the new plan fields with null and adds an empty template list. A v1 plan read from the device database is completed the same way (`upgradePlan`).
+- The IndexedDB upgrade runs per step from the version on the device (`oldVersion`); v2 only adds the `templates` store, and a test opens a real v1 database first.
+- `validatePlan` now also requires at least one reading day, 7 whole numbers in a pace per weekday, and a known duration unit with a value of 1 or more. Templates in a backup are validated like plans.
+- `planSettings(plan)` returns what a template keeps.
+- Lint ignores the siblings of a rest destructure (`const { removed, ...rest } = record`), the idiom for dropping a field from an immutable record.
 
 ## Definition of done
 

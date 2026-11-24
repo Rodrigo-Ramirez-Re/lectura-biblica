@@ -1,6 +1,6 @@
 # Data model
 
-Version 1. The plan (editable), the history (blocks and reading logs, never lost) and notes are separate. **Nothing derived is stored**: passes, progress, streaks and every metric are computed from logs + plan, so correcting a past day updates everything.
+Version 2 (LB-014). Version 1 files and databases are migrated on import and on first open. The plan (editable), the history (blocks and reading logs, never lost) and notes are separate. **Nothing derived is stored**: passes, progress, streaks and every metric are computed from logs + plan, so correcting a past day updates everything.
 
 Changing this model needs a decision in a story and a `schemaVersion` migration ([[architecture/adr/0007-chapters-as-the-unit-of-progress|ADR 0007]]).
 
@@ -10,7 +10,7 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "app": "lectura-biblica",
   "exportedAt": "2026-12-03T21:15:00.000Z",
   "settings": { "lastBackupAt": null },
@@ -22,7 +22,9 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
     "bookOrder": ["abdias", "filemon", "2juan", "3juan", "judas", "hageo"],
     "excluded": [],
     "defaultBlock": { "unit": "month", "value": 1 },
-    "cyclesTarget": null
+    "cyclesTarget": null,
+    "paceByWeekday": null,
+    "pausedSince": null
   },
   "blocks": [
     {
@@ -45,11 +47,17 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
       "chaptersRead": 3
     }
   ],
-  "notes": []
+  "notes": [],
+  "templates": []
 }
 ```
 
 ## Rules
+
+- **Pace:** `paceByWeekday` (7 numbers, Sunday first, 0 = rest) overrides `chaptersPerDay` and `restDays` when set.
+- **Durations:** `defaultBlock.unit` is `month`, `weeks`, `days` or `passes`; every block allows at least one pass at the plan's pace.
+- **Block statuses:** `active`, `done`, `skipped` (count as read in their cycle), `paused`, `replaced` (their book returns to the queue).
+- **Templates:** `{ id, name, settings }`, settings being the plan without `startDate` and `pausedSince`.
 
 - **Dates** are local calendar days `YYYY-MM-DD` (`LocalDate`), never timestamps, so a day never shifts with the time zone. Only `exportedAt` is an instant.
 - **Passes** over a book = Σ `chaptersRead` of its logs ÷ the book's chapters. One-chapter books are read several times a day this way.

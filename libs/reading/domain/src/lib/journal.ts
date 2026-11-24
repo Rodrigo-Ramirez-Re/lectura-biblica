@@ -2,12 +2,14 @@
  * The stored shape of the reading data (docs/architecture/data-model.md). Changing any of these
  * needs a story decision and a `schemaVersion` migration (ADR 0007).
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** A local calendar day, `YYYY-MM-DD`. */
 export type IsoDate = string;
 
-export type BlockUnit = 'month';
+export type BlockUnit = 'month' | 'weeks' | 'days' | 'passes';
+
+export const BLOCK_UNITS: readonly BlockUnit[] = ['month', 'weeks', 'days', 'passes'];
 
 export interface PlanRecord {
   readonly name: string;
@@ -19,9 +21,33 @@ export interface PlanRecord {
   readonly excluded: readonly string[];
   readonly defaultBlock: { readonly unit: BlockUnit; readonly value: number };
   readonly cyclesTarget: number | null;
+  /** Chapters per weekday, Sunday first; 0 = rest. Null: `chaptersPerDay` except `restDays`. */
+  readonly paceByWeekday: readonly number[] | null;
+  /** The day the plan was paused; null while it runs. */
+  readonly pausedSince: IsoDate | null;
 }
 
-export type BlockStatus = 'active' | 'done';
+/** How one reads, without when: what a plan template holds. */
+export type PlanSettings = Omit<PlanRecord, 'startDate' | 'pausedSince'>;
+
+export interface PlanTemplateRecord {
+  readonly id: string;
+  readonly name: string;
+  readonly settings: PlanSettings;
+}
+
+/**
+ * `skipped` books count as read in their cycle; `replaced` and `paused` ones go back to the queue.
+ */
+export type BlockStatus = 'active' | 'done' | 'skipped' | 'paused' | 'replaced';
+
+export const BLOCK_STATUSES: readonly BlockStatus[] = [
+  'active',
+  'done',
+  'skipped',
+  'paused',
+  'replaced',
+];
 
 export interface BlockRecord {
   readonly id: string;
@@ -62,6 +88,7 @@ export interface Journal {
   readonly blocks: readonly BlockRecord[];
   readonly logs: readonly ReadingLogRecord[];
   readonly notes: readonly NoteRecord[];
+  readonly templates: readonly PlanTemplateRecord[];
 }
 
 export const emptyJournal: Journal = {
@@ -70,4 +97,31 @@ export const emptyJournal: Journal = {
   blocks: [],
   logs: [],
   notes: [],
+  templates: [],
 };
+
+/** A plan stored by version 1, completed with the defaults of the fields version 2 added. */
+export function upgradePlan(
+  plan: Omit<PlanRecord, 'paceByWeekday' | 'pausedSince'> & Partial<PlanRecord>,
+): PlanRecord {
+  return {
+    ...plan,
+    paceByWeekday: plan.paceByWeekday ?? null,
+    pausedSince: plan.pausedSince ?? null,
+  };
+}
+
+/** How a plan reads, without its dates: what a template keeps (LB-022). */
+export function planSettings(plan: PlanRecord): PlanSettings {
+  const { name, chaptersPerDay, restDays, paceByWeekday, bookOrder, excluded } = plan;
+  return {
+    name,
+    chaptersPerDay,
+    restDays,
+    paceByWeekday,
+    bookOrder,
+    excluded,
+    defaultBlock: plan.defaultBlock,
+    cyclesTarget: plan.cyclesTarget,
+  };
+}

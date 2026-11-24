@@ -48,7 +48,7 @@ test.describe('Backup (LB-013)', () => {
 
     expect(name).toBe('lectura-biblica-respaldo-2026-12-01.json');
     const backup = JSON.parse(text);
-    expect(backup).toMatchObject({ schemaVersion: 1, app: 'lectura-biblica' });
+    expect(backup).toMatchObject({ schemaVersion: 2, app: 'lectura-biblica' });
     expect(backup.plan.name).toBe('Un libro al mes');
     expect(backup.logs).toHaveLength(1);
     await expect(page.getByText(/Último respaldo: 1 de diciembre de 2026/)).toBeVisible();
@@ -109,6 +109,22 @@ test.describe('Backup (LB-013)', () => {
     await expect(reminder).toBeVisible();
     await reminder.getByRole('button', { name: 'Ahora no' }).click();
     await expect(reminder).toBeHidden();
+  });
+
+  test('imports a backup made by the first version of the app (LB-014)', async ({ page }) => {
+    await readAndOpenAbout(page);
+    const backup = JSON.parse((await exportBackup(page)).text);
+    delete backup.plan.paceByWeekday;
+    delete backup.plan.pausedSince;
+    delete backup.templates;
+    backup.schemaVersion = 1;
+    await deleteEverything(page);
+
+    await page.getByRole('navigation').getByRole('link', { name: 'Acerca de' }).click();
+    await importText(page, JSON.stringify(backup));
+    await page.getByRole('button', { name: 'Reemplazar mis datos' }).click();
+
+    await expect(page.getByText('Listo por hoy')).toBeVisible();
   });
 
   test('has no accessibility violations on the backup panel', async ({ page }) => {

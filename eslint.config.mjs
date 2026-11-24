@@ -24,6 +24,13 @@ export default [
     ignores: ['**/dist', '**/out-tsc', '**/vitest.config.*.timestamp*'],
   },
   {
+    files: ['**/*.ts', '**/*.tsx'],
+    rules: {
+      // `const { removed, ...rest } = record` is how a field is dropped from an immutable record.
+      '@typescript-eslint/no-unused-vars': ['warn', { ignoreRestSiblings: true }],
+    },
+  },
+  {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
       '@nx/enforce-module-boundaries': [

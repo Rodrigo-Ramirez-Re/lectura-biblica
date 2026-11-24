@@ -55,8 +55,8 @@ export class ImportBackup {
   async execute(text: string): Promise<Result<void, BackupError>> {
     const parsed = parseBackup(text, this.catalog);
     if (!parsed.ok) return err(parsed.error);
-    const { settings, plan, blocks, logs, notes } = parsed.value;
-    await this.writer.replaceAll({ settings, plan, blocks, logs, notes });
+    const { settings, plan, blocks, logs, notes, templates } = parsed.value;
+    await this.writer.replaceAll({ settings, plan, blocks, logs, notes, templates });
     return ok(undefined);
   }
 }

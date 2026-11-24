@@ -8,10 +8,11 @@ describe('journal (LB-010)', () => {
       blocks: [],
       logs: [],
       notes: [],
+      templates: [],
     });
   });
 
-  it('is at schema version 1', () => {
-    expect(SCHEMA_VERSION).toBe(1);
+  it('is at schema version 2', () => {
+    expect(SCHEMA_VERSION).toBe(2);
   });
 });
