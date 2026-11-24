@@ -34,6 +34,7 @@
     "@commitlint/lint": "^21.2.4",
     "@commitlint/load": "^21.2.4",
     "@commitlint/types": "^21.2.3",
+    "@eslint/css": "^2.0.1",
     "@eslint/js": "^9.8.0",
     "@nx/angular": "24.0.6",
     "@nx/devkit": "24.0.6",

@@ -18,15 +18,34 @@ Rule: components and features use **semantic** tokens/utilities only. The `--lb-
 
 ## Themes
 
-Light and dark. The semantic tokens are redefined for dark under `prefers-color-scheme: dark` and under `[data-theme="dark"]`; `[data-theme="light"]` forces light. The person's choice (`auto`, `light`, `dark`) is stored in settings.
+Light and dark from a single declaration per color: every semantic color is `light-dark(<light primitive>, <dark primitive>)`, and `color-scheme` on the root picks the side. `:root` is `light dark` (the device decides); `[data-theme="light"]` and `[data-theme="dark"]` force one. The person's choice (`auto`, `light`, `dark`) is stored in settings and sets `data-theme`.
+
+| Semantic           | Light     | Dark      | Use                                       |
+| ------------------ | --------- | --------- | ----------------------------------------- |
+| `surface`          | `#FBF8F3` | `#171512` | Page background (warm paper / warm night) |
+| `surface-raised`   | `#FFFFFF` | `#221F1B` | Cards, sheets, navigation bar             |
+| `surface-subtle`   | `#F3EEE6` | `#2E2A25` | Secondary panels, progress tracks         |
+| `on-surface`       | `#1F1B16` | `#EDE7DD` | Text                                      |
+| `on-surface-muted` | `#5C544A` | `#B3AA9C` | Secondary text                            |
+| `primary`          | `#1F5E5B` | `#6FC2BB` | Actions, links, progress, current item    |
+| `primary-strong`   | `#174845` | `#8FD3CD` | Pressed primary                           |
+| `on-primary`       | `#FFFFFF` | `#0F1F1E` | Text on primary                           |
+| `accent`           | `#8A5A00` | `#E0A84B` | Highlights (streaks, book of the month)   |
+| `success`          | `#2F6B3A` | `#7CC98A` | Done states, always with icon or text     |
+| `danger`           | `#B42318` | `#F28B82` | Errors, destructive actions               |
+| `border`           | `#E6DFD3` | `#2E2A25` | Decorative dividers                       |
+| `border-strong`    | `#8C8173` | `#7D7468` | Field and control borders (3:1)           |
+| `focus`            | `#B45309` | `#F0B45A` | Focus ring                                |
+
+Other tokens: type scale `display`, `heading-1…3`, `body`, `body-sm`, `caption`; spacing `gutter`, `section`, `touch` (44 px); container `content` (40 rem); radius `control`, `card`, `pill`; shadow `card`, `raised`. The catalogue with usage notes is `libs/ui/tokens/src/lib/foundations.ts`.
 
 ## Accessibility
 
-Every text/background pair is listed in `contrastPairs` and asserted by a unit test in **both themes**: ≥ 4.5:1 for text, ≥ 3:1 for focus indicators and chart marks. Never rely on colour alone: every chart series and status carries a label or icon.
+Every text/background pair is listed in `contrastPairs` and asserted by a unit test in **both themes**: ≥ 4.5:1 for text, ≥ 3:1 for focus indicators, field borders and chart marks. Never rely on colour alone: every chart series and status carries a label or icon.
 
 ## Fonts
 
-System font stack, or a font bundled with the app. Never a CDN (offline requirement).
+System stacks: sans (`system-ui`, …) for text, serif (`ui-serif, Georgia`, …) for book names and titles. Zero bytes to download, nothing from a CDN (offline requirement).
 
 ## Rules
 

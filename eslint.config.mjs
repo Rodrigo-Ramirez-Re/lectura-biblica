@@ -1,4 +1,8 @@
+import css from '@eslint/css';
 import nx from '@nx/eslint-plugin';
+import noPrimitiveTokens from './tools/quality/eslint/no-primitive-tokens.mjs';
+
+const lb = { rules: { 'no-primitive-tokens': noPrimitiveTokens } };
 
 // Bounded contexts may use their own libs and shared ones, plus the exceptions listed here
 // (docs/architecture/overview.md).
@@ -141,5 +145,19 @@ export default [
         })),
       ],
     },
+  },
+  {
+    // Tolerant: Tailwind at-rules (@theme, @utility) are not standard CSS.
+    files: ['**/*.css'],
+    plugins: { css },
+    language: 'css/css',
+    languageOptions: { tolerant: true },
+  },
+  {
+    basePath: import.meta.dirname,
+    files: ['**/*.ts', '**/*.html', '**/*.css'],
+    ignores: ['libs/ui/tokens/**', 'tools/**'],
+    plugins: { lb },
+    rules: { 'lb/no-primitive-tokens': 'error' },
   },
 ];
