@@ -36,7 +36,19 @@ Done when the owner can log a full month from their phone.
 
 ## Phase 2 — Flexibility (E3)
 
-Plan editor: pace, rest days, pace per weekday; block duration (month, weeks, days, passes) and goals per block; book order (templates, reorder by hand, include/exclude); cycles and restarting a cycle; choose or change the book of a block, pause, skip; edit and delete past logs; notes per block or book; plan templates (save, export, import).
+Each person builds their own way of reading and can change it without losing history.
+
+| ID                                         | Story                                                           | Depends on |
+| ------------------------------------------ | --------------------------------------------------------------- | ---------- |
+| [[stories/LB-014-data-model-v2\|LB-014]]   | Data model v2 (migration of backups and of the device database) | 013        |
+| [[stories/LB-015-pace-editor\|LB-015]]     | Plan editor: name, pace, rest days, pace per weekday            | 014        |
+| [[stories/LB-016-durations-goals\|LB-016]] | Block duration (month, weeks, days, passes) and goals           | 015        |
+| [[stories/LB-017-book-order\|LB-017]]      | Book order: templates, reorder by hand, include or exclude      | 015        |
+| [[stories/LB-018-current-block\|LB-018]]   | Current book: change, skip, pause and resume, move its end      | 016, 017   |
+| [[stories/LB-019-cycles\|LB-019]]          | Cycles: repeat, number of cycles, restart                       | 018        |
+| [[stories/LB-020-edit-logs\|LB-020]]       | Edit and delete past logs                                       | 018        |
+| [[stories/LB-021-notes\|LB-021]]           | Notes per book or block                                         | 020        |
+| [[stories/LB-022-plan-templates\|LB-022]]  | Plan templates: save, apply, export, import                     | 019        |
 
 ## Phase 3 — Insights (E4)
 
