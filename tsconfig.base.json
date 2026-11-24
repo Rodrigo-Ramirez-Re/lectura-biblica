@@ -14,7 +14,8 @@
     "paths": {
       "@lectura/shared-kernel": ["./libs/shared/kernel/src/index.ts"],
       "@lectura/ui-tokens": ["./libs/ui/tokens/src/index.ts"],
-      "@lectura/shared-util-i18n": ["./libs/shared/util-i18n/src/index.ts"]
+      "@lectura/shared-util-i18n": ["./libs/shared/util-i18n/src/index.ts"],
+      "@lectura/ui-components": ["./libs/ui/components/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

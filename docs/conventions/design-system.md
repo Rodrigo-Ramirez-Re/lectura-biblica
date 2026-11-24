@@ -54,3 +54,15 @@ System stacks: sans (`system-ui`, …) for text, serif (`ui-serif, Georgia`, …
 - Presentational components: inputs/outputs only, no services, no business logic.
 - Each component ships with: spec and Storybook story (states + variants).
 - Prefix: `lb-` for selectors.
+
+## Components
+
+Built (`libs/ui/components`, catalogued in Storybook → Components, with a Tema toolbar for light, dark and automatic):
+
+| Component                         | Use                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `button[lbButton]`, `a[lbButton]` | Actions and links styled as buttons. Variants `primary`, `secondary`, `ghost`, `danger`; sizes `md`, `lg`. 44 px minimum. |
+| `section[lbCard]`                 | Raised panel; name it with `aria-labelledby` pointing at its heading.                                                     |
+| `lb-progress`                     | Progress bar (`role="progressbar"`, value/max, accessible name) with a projected text caption.                            |
+| `lb-stepper`                      | Whole number with − / + buttons or typing, clamped to min/max, value announced politely.                                  |
+| `lb-form-field` + `[lbControl]`   | Label, hint and error wired to the control with `aria-describedby` / `aria-invalid`.                                      |

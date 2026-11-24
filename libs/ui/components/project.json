@@ -1,0 +1,57 @@
+{
+  "name": "ui-components",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ui/components/src",
+  "prefix": "lb",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:shared"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/ui/components/tsconfig.lib.json",
+          "tsc --noEmit -p libs/ui/components/tsconfig.spec.json",
+          "tsc --noEmit -p libs/ui/components/.storybook/tsconfig.json"
+        ]
+      }
+    },
+    "storybook": {
+      "executor": "@storybook/angular:start-storybook",
+      "continuous": true,
+      "readyWhen": {
+        "port": "{env.SBCONFIG_PORT ?? options.port ?? 9009}",
+        "host": "{env.SBCONFIG_HOSTNAME ?? options.host ?? localhost}"
+      },
+      "options": {
+        "port": 4410,
+        "configDir": "libs/ui/components/.storybook",
+        "browserTarget": "ui-components:build-storybook",
+        "compodoc": false,
+        "styles": ["libs/ui/components/.storybook/styles.css"],
+        "tsConfig": "libs/ui/components/.storybook/tsconfig.json"
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      }
+    },
+    "build-storybook": {
+      "executor": "@storybook/angular:build-storybook",
+      "outputs": ["{options.outputDir}"],
+      "options": {
+        "outputDir": "dist/storybook/ui-components",
+        "configDir": "libs/ui/components/.storybook",
+        "browserTarget": "ui-components:build-storybook",
+        "compodoc": false,
+        "styles": ["libs/ui/components/.storybook/styles.css"],
+        "tsConfig": "libs/ui/components/.storybook/tsconfig.json"
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      }
+    }
+  }
+}
