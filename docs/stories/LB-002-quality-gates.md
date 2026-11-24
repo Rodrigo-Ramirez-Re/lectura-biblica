@@ -2,7 +2,7 @@
 id: LB-002
 title: Quality gates
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: [LB-001]
 ---
@@ -68,6 +68,11 @@ The Pages deploy workflow (LB-008); i18n and token lint rules (LB-003, LB-004).
 - None.
 
 ## Decisions
+
+- Context rules are specified on the ESLint config itself until the context libs exist; layer rules are specified by linting probe files.
+- `idb` is banned outside `infrastructure` libs with `no-restricted-imports` too: `bannedExternalImports` only sees installed packages.
+- Domain libs also ban the browser globals `window`, `document`, `navigator`, `localStorage` and `indexedDB`.
+- The required check is the CI job `checks`; branch protection is applied with `gh api` once the job has run on this PR.
 
 ## Definition of done
 

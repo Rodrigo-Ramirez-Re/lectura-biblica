@@ -1,0 +1,2 @@
+# A fast local preview of the CI check that branch protection requires (ADR 0006).
+npx nx affected -t lint typecheck test --base=origin/development --head=HEAD

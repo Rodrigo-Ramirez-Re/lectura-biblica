@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [development, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: 0
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - uses: nrwl/nx-set-shas@v5
+
+      # The title becomes the squash commit on development, so it must pass commitlint too.
+      - name: PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$TITLE" | npx commitlint
+
+      - name: Commit messages
+        if: github.base_ref == 'development'
+        run: npx commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}"
+
+      - run: npx nx affected -t lint typecheck test build build-storybook extract-i18n
+
+      # Only dist/apps/reader/browser is deployed; docs, markdown and agent files must never end up there.
+      - name: Deploy output has no docs
+        run: |
+          leaks=$(find dist/apps \( -name '*.md' -o -name docs -o -name .claude \) 2>/dev/null || true)
+          if [ -n "$leaks" ]; then echo "::error::Docs in deploy output:"; echo "$leaks"; exit 1; fi
+
+      # Public repo: Actions minutes are free, so every engine runs on every PR (ADR 0006).
+      - run: npx playwright install --with-deps chromium firefox webkit
+
+      - run: npx nx affected -t e2e
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: dist/.playwright
+          include-hidden-files: true
+          retention-days: 7

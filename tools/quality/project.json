@@ -1,0 +1,12 @@
+{
+  "name": "quality",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/quality/src",
+  "projectType": "library",
+  "tags": ["type:tooling", "scope:repo"],
+  "targets": {
+    "typecheck": {
+      "options": { "commands": ["tsc --noEmit -p tools/quality/tsconfig.json"] }
+    }
+  }
+}
