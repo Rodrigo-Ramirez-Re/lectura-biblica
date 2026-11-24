@@ -2,7 +2,7 @@
 id: LB-018
 title: Control the current block
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-016, LB-017]
 ---
@@ -61,9 +61,18 @@ Choosing books of future months (that is the order, LB-017).
 
 ## Open questions
 
-- [ ] Which books can be chosen — _Recommendation:_ any included book not yet read or started in the current cycle.
+- [x] Which books can be chosen — _Recommendation (adopted):_ any included book not yet read or started in the current cycle.
 
 ## Decisions
+
+- Every change takes effect today, or tomorrow when today is already logged, so today's reading stays with the book it was read in. The current block ends the day before with a final status; a block that would end before it started (started today, nothing read) is removed.
+- Changing the book closes the current block as `replaced` (its book goes back to the queue in its place) and records the chosen book with a full block of the plan's duration. Choices are the included books not read or running in the cycle.
+- Skipping closes it as `skipped` (it does not come back in the cycle); "Pasar al siguiente libro", offered once the goal is met, closes it as `done`. The next book of the order is recorded when it starts.
+- Pausing closes it as `paused` and sets `plan.pausedSince`; nothing new is recorded while paused. Resuming records the paused book again from that day with a full block.
+- "Terminar este libro el" moves the end of the current block to any day from today on; the projection follows.
+- The actions live in a collapsed "Cambiar este libro" on Hoy; Plan labels blocks Saltado, Cambiado and En pausa, and entries are keyed by book and start because a book can appear twice.
+- The projection now covers the current cycle only and starts after the last recorded block of any status; the active block closes as `done` when its end has passed.
+- The plan feature's unit tests get 20 s: the editor lists 66 books and role queries over it take seconds in jsdom.
 
 ## Definition of done
 

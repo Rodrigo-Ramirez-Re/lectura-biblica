@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import {
   AdvanceBlocks,
   CheckBackupReminder,
+  ControlCurrentBlock,
   GetSchedule,
   GetToday,
   LogReading,
@@ -12,9 +13,11 @@ import {
   UndoReading,
   type ScheduleView,
   type StartChoice,
+  type BookChoice,
   type LogReadingError,
   type TodayView,
 } from '@lectura/reading-application';
+import type { BlockControlError } from '@lectura/reading-domain';
 import { LocalDate } from '@lectura/shared-kernel';
 import {
   ButtonComponent,
@@ -88,6 +91,84 @@ interface LastLog {
             Del {{ view.start.toDate() | date: "d 'de' MMMM" }} al
             {{ view.end.toDate() | date: "d 'de' MMMM 'de' y" }}
           </p>
+          <details>
+            <summary
+              class="min-h-touch cursor-pointer py-2 text-primary focus-visible:focus-ring"
+              i18n="@@reading.control.summary"
+            >
+              Cambiar este libro
+            </summary>
+            <div class="mt-2 flex flex-col gap-3">
+              <p class="text-body-sm text-on-surface-muted" i18n="@@reading.control.tomorrow-hint">
+                Si ya registraste lectura hoy, el cambio empieza mañana.
+              </p>
+              <lb-form-field label="Otro libro" i18n-label="@@reading.control.other-book">
+                <select lbControl (change)="bookChoice.set(asText($event))">
+                  @for (book of choices(); track book.bookId) {
+                    <option [value]="book.bookId" [selected]="book.bookId === bookChoice()">
+                      {{ book.name }}
+                    </option>
+                  }
+                </select>
+              </lb-form-field>
+              <button
+                lbButton
+                variant="secondary"
+                type="button"
+                class="self-start"
+                [disabled]="saving() || !bookChoice()"
+                (click)="control('change')"
+                i18n="@@reading.control.change"
+              >
+                Empezar este libro
+              </button>
+              <lb-form-field label="Terminar este libro el" i18n-label="@@reading.control.end">
+                <input
+                  lbControl
+                  type="date"
+                  [min]="view.today.toString()"
+                  [value]="newEnd()"
+                  (change)="newEnd.set(asText($event))"
+                />
+              </lb-form-field>
+              <button
+                lbButton
+                variant="secondary"
+                type="button"
+                class="self-start"
+                [disabled]="saving()"
+                (click)="control('end')"
+                i18n="@@reading.control.save-end"
+              >
+                Guardar fecha
+              </button>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  lbButton
+                  variant="secondary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="control('skip')"
+                  i18n="@@reading.control.skip"
+                >
+                  Saltar este libro
+                </button>
+                <button
+                  lbButton
+                  variant="ghost"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="control('pause')"
+                  i18n="@@reading.control.pause"
+                >
+                  Pausar el plan
+                </button>
+              </div>
+              @if (controlError(); as message) {
+                <p role="alert" class="font-semibold text-danger">{{ message }}</p>
+              }
+            </div>
+          </details>
         </section>
 
         <section lbCard aria-labelledby="todays-reading" class="mt-section">
@@ -199,8 +280,19 @@ interface LastLog {
                 >
               </p>
               <p class="text-body-sm text-on-surface-muted" i18n="@@reading.today.goal-met-hint">
-                Puedes seguir leyéndolo hasta que termine el bloque.
+                Puedes seguir leyéndolo hasta que termine el bloque, o pasar ya al siguiente libro.
               </p>
+              <button
+                lbButton
+                variant="secondary"
+                type="button"
+                class="self-start"
+                [disabled]="saving()"
+                (click)="control('finish')"
+                i18n="@@reading.control.finish"
+              >
+                Pasar al siguiente libro
+              </button>
             } @else {
               <p class="font-semibold" i18n="@@reading.today.goal">
                 Meta: {{ view.goalPasses }} vueltas · llevas {{ view.passesInBlock.complete }}
@@ -250,7 +342,26 @@ interface LastLog {
           </details>
         </section>
       } @else if (schedule(); as plan) {
-        @if (plan.start.isAfter(options.today)) {
+        @if (plan.plan.pausedSince; as since) {
+          <section lbCard aria-labelledby="paused-title" class="mt-section">
+            <h2 id="paused-title" class="text-heading-2" i18n="@@reading.control.paused-title">
+              Plan en pausa
+            </h2>
+            <p i18n="@@reading.control.paused-since">
+              Tu plan está en pausa desde el {{ asDate(since) | date: "d 'de' MMMM" }}.
+            </p>
+            <button
+              lbButton
+              type="button"
+              class="self-start"
+              [disabled]="saving()"
+              (click)="control('resume')"
+              i18n="@@reading.control.resume"
+            >
+              Reanudar
+            </button>
+          </section>
+        } @else if (plan.start.isAfter(options.today)) {
           <p class="mt-section" i18n="@@reading.today.not-started">
             Tu plan empieza el {{ plan.start.toDate() | date: "d 'de' MMMM" }} con
             {{ plan.entries[0].bookName }}.
@@ -355,6 +466,7 @@ export class TodayPage {
   private readonly undoReading = inject(UndoReading);
   private readonly checkBackup = inject(CheckBackupReminder);
   private readonly setBlockGoal = inject(SetBlockGoal);
+  private readonly controlBlock = inject(ControlCurrentBlock);
 
   protected readonly options = this.startPlan.options();
   protected readonly choice = signal<StartChoice>('today');
@@ -367,6 +479,18 @@ export class TodayPage {
   protected readonly lastLog = signal<LastLog | null>(null);
   protected readonly backupDue = signal(false);
   protected readonly goal = signal(2);
+  protected readonly choices = signal<readonly BookChoice[]>([]);
+  protected readonly bookChoice = signal('');
+  protected readonly newEnd = signal('');
+  protected readonly controlError = signal<string | null>(null);
+
+  private readonly controlErrors: Record<BlockControlError, string> = {
+    'no-plan': $localize`:@@reading.control.error-no-plan:Todavía no tienes un plan.`,
+    'no-active-block': $localize`:@@reading.control.error-no-block:Este libro ya terminó o cambió; vuelve a abrir Hoy.`,
+    'not-available': $localize`:@@reading.control.error-book:Ese libro ya está leído o en curso en este ciclo.`,
+    'not-paused': $localize`:@@reading.control.error-not-paused:El plan no está en pausa.`,
+    'invalid-end': $localize`:@@reading.control.error-end:Elige una fecha desde hoy.`,
+  };
   protected readonly reminderDismissed = inject(BackupReminderState).dismissed;
   protected readonly logError = signal<string | undefined>(undefined);
   protected readonly failed = signal(false);
@@ -408,6 +532,30 @@ export class TodayPage {
   protected async logOther(view: TodayView): Promise<void> {
     const parsed = LocalDate.parse(this.date());
     await this.log(this.amount(), parsed.ok ? parsed.value : view.today);
+  }
+
+  protected async control(
+    action: 'change' | 'skip' | 'finish' | 'pause' | 'resume' | 'end',
+  ): Promise<void> {
+    await this.busy(async () => {
+      const result = await this.runControl(action);
+      this.controlError.set(result.ok ? null : this.controlErrors[result.error]);
+      if (result.ok) await this.advanceBlocks.execute();
+    });
+  }
+
+  private runControl(action: 'change' | 'skip' | 'finish' | 'pause' | 'resume' | 'end') {
+    if (action === 'change') return this.controlBlock.changeBook(this.bookChoice());
+    if (action !== 'end') return this.controlBlock[action]();
+    const end = LocalDate.parse(this.newEnd());
+    return end.ok
+      ? this.controlBlock.changeEnd(end.value)
+      : Promise.resolve({ ok: false as const, error: 'invalid-end' as const });
+  }
+
+  protected asDate(iso: string): Date | null {
+    const parsed = LocalDate.parse(iso);
+    return parsed.ok ? parsed.value.toDate() : null;
   }
 
   protected async saveGoal(goal: number | null): Promise<void> {
@@ -452,15 +600,20 @@ export class TodayPage {
   // Blocks that started while the app was closed are recorded before anything is read.
   private async load(): Promise<void> {
     await this.advanceBlocks.execute();
-    const [schedule, today, backupDue] = await Promise.all([
+    const [schedule, today, backupDue, choices] = await Promise.all([
       this.getSchedule.execute(),
       this.getToday.execute(),
       this.checkBackup.execute(),
+      this.controlBlock.choices(),
     ]);
     this.backupDue.set(backupDue);
     this.schedule.set(schedule);
     this.today.set(today);
+    this.choices.set(choices);
     if (today) {
+      if (!choices.some((book) => book.bookId === this.bookChoice()))
+        this.bookChoice.set(choices[0]?.bookId ?? '');
+      this.newEnd.set(today.end.toString());
       this.amount.set(today.dueChapters || today.todayPace || 1);
       this.goal.set(today.goalPasses ?? Math.max(1, Math.floor(today.passesThatFit)));
     }

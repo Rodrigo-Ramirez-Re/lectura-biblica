@@ -2,6 +2,7 @@ import { provideRouter } from '@angular/router';
 import {
   AdvanceBlocks,
   CheckBackupReminder,
+  ControlCurrentBlock,
   GetSchedule,
   GetToday,
   LogReading,
@@ -44,6 +45,10 @@ async function setup(
       { provide: LogReading, useValue: new LogReading(journal, journal, clock, ids) },
       { provide: UndoReading, useValue: new UndoReading(journal) },
       { provide: SetBlockGoal, useValue: new SetBlockGoal(journal, journal, clock) },
+      {
+        provide: ControlCurrentBlock,
+        useValue: new ControlCurrentBlock(journal, journal, clock),
+      },
     ],
   });
   await result.fixture.whenStable();
@@ -257,5 +262,60 @@ describe('TodayPage — goal (LB-016)', () => {
     await settle(fixture);
 
     expect(screen.getByText(/Cumpliste tu meta de 5 vueltas/)).toBeTruthy();
+  });
+});
+
+describe('TodayPage — current book (LB-018)', () => {
+  it('switches to another book', async () => {
+    const { user, fixture } = await setup('2026-12-10', { started: true });
+
+    await user.click(screen.getByText('Cambiar este libro'));
+    await user.selectOptions(screen.getByLabelText('Otro libro'), 'rut');
+    await user.click(screen.getByRole('button', { name: 'Empezar este libro' }));
+    await settle(fixture);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Rut' })).toBeTruthy();
+  });
+
+  it('skips the book and the next one starts', async () => {
+    const { user, fixture } = await setup('2026-12-10', { started: true });
+
+    await user.click(screen.getByText('Cambiar este libro'));
+    await user.click(screen.getByRole('button', { name: 'Saltar este libro' }));
+    await settle(fixture);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Abdías' })).toBeTruthy();
+  });
+
+  it('pauses and resumes the plan', async () => {
+    const { user, fixture } = await setup('2026-12-10', { started: true });
+
+    await user.click(screen.getByText('Cambiar este libro'));
+    await user.click(screen.getByRole('button', { name: 'Pausar el plan' }));
+    await settle(fixture);
+
+    expect(screen.getByRole('region', { name: 'Plan en pausa' }).textContent).toContain(
+      'desde el 10 de diciembre',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Reanudar' }));
+    await settle(fixture);
+
+    expect(screen.getByRole('region', { name: 'Lectura de hoy' })).toBeTruthy();
+  });
+
+  it('moves on after meeting the goal', async () => {
+    const { user, fixture, journal } = await setup('2026-12-10', { started: true });
+    journal.journal = {
+      ...journal.journal,
+      blocks: journal.journal.blocks.map((block) => ({ ...block, goalPasses: 1 })),
+    };
+    await user.click(screen.getByRole('button', { name: 'Ya leí' }));
+    await settle(fixture);
+
+    await user.click(screen.getByRole('button', { name: 'Pasar al siguiente libro' }));
+    await settle(fixture);
+
+    expect(journal.journal.blocks[0]).toMatchObject({ bookId: 'abdias', status: 'done' });
   });
 });

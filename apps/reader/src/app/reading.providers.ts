@@ -3,6 +3,7 @@ import { BOOK_SECTIONS } from '@lectura/catalog-util-book-sections';
 import {
   AdvanceBlocks,
   CheckBackupReminder,
+  ControlCurrentBlock,
   DeleteAllData,
   ExportBackup,
   GetBookProgress,
@@ -90,6 +91,11 @@ export function provideReading(): Provider[] {
       useFactory: () => new CheckBackupReminder(inject(JournalReader), inject(Clock)),
     },
     { provide: GetPlan, useFactory: () => new GetPlan(inject(JournalReader)) },
+    {
+      provide: ControlCurrentBlock,
+      useFactory: () =>
+        new ControlCurrentBlock(inject(JournalReader), inject(JournalWriter), inject(Clock)),
+    },
     {
       provide: UpdatePlan,
       useFactory: () => new UpdatePlan(inject(JournalReader), inject(JournalWriter)),

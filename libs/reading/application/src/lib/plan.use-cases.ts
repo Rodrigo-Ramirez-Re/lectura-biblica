@@ -6,6 +6,7 @@ import {
   type JournalReader,
   type JournalWriter,
   type PlanRecord,
+  type ScheduledBlock,
 } from '@lectura/reading-domain';
 import { err, ok, type Clock, type LocalDate, type Result } from '@lectura/shared-kernel';
 
@@ -58,9 +59,13 @@ export class AdvanceBlocks {
   }
 }
 
-export type BlockState = 'done' | 'current' | 'upcoming';
+export type BlockState = 'done' | 'current' | 'upcoming' | 'skipped' | 'paused' | 'replaced';
 
 export interface ScheduleEntry {
+  /** Unique in the schedule: a book can come back after being replaced or paused. */
+  readonly key: string;
+  /** Set once the block is recorded. */
+  readonly blockId: string | null;
   readonly bookId: string;
   readonly bookName: string;
   readonly start: LocalDate;
@@ -77,6 +82,13 @@ export interface ScheduleView {
   readonly months: number;
 }
 
+function stateOf(block: ScheduledBlock, today: LocalDate): BlockState {
+  if (block.status === 'skipped' || block.status === 'paused' || block.status === 'replaced')
+    return block.status;
+  if (block.end.isBefore(today)) return 'done';
+  return block.start.isAfter(today) ? 'upcoming' : 'current';
+}
+
 /** The cycle's blocks, past, current and upcoming, for the Plan screen (LB-011). */
 export class GetSchedule {
   constructor(
@@ -90,15 +102,13 @@ export class GetSchedule {
     if (!plan) return null;
     const today = this.clock.today();
     const entries = projectSchedule(plan, blocks, this.catalog).map((block) => ({
+      key: `${block.bookId}:${block.start.toString()}`,
+      blockId: block.id,
       bookId: block.bookId,
       bookName: this.catalog.find(block.bookId)?.name ?? block.bookId,
       start: block.start,
       end: block.end,
-      state: (block.end.isBefore(today)
-        ? 'done'
-        : block.start.isAfter(today)
-          ? 'upcoming'
-          : 'current') as BlockState,
+      state: stateOf(block, today),
     }));
     if (!entries.length) return null;
     const start = entries[0].start;
