@@ -2,8 +2,13 @@ import type { BookCatalog } from '@lectura/catalog-domain';
 import { LocalDate, err, ok, type Result } from '@lectura/shared-kernel';
 import { validatePlan } from './reading-plan';
 import {
+  BLOCK_STATUSES,
+  BLOCK_UNITS,
   SCHEMA_VERSION,
   type BlockRecord,
+  type BlockStatus,
+  type BlockUnit,
+  type PlanTemplateRecord,
   type Journal,
   type NoteRecord,
   type PlanRecord,
@@ -39,15 +44,25 @@ export function toBackup(journal: Journal, exportedAt: Date): BackupDocument {
     blocks: journal.blocks,
     logs: journal.logs,
     notes: journal.notes,
+    templates: journal.templates,
   };
 }
 
 /**
- * Upgrades a document of an older `schemaVersion` one step at a time. Version 1 is the first;
- * the next change of the stored shape adds `1: (doc) => …` here, with a test importing a v1 file.
+ * Upgrades a document of an older `schemaVersion` one step at a time; each step has a test that
+ * imports a file of that version.
  */
-const migrations: Record<number, (document: Record<string, unknown>) => Record<string, unknown>> =
-  {};
+const migrations: Record<number, (document: Record<string, unknown>) => Record<string, unknown>> = {
+  // v2 (LB-014): pace per weekday, pause, plan templates.
+  1: (document) => ({
+    ...document,
+    schemaVersion: 2,
+    plan: isObject(document['plan'])
+      ? { paceByWeekday: null, pausedSince: null, ...document['plan'] }
+      : document['plan'],
+    templates: [],
+  }),
+};
 
 /**
  * Reads a backup file. Anything that is not a complete, valid backup is rejected as a whole:
@@ -122,16 +137,31 @@ const isTextList = (value: unknown) => Array.isArray(value) && value.every(isTex
 const listOf = (value: unknown, check: (item: Shape) => boolean) =>
   Array.isArray(value) && value.every((item) => isObject(item) && check(item));
 
-const isPlan = (plan: Shape): plan is Shape & PlanRecord =>
+const isSettings = (plan: Shape) =>
   isText(plan['name']) &&
-  isDay(plan['startDate']) &&
   isCount(plan['chaptersPerDay'], 1) &&
   Array.isArray(plan['restDays']) &&
   (plan['restDays'] as unknown[]).every((day) => isCount(day) && (day as number) <= 6) &&
   isTextList(plan['bookOrder']) &&
   isTextList(plan['excluded']) &&
   isObject(plan['defaultBlock']) &&
-  (plan['cyclesTarget'] === null || isCount(plan['cyclesTarget'], 1));
+  BLOCK_UNITS.includes(plan['defaultBlock']['unit'] as BlockUnit) &&
+  isCount(plan['defaultBlock']['value'], 1) &&
+  (plan['cyclesTarget'] === null || isCount(plan['cyclesTarget'], 1)) &&
+  (plan['paceByWeekday'] === null ||
+    (Array.isArray(plan['paceByWeekday']) &&
+      (plan['paceByWeekday'] as unknown[]).every((n) => isCount(n))));
+
+const isPlan = (plan: Shape): plan is Shape & PlanRecord =>
+  isSettings(plan) &&
+  isDay(plan['startDate']) &&
+  (plan['pausedSince'] === null || isDay(plan['pausedSince']));
+
+const isTemplate = (template: Shape): template is Shape & PlanTemplateRecord =>
+  isText(template['id']) &&
+  isText(template['name']) &&
+  isObject(template['settings']) &&
+  isSettings(template['settings']);
 
 const isBlock = (block: Shape): block is Shape & BlockRecord =>
   isText(block['id']) &&
@@ -141,7 +171,7 @@ const isBlock = (block: Shape): block is Shape & BlockRecord =>
   isDay(block['end']) &&
   (block['start'] as string) <= (block['end'] as string) &&
   (block['goalPasses'] === null || isCount(block['goalPasses'], 1)) &&
-  (block['status'] === 'active' || block['status'] === 'done');
+  BLOCK_STATUSES.includes(block['status'] as BlockStatus);
 
 const isLog = (log: Shape): log is Shape & ReadingLogRecord =>
   isText(log['id']) &&
@@ -167,13 +197,16 @@ function isValidDocument(document: Shape): document is Shape & BackupDocument {
     (document['plan'] === null || (isObject(document['plan']) && isPlan(document['plan']))) &&
     listOf(document['blocks'], isBlock) &&
     listOf(document['logs'], isLog) &&
-    listOf(document['notes'], isNote)
+    listOf(document['notes'], isNote) &&
+    listOf(document['templates'], isTemplate)
   );
 }
 
 /** References between collections and to the catalog hold, so every screen can load the data. */
 function isConsistent(document: BackupDocument, catalog: BookCatalog): boolean {
   if (document.plan && !validatePlan(document.plan, catalog).ok) return false;
+  if (!document.templates.every((template) => validatePlan(template.settings, catalog).ok))
+    return false;
   const known = (bookId: string) => catalog.find(bookId) !== undefined;
   const blockIds = new Set(document.blocks.map((block) => block.id));
   return (

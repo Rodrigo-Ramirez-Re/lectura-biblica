@@ -48,7 +48,7 @@ describe('ExportBackup (LB-013)', () => {
     expect(file.fileName).toBe('lectura-biblica-respaldo-2026-12-08.json');
     expect(file.type).toBe('application/json');
     expect(JSON.parse(file.content)).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       app: 'lectura-biblica',
       plan: { name: 'Un libro al mes' },
     });

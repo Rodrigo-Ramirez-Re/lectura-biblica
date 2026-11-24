@@ -1,11 +1,13 @@
 import {
   JournalReader,
   emptyJournal,
+  upgradePlan,
   type BlockRecord,
   type Journal,
   type JournalWriter,
   type NoteRecord,
   type PlanRecord,
+  type PlanTemplateRecord,
   type ReadingLogRecord,
   type SettingsRecord,
 } from '@lectura/reading-domain';
@@ -32,19 +34,21 @@ export class IndexedDbJournal extends JournalReader implements JournalWriter {
   load(): Promise<Journal> {
     return this.read(async (db) => {
       const tx = db.transaction(STORES, 'readonly');
-      const [settings, plan, blocks, logs, notes] = await Promise.all([
+      const [settings, plan, blocks, logs, notes, templates] = await Promise.all([
         tx.objectStore('settings').get(SINGLE),
         tx.objectStore('plan').get(SINGLE),
         tx.objectStore('blocks').getAll(),
         tx.objectStore('logs').getAll(),
         tx.objectStore('notes').getAll(),
+        tx.objectStore('templates').getAll(),
       ]);
       return {
         settings: (settings as SettingsRecord | undefined) ?? emptyJournal.settings,
-        plan: (plan as PlanRecord | undefined) ?? null,
+        plan: plan ? upgradePlan(plan as PlanRecord) : null,
         blocks: blocks as unknown as BlockRecord[],
         logs: logs as unknown as ReadingLogRecord[],
         notes: notes as unknown as NoteRecord[],
+        templates: templates as unknown as PlanTemplateRecord[],
       };
     });
   }
@@ -82,6 +86,7 @@ export class IndexedDbJournal extends JournalReader implements JournalWriter {
         ...journal.blocks.map((block) => tx.objectStore('blocks').put(block)),
         ...journal.logs.map((log) => tx.objectStore('logs').put(log)),
         ...journal.notes.map((note) => tx.objectStore('notes').put(note)),
+        ...journal.templates.map((template) => tx.objectStore('templates').put(template)),
         tx.done,
       ]);
     });

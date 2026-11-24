@@ -1,7 +1,13 @@
 import { bookCatalog } from '@lectura/catalog-domain';
 import { LocalDate } from '@lectura/shared-kernel';
 import { isBackupDue, parseBackup, summarize, toBackup } from './backup';
-import { emptyJournal, type Journal, type ReadingLogRecord } from './journal';
+import {
+  SCHEMA_VERSION,
+  emptyJournal,
+  planSettings,
+  type Journal,
+  type ReadingLogRecord,
+} from './journal';
 import { defaultPlan } from './reading-plan';
 
 const day = (iso: string) => {
@@ -35,6 +41,7 @@ const journal: Journal = {
   ],
   logs: [log('2026-12-03'), log('2026-12-01')],
   notes: [],
+  templates: [],
 };
 
 const exported = () => JSON.stringify(toBackup(journal, new Date('2026-12-05T21:15:00.000Z')));
@@ -42,7 +49,7 @@ const exported = () => JSON.stringify(toBackup(journal, new Date('2026-12-05T21:
 describe('backup (LB-013)', () => {
   it('carries the schema version, the app and every collection', () => {
     expect(JSON.parse(exported())).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       app: 'lectura-biblica',
       exportedAt: '2026-12-05T21:15:00.000Z',
       plan: { name: 'Un libro al mes' },
@@ -76,7 +83,7 @@ describe('backup (LB-013)', () => {
     ['a list', '[]', 'not-a-backup'],
     [
       'a newer version',
-      JSON.stringify({ ...JSON.parse(exported()), schemaVersion: 2 }),
+      JSON.stringify({ ...JSON.parse(exported()), schemaVersion: SCHEMA_VERSION + 1 }),
       'newer-version',
     ],
     [
@@ -180,5 +187,63 @@ describe('backup consistency (LB-013 review)', () => {
 
     expect(isBackupDue(journalAt(evening), day('2027-01-04'))).toBe(false);
     expect(isBackupDue(journalAt(evening), day('2027-01-05'))).toBe(true);
+  });
+});
+
+describe('data model v2 (LB-014)', () => {
+  /** A backup as the v1 app exported it: no pace per weekday, no pause, no templates. */
+  const v1Backup = () => {
+    const document = JSON.parse(exported());
+    delete document.plan.paceByWeekday;
+    delete document.plan.pausedSince;
+    delete document.templates;
+    return { ...document, schemaVersion: 1 };
+  };
+
+  it('migrates a v1 backup to v2 with the same plan, blocks and logs', () => {
+    const parsed = parseBackup(JSON.stringify(v1Backup()), bookCatalog);
+
+    expect(parsed.ok && parsed.value).toMatchObject({
+      schemaVersion: 2,
+      plan: { name: 'Un libro al mes', paceByWeekday: null, pausedSince: null },
+      blocks: journal.blocks,
+      logs: journal.logs,
+      templates: [],
+    });
+  });
+
+  it.each(['active', 'done', 'skipped', 'paused', 'replaced'])('accepts a %s block', (status) => {
+    const document = JSON.parse(exported());
+    document.blocks[0].status = status;
+    expect(parseBackup(JSON.stringify(document), bookCatalog).ok).toBe(true);
+  });
+
+  it('carries the plan templates', () => {
+    const settings = planSettings(defaultPlan(day('2026-12-01'), bookCatalog));
+    const withTemplate = { ...journal, templates: [{ id: 't1', name: 'Mío', settings }] };
+    const text = JSON.stringify(toBackup(withTemplate, new Date('2026-12-05T00:00:00.000Z')));
+
+    const parsed = parseBackup(text, bookCatalog);
+    expect(parsed.ok && parsed.value.templates.map((t) => t.name)).toEqual(['Mío']);
+  });
+
+  it('rejects a template whose order has unknown books', () => {
+    const document = JSON.parse(exported());
+    document.templates = [
+      { id: 't1', name: 'Mal', settings: { ...document.plan, bookOrder: ['xyz'] } },
+    ];
+    expect(parseBackup(JSON.stringify(document), bookCatalog)).toEqual({
+      ok: false,
+      error: 'invalid',
+    });
+  });
+
+  it('rejects an unknown block duration', () => {
+    const document = JSON.parse(exported());
+    document.plan.defaultBlock = { unit: 'years', value: 1 };
+    expect(parseBackup(JSON.stringify(document), bookCatalog)).toEqual({
+      ok: false,
+      error: 'invalid',
+    });
   });
 });
