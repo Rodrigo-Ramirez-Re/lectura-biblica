@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { AdvanceBlocks, GetSchedule, type ScheduleView } from '@lectura/reading-application';
 import { ButtonComponent, CardComponent } from '@lectura/ui-components';
-import { describeDuration, describePace } from './plan-text';
+import { describeDuration, describeOrder, describePace } from './plan-text';
 
 @Component({
   selector: 'lb-plan-page',
@@ -28,7 +28,7 @@ import { describeDuration, describePace } from './plan-text';
           <ul class="flex flex-col gap-1">
             <li>{{ pace(view) }}</li>
             <li>{{ duration(view) }}</li>
-            <li i18n="@@reading.plan.order">De menor a mayor número de capítulos</li>
+            <li>{{ order(view) }}</li>
             <li i18n="@@reading.plan.cycle">
               {{ view.entries.length }} libros en {{ view.months }} meses: del
               {{ view.start.toDate() | date: "d 'de' MMMM 'de' y" }} al
@@ -111,6 +111,10 @@ export class PlanPage {
 
   protected duration(view: ScheduleView): string {
     return describeDuration(view.plan.defaultBlock);
+  }
+
+  protected order(view: ScheduleView): string {
+    return describeOrder(view.plan);
   }
 
   protected pace(view: ScheduleView): string {

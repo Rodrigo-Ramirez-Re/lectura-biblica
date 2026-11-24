@@ -110,3 +110,33 @@ describe('PlanEditorPage — duration (LB-016)', () => {
     expect(journal.journal.plan?.defaultBlock).toEqual({ unit: 'passes', value: 3 });
   });
 });
+
+describe('PlanEditorPage — order (LB-017)', () => {
+  it('applies an order template', async () => {
+    const { user, journal } = await setup();
+
+    await user.click(screen.getByRole('button', { name: 'Canónico' }));
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(journal.journal.plan?.bookOrder.slice(0, 2)).toEqual(['genesis', 'exodo']);
+  });
+
+  it('moves a book one place up and announces its new position', async () => {
+    const { user, journal } = await setup();
+
+    await user.click(screen.getByRole('button', { name: 'Subir Filemón' }));
+
+    expect(screen.getByText('Filemón ahora es el 1 de 66')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(journal.journal.plan?.bookOrder.slice(0, 2)).toEqual(['filemon', 'abdias']);
+  });
+
+  it('leaves a book out', async () => {
+    const { user, journal } = await setup();
+
+    await user.click(screen.getByRole('checkbox', { name: /Cantares/ }));
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(journal.journal.plan?.excluded).toEqual(['cantares']);
+  });
+});

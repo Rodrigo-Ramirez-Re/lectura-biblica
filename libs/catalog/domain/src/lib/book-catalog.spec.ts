@@ -82,3 +82,13 @@ describe('order templates (LB-009)', () => {
     expect(new Set(order).size).toBe(66);
   });
 });
+
+describe('new testament first (LB-017)', () => {
+  it('reads the New Testament first, then the Old, each in canonical order', () => {
+    const order = orderTemplates['new-testament-first'](bookCatalog);
+    expect(order.slice(0, 2)).toEqual(['mateo', 'marcos']);
+    expect(order[26]).toBe('apocalipsis');
+    expect(order[27]).toBe('genesis');
+    expect(new Set(order).size).toBe(66);
+  });
+});

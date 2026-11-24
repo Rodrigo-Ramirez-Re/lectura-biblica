@@ -1,4 +1,5 @@
-import { describeDuration, describePace } from './plan-text';
+import { bookCatalog, orderTemplates } from '@lectura/catalog-domain';
+import { describeDuration, describeOrder, describePace } from './plan-text';
 
 describe('describePace (LB-015)', () => {
   it('says the daily pace', () => {
@@ -34,5 +35,23 @@ describe('describeDuration (LB-016)', () => {
     [{ unit: 'passes', value: 3 }, 'Cada libro: hasta leerlo 3 veces'],
   ] as const)('describes %o', (block, text) => {
     expect(describeDuration(block)).toBe(text);
+  });
+});
+
+describe('describeOrder (LB-017)', () => {
+  const byChapters = orderTemplates['by-chapters'](bookCatalog);
+
+  it('names the template the order follows', () => {
+    expect(describeOrder({ bookOrder: byChapters, excluded: [] })).toBe('Orden: De menor a mayor');
+    expect(describeOrder({ bookOrder: orderTemplates.canonical(bookCatalog), excluded: [] })).toBe(
+      'Orden: Canónico',
+    );
+  });
+
+  it('says when the order was made by hand and how many books are out', () => {
+    const custom = [byChapters[1], byChapters[0], ...byChapters.slice(2)];
+    expect(describeOrder({ bookOrder: custom, excluded: ['cantares', 'ester'] })).toBe(
+      'Orden personalizado; sin 2 libros',
+    );
   });
 });

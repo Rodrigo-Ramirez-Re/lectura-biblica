@@ -1,3 +1,4 @@
+import { bookCatalog, orderTemplates, type OrderTemplate } from '@lectura/catalog-domain';
 import type { Pace, PlanSettings } from '@lectura/reading-domain';
 
 /** Weekday names, Sunday first, as `LocalDate.dayOfWeek` numbers them. */
@@ -62,4 +63,25 @@ export function describeDuration(block: PlanSettings['defaultBlock']): string {
         : $localize`:@@reading.duration.passes:hasta leerlo ${value}:count: veces`,
   };
   return $localize`:@@reading.duration.each-book:Cada libro: ${amounts[unit]}:amount:`;
+}
+
+export const ORDER_NAMES: Record<OrderTemplate, string> = {
+  'by-chapters': $localize`:@@reading.order.by-chapters:De menor a mayor`,
+  canonical: $localize`:@@reading.order.canonical:Canónico`,
+  'new-testament-first': $localize`:@@reading.order.nt-first:Nuevo Testamento primero`,
+};
+
+/** Which template the order matches, or "Orden personalizado"; and how many books are left out. */
+export function describeOrder(order: Pick<PlanSettings, 'bookOrder' | 'excluded'>): string {
+  const matching = (Object.keys(orderTemplates) as OrderTemplate[]).find(
+    (template) => orderTemplates[template](bookCatalog).join() === order.bookOrder.join(),
+  );
+  const name = matching
+    ? $localize`:@@reading.order.template:Orden: ${ORDER_NAMES[matching]}:name:`
+    : $localize`:@@reading.order.custom:Orden personalizado`;
+  const out = order.excluded.length;
+  if (!out) return name;
+  return out === 1
+    ? $localize`:@@reading.order.one-excluded:${name}:order:; sin 1 libro`
+    : $localize`:@@reading.order.excluded:${name}:order:; sin ${out}:count: libros`;
 }
