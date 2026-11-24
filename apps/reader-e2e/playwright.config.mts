@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
-import { getReadyUrl, workspaceRoot } from '@nx/devkit';
+import { workspaceRoot } from '@nx/devkit';
 
-// With BASE_URL (e.g. a check against the published site) no local server is started.
-const baseURL = process.env['BASE_URL'] || getReadyUrl('http://localhost:4210');
+// The production build served like GitHub Pages, under the repository sub-path (LB-008).
+const pagesURL = 'http://localhost:4210/lectura-biblica/';
+const baseURL = process.env['BASE_URL'] || pagesURL;
 // Narrows the engines for a quick local run (E2E_BROWSERS=chromium); unset runs all.
 const browsers = process.env['E2E_BROWSERS']?.split(',');
 
@@ -13,12 +14,12 @@ export default defineConfig({
     baseURL,
     trace: 'on-first-retry',
   },
+  // With BASE_URL (e.g. a check against the published site) no local server is started.
   webServer: process.env['BASE_URL']
     ? undefined
     : {
-        // The production build: only it has the service worker.
-        command: 'npx nx run reader:serve-static',
-        url: getReadyUrl('http://localhost:4210'),
+        command: 'npx nx run reader:serve-pages',
+        url: pagesURL,
         reuseExistingServer: true,
         cwd: workspaceRoot,
       },

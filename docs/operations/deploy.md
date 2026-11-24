@@ -9,6 +9,10 @@ The app is published at **https://rodrigo-ramirez-re.github.io/lectura-biblica/*
 3. The Pages workflow builds with `--base-href /lectura-biblica/` and deploys `dist/apps/reader/browser`.
 4. Tag the merge commit: `git tag reader@x.y.z && git push --tags`.
 
+## Try the release build locally
+
+`npx nx run reader:serve-pages` builds for production, adds `404.html` and serves it like GitHub Pages at http://localhost:4210/lectura-biblica/ — the same server e2e uses.
+
 ## Checks after a release
 
 - Open the URL above (not the root of a local server).
@@ -22,5 +26,5 @@ Already applied when the repo was created; listed to rebuild it if needed.
 - Public repository, default branch `development`.
 - Merge options: squash and merge commit on, rebase off, delete head branches on.
 - Settings → Pages → Source: **GitHub Actions**.
-- Environment `github-pages`: deployments allowed from `main`.
+- Environment `github-pages`: deployments allowed from `main` only.
 - Branch protection on `development` and `main` ([[architecture/adr/0006-quality-gates-with-branch-protection|ADR 0006]]).
