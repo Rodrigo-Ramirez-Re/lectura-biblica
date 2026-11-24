@@ -1,0 +1,12 @@
+{
+  "name": "pages",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/pages/src",
+  "projectType": "library",
+  "tags": ["type:tooling", "scope:repo"],
+  "targets": {
+    "typecheck": {
+      "options": { "commands": ["tsc --noEmit -p tools/pages/tsconfig.json"] }
+    }
+  }
+}

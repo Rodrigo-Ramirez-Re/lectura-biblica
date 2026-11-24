@@ -2,7 +2,7 @@
 id: LB-008
 title: GitHub Pages deploy
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: [LB-002, LB-007]
 ---
@@ -55,6 +55,12 @@ Custom domain.
 - None.
 
 ## Decisions
+
+- The production build carries `baseHref: /lectura-biblica/`; `tools/pages/src/site.mjs` holds the path and a spec keeps both equal.
+- `reader:pages` builds and copies `index.html` to `404.html`; `reader:serve-pages` serves that output like Pages (only under the sub-path, folders answer index.html, missing files answer 404.html with status 404). Its behaviour is specified in `tools/pages`.
+- e2e always runs against `serve-pages`, so every suite checks the sub-path, not the server root. The development server keeps `/`.
+- Official actions at their current majors (checked 2026-11-24): configure-pages v6, upload-pages-artifact v5, deploy-pages v5. Deployments never cancel one in progress.
+- The `github-pages` environment allows deployments from `main` only.
 
 ## Definition of done
 

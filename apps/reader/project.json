@@ -41,7 +41,8 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "baseHref": "/lectura-biblica/"
         },
         "development": {
           "optimization": false,
@@ -84,26 +85,30 @@
         "watch": false
       }
     },
-    "serve-static": {
-      "continuous": true,
-      "readyWhen": {
-        "signal": true
-      },
-      "dependsOn": ["build"],
-      "executor": "@nx/web:file-server",
-      "options": {
-        "buildTarget": "reader:build",
-        "port": 4210,
-        "staticFilePath": "dist/apps/reader/browser",
-        "spa": true
-      }
-    },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
       "options": {
         "buildTarget": "reader:build",
         "format": "xlf2",
         "outputPath": "dist/i18n/reader"
+      }
+    },
+    "pages": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "outputs": ["{workspaceRoot}/dist/apps/reader/browser/404.html"],
+      "cache": true,
+      "inputs": ["production", "^production"],
+      "options": {
+        "command": "node tools/pages/src/prepare.mjs dist/apps/reader/browser"
+      }
+    },
+    "serve-pages": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "dependsOn": ["pages"],
+      "options": {
+        "command": "node tools/pages/src/serve.mjs 4210"
       }
     }
   }

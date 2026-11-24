@@ -69,6 +69,7 @@ The Pages deploy workflow (LB-008); i18n and token lint rules (LB-003, LB-004).
 
 ## Decisions
 
+- e2e runs in its own job inside the official Playwright image (`mcr.microsoft.com/playwright`), pinned to the exact `@playwright/test` version (a quality spec keeps both equal): installing browsers with apt on the runner once took 29 minutes and timed out. Required checks: `checks` and `e2e`.
 - Context rules are specified on the ESLint config itself until the context libs exist; layer rules are specified by linting probe files.
 - `idb` is banned outside `infrastructure` libs with `no-restricted-imports` too: `bannedExternalImports` only sees installed packages.
 - Domain libs also ban the browser globals `window`, `document`, `navigator`, `localStorage` and `indexedDB`.
