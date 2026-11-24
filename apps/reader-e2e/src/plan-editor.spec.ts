@@ -17,9 +17,11 @@ async function openEditor(page: Page) {
   await expect(page.getByRole('heading', { level: 1, name: 'Editar plan' })).toBeVisible();
 }
 
+// The number field only: a checkbox can share the label ("sábado" as a rest day and as a pace).
 async function setNumber(page: Page, label: string, value: string) {
-  await page.getByLabel(label, { exact: true }).fill(value);
-  await page.getByLabel(label, { exact: true }).blur();
+  const field = page.getByRole('spinbutton', { name: label, exact: true });
+  await field.fill(value);
+  await field.blur();
 }
 
 test.describe('Plan editor — pace (LB-015)', () => {
