@@ -15,7 +15,14 @@ import {
   type Passes,
   type ReadingLogRecord,
 } from '@lectura/reading-domain';
-import { LocalDate, err, type Clock, type IdGenerator, type Result } from '@lectura/shared-kernel';
+import {
+  LocalDate,
+  err,
+  ok,
+  type Clock,
+  type IdGenerator,
+  type Result,
+} from '@lectura/shared-kernel';
 
 export interface TodayView {
   readonly blockId: string;
@@ -36,6 +43,8 @@ export interface TodayView {
   readonly readToday: number;
   readonly passesInBlock: Passes;
   readonly passesThatFit: number;
+  readonly goalPasses: number | null;
+  readonly goalMet: boolean;
 }
 
 const parse = (iso: string) => {
@@ -83,6 +92,9 @@ export class GetToday {
       readToday,
       passesInBlock: passes(read, book.chapters),
       passesThatFit: passesThatFit(start, end, plan, book.chapters),
+      goalPasses: block.goalPasses,
+      goalMet:
+        block.goalPasses !== null && passes(read, book.chapters).complete >= block.goalPasses,
     };
   }
 }
@@ -120,6 +132,26 @@ export class LogReading {
     });
     if (result.ok) await this.writer.addLog(result.value);
     return result;
+  }
+}
+
+export type SetGoalError = 'no-active-block' | 'invalid-goal';
+
+/** Sets or clears the goal of passes of the active block (LB-016). */
+export class SetBlockGoal {
+  constructor(
+    private readonly reader: JournalReader,
+    private readonly writer: JournalWriter,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(goalPasses: number | null): Promise<Result<void, SetGoalError>> {
+    if (goalPasses !== null && (!Number.isInteger(goalPasses) || goalPasses < 1))
+      return err('invalid-goal');
+    const block = activeBlock((await this.reader.load()).blocks, this.clock.today());
+    if (!block) return err('no-active-block');
+    await this.writer.saveBlocks([{ ...block, goalPasses }]);
+    return ok(undefined);
   }
 }
 

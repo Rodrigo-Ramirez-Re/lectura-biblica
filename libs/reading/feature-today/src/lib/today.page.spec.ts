@@ -5,6 +5,7 @@ import {
   GetSchedule,
   GetToday,
   LogReading,
+  SetBlockGoal,
   StartDefaultPlan,
   UndoReading,
 } from '@lectura/reading-application';
@@ -42,6 +43,7 @@ async function setup(
       { provide: StartDefaultPlan, useValue: startPlan },
       { provide: LogReading, useValue: new LogReading(journal, journal, clock, ids) },
       { provide: UndoReading, useValue: new UndoReading(journal) },
+      { provide: SetBlockGoal, useValue: new SetBlockGoal(journal, journal, clock) },
     ],
   });
   await result.fixture.whenStable();
@@ -228,5 +230,32 @@ describe('TodayPage — feedback (LB-012 review)', () => {
 
     expect(screen.getByRole('alert').textContent).toContain('No se pudieron leer o guardar');
     expect(screen.getByRole('button', { name: 'Ya leí' })).toHaveProperty('disabled', false);
+  });
+});
+
+describe('TodayPage — goal (LB-016)', () => {
+  it('sets a goal of passes and shows it, then says when it is met', async () => {
+    const { user, fixture, journal } = await setup('2026-12-01', { started: true });
+
+    await user.click(screen.getByText('Meta de vueltas'));
+    const goal = screen.getByLabelText('Vueltas en este bloque');
+    await user.clear(goal);
+    await user.type(goal, '5');
+    await user.tab();
+    await user.click(screen.getByRole('button', { name: 'Guardar meta' }));
+    await settle(fixture);
+
+    expect(journal.journal.blocks[0].goalPasses).toBe(5);
+    expect(screen.getByText(/Meta: 5 vueltas · llevas 0/)).toBeTruthy();
+
+    await user.click(screen.getByText('Otra cantidad u otro día'));
+    const amount = screen.getByLabelText('Capítulos');
+    await user.clear(amount);
+    await user.type(amount, '5');
+    await user.tab();
+    await user.click(screen.getByRole('button', { name: 'Registrar' }));
+    await settle(fixture);
+
+    expect(screen.getByText(/Cumpliste tu meta de 5 vueltas/)).toBeTruthy();
   });
 });

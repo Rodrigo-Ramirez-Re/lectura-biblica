@@ -88,3 +88,25 @@ describe('PlanEditorPage — pace (LB-015)', () => {
     expect(journal.journal.plan?.name).toBe('Mi plan');
   });
 });
+
+describe('PlanEditorPage — duration (LB-016)', () => {
+  it('saves how long to stay on each book', async () => {
+    const { user, journal } = await setup();
+
+    await user.click(screen.getByRole('radio', { name: 'Semanas' }));
+    await setNumber(user, 'Semanas por libro', '2');
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(journal.journal.plan?.defaultBlock).toEqual({ unit: 'weeks', value: 2 });
+  });
+
+  it('reads until a number of passes', async () => {
+    const { user, journal } = await setup();
+
+    await user.click(screen.getByRole('radio', { name: 'Hasta leerlo varias veces' }));
+    await setNumber(user, 'Veces que lo lees', '3');
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(journal.journal.plan?.defaultBlock).toEqual({ unit: 'passes', value: 3 });
+  });
+});

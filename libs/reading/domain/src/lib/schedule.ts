@@ -19,15 +19,41 @@ const date = (iso: string) => {
   return parsed.value;
 };
 
+export type Duration = Pace & Pick<PlanRecord, 'defaultBlock'>;
+
 /**
- * A monthly block runs to the end of its calendar month and grows by whole months until one pass
- * of the book fits at the plan's pace (rest days read nothing). At 3 a day only Salmos needs it
+ * When a block starting on `start` ends, for every duration unit (LB-016). A block always allows at
+ * least one pass of the book at the plan's pace, counting only reading days, and grows by whole
+ * months, weeks or single days until it does. At 3 a day only Salmos needs to grow a monthly block
  * (150 chapters, 50 days), which is why the default cycle lasts 67 months for 66 books.
  */
-export function monthlyBlockEnd(start: LocalDate, chapters: number, pace: Pace) {
-  let end = start.endOfMonth();
-  while (chaptersBetween(pace, start, end) < chapters) end = end.plusDays(1).endOfMonth();
-  return end;
+export function blockEnd(start: LocalDate, chapters: number, plan: Duration): LocalDate {
+  const { unit, value } = plan.defaultBlock;
+  const fits = (end: LocalDate, target: number) => chaptersBetween(plan, start, end) >= target;
+  let end: LocalDate;
+  switch (unit) {
+    case 'month':
+      end = LocalDate.of(start.year, start.month + value - 1, 1).endOfMonth();
+      while (!fits(end, chapters)) end = end.plusDays(1).endOfMonth();
+      return end;
+    case 'weeks':
+      end = start.plusDays(7 * value - 1);
+      while (!fits(end, chapters)) end = end.plusDays(7);
+      return end;
+    case 'days':
+      end = start.plusDays(value - 1);
+      while (!fits(end, chapters)) end = end.plusDays(1);
+      return end;
+    case 'passes':
+      end = start;
+      while (!fits(end, chapters * value)) end = end.plusDays(1);
+      return end;
+  }
+}
+
+/** The goal a new block starts with: the number of passes when the plan reads until that many. */
+export function defaultGoal(plan: Pick<PlanRecord, 'defaultBlock'>): number | null {
+  return plan.defaultBlock.unit === 'passes' ? plan.defaultBlock.value : null;
 }
 
 /**
@@ -56,7 +82,7 @@ export function projectSchedule(
     if (done.has(bookId) || plan.excluded.includes(bookId)) continue;
     const book = catalog.find(bookId);
     if (!book) continue;
-    const end = monthlyBlockEnd(start, book.chapters, plan);
+    const end = blockEnd(start, book.chapters, plan);
     upcoming.push({ bookId, cycle: 1, start, end, id: null });
     start = end.plusDays(1);
   }
@@ -88,7 +114,7 @@ export function advanceBlocks(
       bookId: block.bookId,
       start: block.start.toString(),
       end: block.end.toString(),
-      goalPasses: null,
+      goalPasses: defaultGoal(plan),
       status,
     });
   }
