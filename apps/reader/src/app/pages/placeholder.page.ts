@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-/** Stands in for Hoy, Plan and Libros until their stories (LB-009, LB-011, LB-012) replace it. */
+/** Stands in for Hoy and Plan until their stories (LB-011, LB-012) replace it. */
 @Component({
   selector: 'lb-placeholder-page',
   template: `

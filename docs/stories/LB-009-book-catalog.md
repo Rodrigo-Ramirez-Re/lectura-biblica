@@ -2,7 +2,7 @@
 id: LB-009
 title: Book catalog and book page
 epic: E1
-status: ready
+status: done
 phase: 1
 depends_on: [LB-006]
 ---
@@ -64,6 +64,13 @@ Reading progress on the book page (LB-012 registers that section); study materia
 - [x] Naming convention — Reina-Valera (owner, 2026-11-24): Abdías, Cantares, Hechos, Apocalipsis…
 
 ## Decisions
+
+- The catalog is a typed TypeScript module (`books.ts`) instead of `data/books.json`: the domain lib needs no JSON import setup and the compiler checks every entry. Tests assert 66 books, 39 + 27, 929 + 260 = 1,189 chapters, unique ids and canonical positions.
+- Ids are lowercase ASCII without accents, numbered books with the digit first (`1samuel`, `2juan`).
+- Search ignores accents and case and matches anywhere in the name.
+- `BOOK_SECTIONS` is a multi-provider of `{ order, component }`; the page renders each section with `NgComponentOutlet`, passing `bookId`. The app registers sections, so contexts never import each other's features.
+- The book route reads `bookId` through component input binding; its title is the book name, or "Libro no encontrado".
+- Chapter counts use ICU plurals ("1 capítulo", "150 capítulos").
 
 ## Definition of done
 
