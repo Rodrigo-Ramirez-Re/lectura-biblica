@@ -30,3 +30,25 @@ docs/              Spec, stories, ADRs (Obsidian vault — never deployed)
 ```
 
 See [docs/README.md](docs/README.md) for architecture, conventions and the backlog.
+
+## Getting started
+
+Requirements: Node 24 (see `.nvmrc`), npm 11.
+
+```sh
+npm install
+npx playwright install        # once, downloads Chromium, Firefox and WebKit for e2e
+```
+
+| Task                                 | Command             |
+| ------------------------------------ | ------------------- |
+| Serve the app (localhost:4210)       | `npm start`         |
+| Unit tests (all projects)            | `npm test`          |
+| Lint (all projects)                  | `npm run lint`      |
+| Type-check (all projects)            | `npm run typecheck` |
+| E2E (all browsers)                   | `npm run e2e`       |
+| Build all                            | `npm run build`     |
+| Lint, typecheck, test, build changes | `npm run affected`  |
+| Format                               | `npm run format`    |
+
+Any single target: `npx nx <target> <project>` (e.g. `npx nx test shared-kernel`). Project graph: `npx nx graph`.

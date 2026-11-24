@@ -2,7 +2,7 @@
 id: LB-001
 title: Workspace scaffold
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: []
 ---
@@ -63,6 +63,10 @@ Boundary rules, hooks and CI (LB-002), tokens (LB-003), i18n (LB-004), Storybook
 - [x] App directory: `apps/reader` (+ `apps/reader-e2e`). Import prefix `@lectura/*`.
 
 ## Decisions
+
+- Dev server and static server on port 4210 (the owner's other workspace uses 4200, 4300 and 4400).
+- `@angular-devkit/architect` pinned to the Angular 22.2 line: `angular-eslint` and Analog pulled 0.2203, which Nx cannot load.
+- `shared-kernel` starts with `Result` (`ok`/`err`), the return type of every entity factory.
 
 ## Definition of done
 

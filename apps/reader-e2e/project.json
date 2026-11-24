@@ -1,0 +1,13 @@
+{
+  "name": "reader-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/reader-e2e/src",
+  "implicitDependencies": ["reader"],
+  "tags": ["type:e2e", "scope:reader"],
+  "targets": {
+    "typecheck": {
+      "options": { "commands": ["tsc --noEmit -p apps/reader-e2e/tsconfig.json"] }
+    }
+  }
+}

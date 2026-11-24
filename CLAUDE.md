@@ -56,5 +56,8 @@ Always run tasks through Nx (`npx nx …`), never the underlying tools directly.
 
 - `npx nx affected -t lint typecheck test build` — before every PR
 - `npx nx test <project>` / `npx nx lint <project>` / `npx nx typecheck <project>` / `npx nx e2e reader-e2e`
+- `npx nx g @nx/angular:library libs/<context>/<layer> --name=<context>-<layer> --importPath=@lectura/<context>-<layer> --unitTestRunner=vitest-analog --tags="type:<layer>,scope:<context>"` — new Angular lib
+- `npx nx g @nx/js:library libs/<context>/domain --name=<context>-domain --importPath=@lectura/<context>-domain --bundler=none --unitTestRunner=vitest --tags="type:domain,scope:<context>"` — new framework-free lib (set `module: esnext` in its tsconfig)
+- After generating any project, add a `typecheck` target listing its tsconfigs (see `libs/shared/kernel/project.json`).
 
 Agent shell notes: run Nx from `C:\dev\lectura-biblica` (uppercase drive letter) — with a lowercase `c:` working directory, Angular unit tests fail with "Vitest failed to find the runner". Node is managed by fnm; if `node` is missing, prefix commands with `fnm env --shell powershell | Out-String | Invoke-Expression;`. If `gh` is missing, reload PATH: `$env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [Environment]::GetEnvironmentVariable("Path","User")`.
