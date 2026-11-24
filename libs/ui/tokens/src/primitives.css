@@ -1,0 +1,39 @@
+/*
+ * Primitive tokens: raw values, private to this lib. Components use the semantic tokens in
+ * theme.css; lint rejects --lb-* anywhere else (docs/conventions/design-system.md).
+ */
+:root {
+  --lb-paper-50: #fbf8f3;
+  --lb-paper-100: #f3eee6;
+  --lb-paper-200: #e6dfd3;
+  --lb-stone-400: #8c8173;
+  --lb-stone-600: #5c544a;
+  --lb-stone-900: #1f1b16;
+  --lb-night-950: #171512;
+  --lb-night-900: #221f1b;
+  --lb-night-800: #2e2a25;
+  --lb-night-600: #7d7468;
+  --lb-night-300: #b3aa9c;
+  --lb-night-100: #ede7dd;
+  --lb-white: #ffffff;
+
+  --lb-teal-800: #1f5e5b;
+  --lb-teal-900: #174845;
+  --lb-teal-950: #0f1f1e;
+  --lb-teal-300: #6fc2bb;
+  --lb-teal-200: #8fd3cd;
+
+  --lb-amber-700: #8a5a00;
+  --lb-amber-600: #b45309;
+  --lb-amber-300: #e0a84b;
+  --lb-amber-200: #f0b45a;
+
+  --lb-red-700: #b42318;
+  --lb-red-300: #f28b82;
+  --lb-green-700: #2f6b3a;
+  --lb-green-300: #7cc98a;
+
+  --lb-font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --lb-font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+}

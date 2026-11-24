@@ -2,7 +2,7 @@
 id: LB-003
 title: Design tokens and themes
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: [LB-001]
 ---
@@ -54,10 +54,16 @@ The theme picker UI and storing the choice (settings, LB-010/LB-006).
 
 ## Open questions
 
-- [ ] Palette — _Recommendation:_ warm neutral paper background with a deep blue-green primary and an amber accent; dark theme on a near-black warm grey. Neutral enough for a public app.
-- [ ] Font — _Recommendation:_ system UI stack for text (zero bytes, offline) and a serif system stack (`ui-serif, Georgia`) for book names and headings.
+- [x] Palette — _Recommendation (adopted):_ warm neutral paper background with a deep blue-green primary and an amber accent; dark theme on a near-black warm grey. Neutral enough for a public app.
+- [x] Font — _Recommendation (adopted):_ system UI stack for text (zero bytes, offline) and a serif system stack (`ui-serif, Georgia`) for book names and headings.
 
 ## Decisions
+
+- Warm paper surfaces, deep teal primary (#1F5E5B / #6FC2BB), amber accent and focus; table in design-system.md.
+- Themes use CSS `light-dark()` with `color-scheme` on the root instead of duplicated dark blocks: one declaration per color, and the contrast spec reads both sides. Supported by every browser this app targets (Safari 17.5+, Chrome 123+, Firefox 120+).
+- System font stacks only (sans for text, serif for display); no font files.
+- Added `success` (done states) and `border-strong` (field borders at 3:1) for the screens of phase 1.
+- Theme e2e checks the body background under a dark device and with `data-theme` forced.
 
 ## Definition of done
 
