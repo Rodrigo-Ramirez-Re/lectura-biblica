@@ -20,8 +20,8 @@ async function setup() {
   const journal = new InMemoryJournal();
   const clock = new FixedClock('2026-12-03');
   const ids = new SequentialIds();
-  await new StartDefaultPlan(journal, journal, clock, ids).execute('today');
-  await new AdvanceBlocks(journal, journal, clock, ids).execute();
+  await new StartDefaultPlan(journal, journal, clock).execute('today');
+  await new AdvanceBlocks(journal, journal, clock).execute();
   await new LogReading(journal, journal, clock, ids).execute({ chapters: 3 });
   const files = new InMemoryFileSaver();
   const result = await render(BackupPanel, {

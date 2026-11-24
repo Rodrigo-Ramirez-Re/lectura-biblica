@@ -37,22 +37,12 @@ export function provideReading(): Provider[] {
     {
       provide: StartDefaultPlan,
       useFactory: () =>
-        new StartDefaultPlan(
-          inject(JournalReader),
-          inject(JournalWriter),
-          inject(Clock),
-          inject(IdGenerator),
-        ),
+        new StartDefaultPlan(inject(JournalReader), inject(JournalWriter), inject(Clock)),
     },
     {
       provide: AdvanceBlocks,
       useFactory: () =>
-        new AdvanceBlocks(
-          inject(JournalReader),
-          inject(JournalWriter),
-          inject(Clock),
-          inject(IdGenerator),
-        ),
+        new AdvanceBlocks(inject(JournalReader), inject(JournalWriter), inject(Clock)),
     },
     {
       provide: GetSchedule,

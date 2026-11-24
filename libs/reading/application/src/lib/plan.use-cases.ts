@@ -7,14 +7,7 @@ import {
   type JournalWriter,
   type PlanRecord,
 } from '@lectura/reading-domain';
-import {
-  err,
-  ok,
-  type Clock,
-  type IdGenerator,
-  type LocalDate,
-  type Result,
-} from '@lectura/shared-kernel';
+import { err, ok, type Clock, type LocalDate, type Result } from '@lectura/shared-kernel';
 
 export type StartChoice = 'today' | 'next-month';
 
@@ -29,7 +22,6 @@ export class StartDefaultPlan {
     private readonly reader: JournalReader,
     private readonly writer: JournalWriter,
     private readonly clock: Clock,
-    private readonly ids: IdGenerator,
     private readonly catalog: BookCatalog = bookCatalog,
   ) {}
 
@@ -43,7 +35,7 @@ export class StartDefaultPlan {
     const { today, nextMonth } = this.options();
     const plan = defaultPlan(choice === 'today' ? today : nextMonth, this.catalog);
     await this.writer.savePlan(plan);
-    const blocks = advanceBlocks(plan, [], this.catalog, today, () => this.ids.next());
+    const blocks = advanceBlocks(plan, [], this.catalog, today);
     if (blocks.length) await this.writer.saveBlocks(blocks);
     return ok(plan);
   }
@@ -55,16 +47,13 @@ export class AdvanceBlocks {
     private readonly reader: JournalReader,
     private readonly writer: JournalWriter,
     private readonly clock: Clock,
-    private readonly ids: IdGenerator,
     private readonly catalog: BookCatalog = bookCatalog,
   ) {}
 
   async execute(): Promise<void> {
     const { plan, blocks } = await this.reader.load();
     if (!plan) return;
-    const changes = advanceBlocks(plan, blocks, this.catalog, this.clock.today(), () =>
-      this.ids.next(),
-    );
+    const changes = advanceBlocks(plan, blocks, this.catalog, this.clock.today());
     if (changes.length) await this.writer.saveBlocks(changes);
   }
 }
@@ -111,6 +100,7 @@ export class GetSchedule {
           ? 'upcoming'
           : 'current') as BlockState,
     }));
+    if (!entries.length) return null;
     const start = entries[0].start;
     const end = entries[entries.length - 1].end;
     return { plan, entries, start, end, months: start.monthsSpannedUntil(end) };

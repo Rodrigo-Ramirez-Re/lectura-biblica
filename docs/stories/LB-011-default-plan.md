@@ -89,6 +89,7 @@ Editing the plan, choosing another book for a month, pausing, skipping, cycles b
 - Found while testing in Firefox (fixes to LB-010 code): `navigator.storage.persist()` is no longer awaited before writing — Firefox answers only after the person replies to its prompt, which blocked saving; and the IndexedDB adapter opens and closes a connection per operation, so an idle connection never blocks a future schema upgrade from another tab.
 - axe scans run in Chromium and WebKit; in Firefox the test records an `axe` annotation instead (the scan crashes Playwright's Firefox, not the page).
 - Plan shows the plan summary ("66 libros en 67 meses: del … al …") and every block with dates and state (Terminado, Ahora with `aria-current="step"`, Próximo).
+- Review fix: block ids are deterministic (`cycle:bookId:start`), so two tabs, or Hoy and Plan opening together, record a starting block once instead of twice. `StartDefaultPlan` and `AdvanceBlocks` no longer need an id generator. An empty schedule (no book left) yields no view instead of failing, and Plan shows an error if the data cannot be read.
 
 ## Definition of done
 

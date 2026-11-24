@@ -15,9 +15,9 @@ async function reading(start: string, today = start) {
   const journal = new InMemoryJournal();
   const clock = new FixedClock(start);
   const ids = new SequentialIds();
-  await new StartDefaultPlan(journal, journal, clock, ids).execute('today');
+  await new StartDefaultPlan(journal, journal, clock).execute('today');
   clock.set(today);
-  await new AdvanceBlocks(journal, journal, clock, ids).execute();
+  await new AdvanceBlocks(journal, journal, clock).execute();
   return {
     journal,
     clock,
@@ -25,7 +25,7 @@ async function reading(start: string, today = start) {
     log: new LogReading(journal, journal, clock, ids),
     undo: new UndoReading(journal),
     progress: new GetBookProgress(journal),
-    advance: new AdvanceBlocks(journal, journal, clock, ids),
+    advance: new AdvanceBlocks(journal, journal, clock),
   };
 }
 

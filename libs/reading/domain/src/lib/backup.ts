@@ -1,4 +1,6 @@
-import { err, ok, type LocalDate, type Result } from '@lectura/shared-kernel';
+import type { BookCatalog } from '@lectura/catalog-domain';
+import { LocalDate, err, ok, type Result } from '@lectura/shared-kernel';
+import { validatePlan } from './reading-plan';
 import {
   SCHEMA_VERSION,
   type BlockRecord,
@@ -47,8 +49,14 @@ export function toBackup(journal: Journal, exportedAt: Date): BackupDocument {
 const migrations: Record<number, (document: Record<string, unknown>) => Record<string, unknown>> =
   {};
 
-/** Reads a backup file. Anything that is not a complete, valid backup is rejected as a whole. */
-export function parseBackup(text: string): Result<BackupDocument, BackupError> {
+/**
+ * Reads a backup file. Anything that is not a complete, valid backup is rejected as a whole:
+ * imported data must never leave the app unable to load (LB-013 review).
+ */
+export function parseBackup(
+  text: string,
+  catalog: BookCatalog,
+): Result<BackupDocument, BackupError> {
   let data: unknown;
   try {
     data = JSON.parse(text);
@@ -67,7 +75,9 @@ export function parseBackup(text: string): Result<BackupDocument, BackupError> {
     document = migrate(document);
     version++;
   }
-  return isValidDocument(document) ? ok(document) : err('invalid');
+  return isValidDocument(document) && isConsistent(document, catalog)
+    ? ok(document)
+    : err('invalid');
 }
 
 export function summarize(backup: BackupDocument): BackupSummary {
@@ -91,8 +101,9 @@ const REMINDER_AFTER_DAYS = 30;
 export function isBackupDue(journal: Journal, today: LocalDate): boolean {
   const { lastBackupAt } = journal.settings;
   if (!lastBackupAt) return new Set(journal.logs.map((log) => log.date)).size >= REMINDER_MIN_DAYS;
-  const lastDay = lastBackupAt.slice(0, 10);
-  return today.plusDays(-REMINDER_AFTER_DAYS).toString() > lastDay;
+  // The local day of the export instant: an evening export in Mexico is already tomorrow in UTC.
+  const lastDay = LocalDate.fromDate(new Date(lastBackupAt));
+  return today.plusDays(-REMINDER_AFTER_DAYS).isAfter(lastDay);
 }
 
 // --- validation -------------------------------------------------------------------------------
@@ -102,7 +113,9 @@ type Shape = Record<string, unknown>;
 const isObject = (value: unknown): value is Shape =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const isText = (value: unknown): value is string => typeof value === 'string';
-const isDay = (value: unknown) => isText(value) && /^\d{4}-\d{2}-\d{2}$/.test(value);
+const isDay = (value: unknown) => isText(value) && LocalDate.parse(value).ok;
+const isInstant = (value: unknown) =>
+  isText(value) && /^\d{4}-\d{2}-\d{2}T/.test(value) && !Number.isNaN(Date.parse(value));
 const isCount = (value: unknown, min = 0) =>
   typeof value === 'number' && Number.isInteger(value) && value >= min;
 const isTextList = (value: unknown) => Array.isArray(value) && value.every(isText);
@@ -126,6 +139,7 @@ const isBlock = (block: Shape): block is Shape & BlockRecord =>
   isText(block['bookId']) &&
   isDay(block['start']) &&
   isDay(block['end']) &&
+  (block['start'] as string) <= (block['end'] as string) &&
   (block['goalPasses'] === null || isCount(block['goalPasses'], 1)) &&
   (block['status'] === 'active' || block['status'] === 'done');
 
@@ -147,12 +161,25 @@ const isNote = (note: Shape): note is Shape & NoteRecord =>
 function isValidDocument(document: Shape): document is Shape & BackupDocument {
   const settings = document['settings'];
   return (
-    isText(document['exportedAt']) &&
+    isInstant(document['exportedAt']) &&
     isObject(settings) &&
-    (settings['lastBackupAt'] === null || isText(settings['lastBackupAt'])) &&
+    (settings['lastBackupAt'] === null || isInstant(settings['lastBackupAt'])) &&
     (document['plan'] === null || (isObject(document['plan']) && isPlan(document['plan']))) &&
     listOf(document['blocks'], isBlock) &&
     listOf(document['logs'], isLog) &&
     listOf(document['notes'], isNote)
+  );
+}
+
+/** References between collections and to the catalog hold, so every screen can load the data. */
+function isConsistent(document: BackupDocument, catalog: BookCatalog): boolean {
+  if (document.plan && !validatePlan(document.plan, catalog).ok) return false;
+  const known = (bookId: string) => catalog.find(bookId) !== undefined;
+  const blockIds = new Set(document.blocks.map((block) => block.id));
+  return (
+    blockIds.size === document.blocks.length &&
+    document.blocks.every((block) => known(block.bookId)) &&
+    document.logs.every((log) => known(log.bookId) && blockIds.has(log.blockId)) &&
+    document.notes.every((note) => known(note.bookId))
   );
 }

@@ -79,6 +79,7 @@ Plan templates as files (phase 2); CSV export (phase 3).
 - `Clock` gained `now()` for the export instant; files are saved through a `FileSaver` port (`BrowserFileSaver` downloads through a temporary link, which works offline and in installed apps).
 - Reminder on Hoy: logs on 7 different days and no export ever, or the last export over 30 days old. "Ahora no" hides it until the app is opened again; "Ir a Respaldo" opens Acerca de, where the panel lives.
 - "Borrar mis datos" sits collapsed in the panel and needs the word BORRAR; afterwards the app returns to the first-run welcome.
+- Review fix: imports must leave the app loadable. Days must be real calendar days, instants must parse, blocks must not end before they start, and the plan must pass `validatePlan` (known, unique books, at least one not excluded). Blocks and notes must be of known books, and every log must belong to a block in the file. The 30-day reminder counts from the local day of the last export (an evening export in Mexico is already the next day in UTC), and "Ahora no" lasts across screens until the app is opened again.
 
 ## Definition of done
 

@@ -53,13 +53,13 @@ describe('backup (LB-013)', () => {
   });
 
   it('reads back what it exported', () => {
-    const parsed = parseBackup(exported());
+    const parsed = parseBackup(exported(), bookCatalog);
 
     expect(parsed.ok && parsed.value).toMatchObject(journal);
   });
 
   it('summarises a backup before importing it', () => {
-    const parsed = parseBackup(exported());
+    const parsed = parseBackup(exported(), bookCatalog);
 
     expect(parsed.ok && summarize(parsed.value)).toEqual({
       planName: 'Un libro al mes',
@@ -98,13 +98,13 @@ describe('backup (LB-013)', () => {
       'invalid',
     ],
   ])('rejects %s', (_, text, error) => {
-    expect(parseBackup(text)).toEqual({ ok: false, error });
+    expect(parseBackup(text, bookCatalog)).toEqual({ ok: false, error });
   });
 
   it('accepts a backup with no plan yet', () => {
     const text = JSON.stringify(toBackup(emptyJournal, new Date('2026-12-05T00:00:00.000Z')));
 
-    expect(parseBackup(text).ok).toBe(true);
+    expect(parseBackup(text, bookCatalog).ok).toBe(true);
   });
 });
 
@@ -134,5 +134,51 @@ describe('backup reminder (LB-013)', () => {
   it('is due again 30 days after the last backup', () => {
     expect(isBackupDue(withLogs(7, '2026-12-05T21:15:00.000Z'), day('2027-01-04'))).toBe(false);
     expect(isBackupDue(withLogs(7, '2026-12-05T21:15:00.000Z'), day('2027-01-05'))).toBe(true);
+  });
+});
+
+describe('backup consistency (LB-013 review)', () => {
+  const base = () => JSON.parse(exported());
+  const reject = (document: unknown) =>
+    expect(parseBackup(JSON.stringify(document), bookCatalog)).toEqual({
+      ok: false,
+      error: 'invalid',
+    });
+
+  it('rejects an impossible date', () => {
+    const document = base();
+    document.logs[0].date = '2026-02-31';
+    reject(document);
+  });
+
+  it('rejects a plan with unknown or repeated books, or with every book excluded', () => {
+    reject({ ...base(), plan: { ...base().plan, bookOrder: ['abdias', 'xyz'] } });
+    reject({ ...base(), plan: { ...base().plan, bookOrder: ['abdias', 'abdias'] } });
+    reject({ ...base(), plan: { ...base().plan, bookOrder: ['abdias'], excluded: ['abdias'] } });
+  });
+
+  it('rejects a block of an unknown book or ending before it starts', () => {
+    reject({ ...base(), blocks: [{ ...base().blocks[0], bookId: 'xyz' }] });
+    reject({ ...base(), blocks: [{ ...base().blocks[0], end: '2026-11-30' }] });
+  });
+
+  it('rejects a log of a block that is not in the backup', () => {
+    reject({ ...base(), logs: [{ ...base().logs[0], blockId: 'missing' }] });
+  });
+
+  it('rejects a last-backup time that is not an instant', () => {
+    reject({ ...base(), settings: { lastBackupAt: 'x' } });
+  });
+
+  it('counts the 30 days from the local day of the last export', () => {
+    // 2026-12-05 at 20:00 in Mexico City is already 2026-12-06 in UTC.
+    const evening = new Date(2026, 11, 5, 20, 0).toISOString();
+    const journalAt = (lastBackupAt: string): Journal => ({
+      ...journal,
+      settings: { lastBackupAt },
+    });
+
+    expect(isBackupDue(journalAt(evening), day('2027-01-04'))).toBe(false);
+    expect(isBackupDue(journalAt(evening), day('2027-01-05'))).toBe(true);
   });
 });

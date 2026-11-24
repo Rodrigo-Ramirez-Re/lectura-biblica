@@ -1,3 +1,4 @@
+import { bookCatalog, type BookCatalog } from '@lectura/catalog-domain';
 import {
   emptyJournal,
   isBackupDue,
@@ -36,18 +37,23 @@ export class ExportBackup {
 
 /** What a backup file contains, shown before anything is replaced (LB-013). */
 export class PreviewBackup {
+  constructor(private readonly catalog: BookCatalog = bookCatalog) {}
+
   execute(text: string): Result<BackupSummary, BackupError> {
-    const parsed = parseBackup(text);
+    const parsed = parseBackup(text, this.catalog);
     return parsed.ok ? ok(summarize(parsed.value)) : parsed;
   }
 }
 
 /** Replaces all data with a valid backup in one transaction, or changes nothing (LB-013). */
 export class ImportBackup {
-  constructor(private readonly writer: JournalWriter) {}
+  constructor(
+    private readonly writer: JournalWriter,
+    private readonly catalog: BookCatalog = bookCatalog,
+  ) {}
 
   async execute(text: string): Promise<Result<void, BackupError>> {
-    const parsed = parseBackup(text);
+    const parsed = parseBackup(text, this.catalog);
     if (!parsed.ok) return err(parsed.error);
     const { settings, plan, blocks, logs, notes } = parsed.value;
     await this.writer.replaceAll({ settings, plan, blocks, logs, notes });

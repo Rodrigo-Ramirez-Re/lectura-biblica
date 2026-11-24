@@ -10,6 +10,16 @@ import { ButtonComponent, CardComponent } from '@lectura/ui-components';
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reading.plan.title">Plan</h1>
 
+    @if (failed()) {
+      <p
+        role="alert"
+        class="mt-section font-semibold text-danger"
+        i18n="@@reading.plan.load-failed"
+      >
+        No se pudo leer tu plan en este dispositivo. Revisa que el navegador permita guardar datos.
+      </p>
+    }
+
     @if (loaded()) {
       @if (schedule(); as view) {
         <section lbCard aria-labelledby="plan-summary" class="mt-section">
@@ -92,6 +102,7 @@ export class PlanPage {
 
   protected readonly schedule = signal<ScheduleView | null>(null);
   protected readonly loaded = signal(false);
+  protected readonly failed = signal(false);
 
   constructor() {
     void this.load();
@@ -99,8 +110,12 @@ export class PlanPage {
 
   // Blocks that started while the app was closed are recorded before the schedule is read.
   private async load(): Promise<void> {
-    await this.advanceBlocks.execute();
-    this.schedule.set(await this.getSchedule.execute());
-    this.loaded.set(true);
+    try {
+      await this.advanceBlocks.execute();
+      this.schedule.set(await this.getSchedule.execute());
+      this.loaded.set(true);
+    } catch {
+      this.failed.set(true);
+    }
   }
 }

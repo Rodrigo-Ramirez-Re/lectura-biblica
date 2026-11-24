@@ -21,8 +21,8 @@ async function setup() {
   const journal = new InMemoryJournal();
   const clock = new FixedClock('2026-12-01');
   const ids = new SequentialIds();
-  await new StartDefaultPlan(journal, journal, clock, ids).execute('today');
-  await new AdvanceBlocks(journal, journal, clock, ids).execute();
+  await new StartDefaultPlan(journal, journal, clock).execute('today');
+  await new AdvanceBlocks(journal, journal, clock).execute();
   clock.set('2026-12-08');
   const log = new LogReading(journal, journal, clock, ids);
   for (let d = 1; d <= 7; d++) await log.execute({ chapters: 3, date: day(`2026-12-0${d}`) });

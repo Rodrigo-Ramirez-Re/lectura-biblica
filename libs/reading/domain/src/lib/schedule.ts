@@ -71,7 +71,6 @@ export function advanceBlocks(
   recorded: readonly BlockRecord[],
   catalog: BookCatalog,
   today: LocalDate,
-  newId: () => string,
 ): BlockRecord[] {
   const changes: BlockRecord[] = [];
   for (const block of projectSchedule(plan, recorded, catalog)) {
@@ -83,7 +82,7 @@ export function advanceBlocks(
       continue;
     }
     changes.push({
-      id: newId(),
+      id: blockId(block),
       cycle: block.cycle,
       bookId: block.bookId,
       start: block.start.toString(),
@@ -93,4 +92,12 @@ export function advanceBlocks(
     });
   }
   return changes;
+}
+
+/**
+ * Deterministic, so recording the same block twice (two tabs, or Hoy and Plan opening together)
+ * writes the same record instead of a duplicate.
+ */
+export function blockId(block: Pick<ScheduledBlock, 'cycle' | 'bookId' | 'start'>): string {
+  return `${block.cycle}:${block.bookId}:${block.start.toString()}`;
 }
