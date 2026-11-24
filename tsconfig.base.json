@@ -23,7 +23,12 @@
         "./libs/shared/infrastructure-browser/src/index.ts"
       ],
       "@lectura/reading-domain": ["./libs/reading/domain/src/index.ts"],
-      "@lectura/reading-infrastructure": ["./libs/reading/infrastructure/src/index.ts"]
+      "@lectura/reading-infrastructure": ["./libs/reading/infrastructure/src/index.ts"],
+      "@lectura/reading-application": ["./libs/reading/application/src/index.ts"],
+      "@lectura/shared-kernel/testing": ["./libs/shared/kernel/src/testing/index.ts"],
+      "@lectura/reading-domain/testing": ["./libs/reading/domain/src/testing/index.ts"],
+      "@lectura/reading-feature-today": ["./libs/reading/feature-today/src/index.ts"],
+      "@lectura/reading-feature-plan": ["./libs/reading/feature-plan/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

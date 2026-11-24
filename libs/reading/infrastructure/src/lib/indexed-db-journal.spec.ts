@@ -118,4 +118,14 @@ describe('IndexedDbJournal (LB-010)', () => {
 
     expect(storage.persistCalls).toBe(1);
   });
+
+  it('saves without waiting for the browser to answer the persistence request', async () => {
+    const storage = new FakeStorageGuard();
+    storage.persist = () => new Promise<boolean>(() => undefined);
+    const journal = new IndexedDbJournal(storage);
+
+    await journal.savePlan(plan);
+
+    expect((await journal.load()).plan).toEqual(plan);
+  });
 });
