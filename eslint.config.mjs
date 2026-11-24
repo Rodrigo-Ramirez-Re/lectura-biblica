@@ -147,6 +147,56 @@ export default [
     },
   },
   {
+    // UI copy is Spanish source text extracted by @angular/localize (ADR 0005); custom IDs keep
+    // translations stable when the text changes. Inline templates reach this as virtual .html files.
+    basePath: import.meta.dirname,
+    files: ['apps/**/*.html', 'libs/**/*.html'],
+    // The host page is not a component template, and test stubs and Storybook demos never reach users.
+    ignores: ['apps/*/src/index.html', '**/*.spec.ts/**', '**/*.stories.ts/**'],
+    rules: {
+      '@angular-eslint/template/i18n': [
+        'error',
+        {
+          checkId: true,
+          // The same text may reuse its ID; the extractor rejects real conflicts.
+          checkDuplicateId: false,
+          checkText: true,
+          checkAttributes: true,
+          requireDescription: false,
+          // Technical attributes and component inputs that never carry user-facing text.
+          ignoreAttributes: [
+            'variant',
+            'size',
+            'tone',
+            'accept',
+            'scope',
+            'd',
+            'viewBox',
+            'fill',
+            'stroke',
+            'stroke-width',
+            'stroke-linecap',
+            'stroke-linejoin',
+            'loading',
+            'decoding',
+            'rel',
+            'autocomplete',
+            'inputmode',
+            'aria-haspopup',
+            'aria-controls',
+            'aria-describedby',
+            'aria-labelledby',
+            'aria-current',
+            'aria-live',
+            'routerLink',
+            'routerLinkActive',
+            'ariaCurrentWhenActive',
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Tolerant: Tailwind at-rules (@theme, @utility) are not standard CSS.
     files: ['**/*.css'],
     plugins: { css },

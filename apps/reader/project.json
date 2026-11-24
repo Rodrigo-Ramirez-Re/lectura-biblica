@@ -5,6 +5,9 @@
   "prefix": "lb",
   "sourceRoot": "apps/reader/src",
   "tags": ["type:app", "scope:reader"],
+  "i18n": {
+    "sourceLocale": "es-MX"
+  },
   "targets": {
     "build": {
       "executor": "@angular/build:application",
@@ -20,7 +23,8 @@
             "input": "apps/reader/public"
           }
         ],
-        "styles": ["apps/reader/src/styles.css"]
+        "styles": ["apps/reader/src/styles.css"],
+        "polyfills": ["@angular/localize/init"]
       },
       "configurations": {
         "production": {
@@ -90,6 +94,14 @@
         "port": 4210,
         "staticFilePath": "dist/apps/reader/browser",
         "spa": true
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular/build:extract-i18n",
+      "options": {
+        "buildTarget": "reader:build",
+        "format": "xlf2",
+        "outputPath": "dist/i18n/reader"
       }
     }
   }
