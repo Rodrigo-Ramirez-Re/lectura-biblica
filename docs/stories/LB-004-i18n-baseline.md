@@ -2,7 +2,7 @@
 id: LB-004
 title: i18n baseline
 epic: E0
-status: ready
+status: done
 phase: 1
 depends_on: [LB-001]
 ---
@@ -55,6 +55,10 @@ A second language.
 - None.
 
 ## Decisions
+
+- `provideSpanishLocale()` sets only `LOCALE_ID`; no currency is used in the app.
+- Message IDs start with the area: `reader.*` for the app shell, `<context>.*` for features, `ui.*` for components.
+- The extracted catalogue goes to `dist/i18n/reader` and is not committed until a second language exists.
 
 ## Definition of done
 
