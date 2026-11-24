@@ -2,7 +2,13 @@ import { InMemoryJournal } from '@lectura/reading-domain/testing';
 import { LocalDate } from '@lectura/shared-kernel';
 import { FixedClock, SequentialIds } from '@lectura/shared-kernel/testing';
 import { AdvanceBlocks, StartDefaultPlan } from './plan.use-cases';
-import { GetBookProgress, GetToday, LogReading, UndoReading } from './today.use-cases';
+import {
+  GetBookProgress,
+  GetToday,
+  LogReading,
+  SetBlockGoal,
+  UndoReading,
+} from './today.use-cases';
 
 const day = (iso: string) => {
   const parsed = LocalDate.parse(iso);
@@ -179,6 +185,38 @@ describe('GetBookProgress (LB-012)', () => {
       passes: { complete: 0, chaptersIntoCurrent: 0 },
       chaptersRead: 0,
       blocks: [],
+    });
+  });
+});
+
+describe('SetBlockGoal (LB-016)', () => {
+  it('sets a goal of passes and says when it is met', async () => {
+    const { journal, clock, today, log } = await reading('2026-12-01', '2026-12-03');
+    const setGoal = new SetBlockGoal(journal, journal, clock);
+
+    await setGoal.execute(5);
+    expect(await today.execute()).toMatchObject({ goalPasses: 5, goalMet: false });
+
+    await log.execute({ chapters: 5 });
+    expect(await today.execute()).toMatchObject({ goalPasses: 5, goalMet: true });
+  });
+
+  it('clears the goal', async () => {
+    const { journal, clock, today } = await reading('2026-12-01', '2026-12-03');
+    const setGoal = new SetBlockGoal(journal, journal, clock);
+    await setGoal.execute(5);
+
+    await setGoal.execute(null);
+
+    expect(await today.execute()).toMatchObject({ goalPasses: null, goalMet: false });
+  });
+
+  it('refuses a goal that is not a whole number of at least 1', async () => {
+    const { journal, clock } = await reading('2026-12-01', '2026-12-03');
+
+    expect(await new SetBlockGoal(journal, journal, clock).execute(0)).toEqual({
+      ok: false,
+      error: 'invalid-goal',
     });
   });
 });

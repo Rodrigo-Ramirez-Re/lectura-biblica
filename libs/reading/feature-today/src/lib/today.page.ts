@@ -7,6 +7,7 @@ import {
   GetSchedule,
   GetToday,
   LogReading,
+  SetBlockGoal,
   StartDefaultPlan,
   UndoReading,
   type ScheduleView,
@@ -189,6 +190,64 @@ interface LastLog {
           <p class="text-body-sm text-on-surface-muted" i18n="@@reading.today.passes-fit">
             A tu ritmo caben {{ view.passesThatFit | number: '1.0-1' }} vueltas en este bloque.
           </p>
+          @if (view.goalPasses !== null) {
+            @if (view.goalMet) {
+              <p class="flex items-center gap-2 font-semibold text-success">
+                <lb-icon name="check" />
+                <span i18n="@@reading.today.goal-met"
+                  >¡Cumpliste tu meta de {{ view.goalPasses }} vueltas!</span
+                >
+              </p>
+              <p class="text-body-sm text-on-surface-muted" i18n="@@reading.today.goal-met-hint">
+                Puedes seguir leyéndolo hasta que termine el bloque.
+              </p>
+            } @else {
+              <p class="font-semibold" i18n="@@reading.today.goal">
+                Meta: {{ view.goalPasses }} vueltas · llevas {{ view.passesInBlock.complete }}
+              </p>
+            }
+          }
+          <details>
+            <summary
+              class="min-h-touch cursor-pointer py-2 text-primary focus-visible:focus-ring"
+              i18n="@@reading.today.goal-edit"
+            >
+              Meta de vueltas
+            </summary>
+            <div class="mt-2 flex flex-col gap-3">
+              <lb-stepper
+                label="Vueltas en este bloque"
+                i18n-label="@@reading.today.goal-amount"
+                [(value)]="goal"
+                [min]="1"
+                [max]="999"
+              />
+              <div class="flex flex-wrap gap-2">
+                <button
+                  lbButton
+                  variant="secondary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="saveGoal(goal())"
+                  i18n="@@reading.today.goal-save"
+                >
+                  Guardar meta
+                </button>
+                @if (view.goalPasses !== null) {
+                  <button
+                    lbButton
+                    variant="ghost"
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="saveGoal(null)"
+                    i18n="@@reading.today.goal-clear"
+                  >
+                    Quitar meta
+                  </button>
+                }
+              </div>
+            </div>
+          </details>
         </section>
       } @else if (schedule(); as plan) {
         @if (plan.start.isAfter(options.today)) {
@@ -295,6 +354,7 @@ export class TodayPage {
   private readonly logReading = inject(LogReading);
   private readonly undoReading = inject(UndoReading);
   private readonly checkBackup = inject(CheckBackupReminder);
+  private readonly setBlockGoal = inject(SetBlockGoal);
 
   protected readonly options = this.startPlan.options();
   protected readonly choice = signal<StartChoice>('today');
@@ -306,6 +366,7 @@ export class TodayPage {
   protected readonly date = signal(this.options.today.toString());
   protected readonly lastLog = signal<LastLog | null>(null);
   protected readonly backupDue = signal(false);
+  protected readonly goal = signal(2);
   protected readonly reminderDismissed = inject(BackupReminderState).dismissed;
   protected readonly logError = signal<string | undefined>(undefined);
   protected readonly failed = signal(false);
@@ -347,6 +408,10 @@ export class TodayPage {
   protected async logOther(view: TodayView): Promise<void> {
     const parsed = LocalDate.parse(this.date());
     await this.log(this.amount(), parsed.ok ? parsed.value : view.today);
+  }
+
+  protected async saveGoal(goal: number | null): Promise<void> {
+    await this.busy(() => this.setBlockGoal.execute(goal));
   }
 
   protected async undo(id: string): Promise<void> {
@@ -395,7 +460,10 @@ export class TodayPage {
     this.backupDue.set(backupDue);
     this.schedule.set(schedule);
     this.today.set(today);
-    if (today) this.amount.set(today.dueChapters || today.todayPace || 1);
+    if (today) {
+      this.amount.set(today.dueChapters || today.todayPace || 1);
+      this.goal.set(today.goalPasses ?? Math.max(1, Math.floor(today.passesThatFit)));
+    }
     this.loaded.set(true);
   }
 }

@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { GetPlan, UpdatePlan, type UpdatePlanError } from '@lectura/reading-application';
 import { planSettings, type PlanSettings } from '@lectura/reading-domain';
 import { ButtonComponent, FormControlDirective, FormFieldComponent } from '@lectura/ui-components';
+import { DurationSection } from './duration-section';
 import { PaceSection } from './pace-section';
 
 /**
@@ -11,7 +12,14 @@ import { PaceSection } from './pace-section';
  */
 @Component({
   selector: 'lb-plan-editor-page',
-  imports: [RouterLink, ButtonComponent, FormFieldComponent, FormControlDirective, PaceSection],
+  imports: [
+    RouterLink,
+    ButtonComponent,
+    FormFieldComponent,
+    FormControlDirective,
+    PaceSection,
+    DurationSection,
+  ],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reading.editor.title">Editar plan</h1>
 
@@ -28,6 +36,7 @@ import { PaceSection } from './pace-section';
         </lb-form-field>
 
         <lb-pace-section [pace]="plan" (changed)="patch($event)" />
+        <lb-duration-section [block]="plan.defaultBlock" (changed)="patch($event)" />
 
         @if (error(); as message) {
           <p role="alert" class="font-semibold text-danger">{{ message }}</p>

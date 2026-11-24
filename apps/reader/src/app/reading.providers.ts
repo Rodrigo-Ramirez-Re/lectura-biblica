@@ -12,6 +12,7 @@ import {
   ImportBackup,
   LogReading,
   PreviewBackup,
+  SetBlockGoal,
   StartDefaultPlan,
   UndoReading,
   UpdatePlan,
@@ -92,6 +93,11 @@ export function provideReading(): Provider[] {
     {
       provide: UpdatePlan,
       useFactory: () => new UpdatePlan(inject(JournalReader), inject(JournalWriter)),
+    },
+    {
+      provide: SetBlockGoal,
+      useFactory: () =>
+        new SetBlockGoal(inject(JournalReader), inject(JournalWriter), inject(Clock)),
     },
   ];
 }

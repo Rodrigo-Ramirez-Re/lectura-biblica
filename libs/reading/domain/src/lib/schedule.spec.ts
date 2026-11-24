@@ -2,7 +2,7 @@ import { bookCatalog } from '@lectura/catalog-domain';
 import { LocalDate } from '@lectura/shared-kernel';
 import type { BlockRecord } from './journal';
 import { defaultPlan, validatePlan } from './reading-plan';
-import { advanceBlocks, monthlyBlockEnd, projectSchedule } from './schedule';
+import { advanceBlocks, blockEnd, projectSchedule } from './schedule';
 
 const day = (iso: string) => {
   const parsed = LocalDate.parse(iso);
@@ -10,7 +10,12 @@ const day = (iso: string) => {
   return parsed.value;
 };
 
-const threeADay = { chaptersPerDay: 3, restDays: [], paceByWeekday: null };
+const threeADay = {
+  chaptersPerDay: 3,
+  restDays: [],
+  paceByWeekday: null,
+  defaultBlock: { unit: 'month' as const, value: 1 },
+};
 
 const plan = (start = '2026-12-01') => defaultPlan(day(start), bookCatalog);
 
@@ -57,19 +62,19 @@ describe('default plan (LB-011)', () => {
 
 describe('monthly blocks (LB-011)', () => {
   it('end with the calendar month', () => {
-    expect(monthlyBlockEnd(day('2026-12-01'), 1, threeADay).toString()).toBe('2026-12-31');
+    expect(blockEnd(day('2026-12-01'), 1, threeADay).toString()).toBe('2026-12-31');
   });
 
   it('end with the month even when they start mid-month', () => {
-    expect(monthlyBlockEnd(day('2026-11-24'), 1, threeADay).toString()).toBe('2026-11-30');
+    expect(blockEnd(day('2026-11-24'), 1, threeADay).toString()).toBe('2026-11-30');
   });
 
   it('grow by whole months until one pass fits: Salmos takes two at 3 a day', () => {
-    expect(monthlyBlockEnd(day('2032-03-01'), 150, threeADay).toString()).toBe('2032-04-30');
+    expect(blockEnd(day('2032-03-01'), 150, threeADay).toString()).toBe('2032-04-30');
   });
 
   it('fit Isaías in February at 3 a day', () => {
-    expect(monthlyBlockEnd(day('2027-02-01'), 66, threeADay).toString()).toBe('2027-02-28');
+    expect(blockEnd(day('2027-02-01'), 66, threeADay).toString()).toBe('2027-02-28');
   });
 });
 
@@ -225,9 +230,53 @@ describe('plan validation v2 (LB-014)', () => {
 describe('blocks follow the pace (LB-015)', () => {
   it('grow until one pass fits counting only reading days', () => {
     // Isaías (66) in February 2027 at 3 a day: 84 chapters fit; resting on Sundays leaves 72.
-    expect(monthlyBlockEnd(day('2027-02-01'), 66, threeADay).toString()).toBe('2027-02-28');
-    expect(monthlyBlockEnd(day('2027-02-01'), 80, { ...threeADay, restDays: [0] }).toString()).toBe(
+    expect(blockEnd(day('2027-02-01'), 66, threeADay).toString()).toBe('2027-02-28');
+    expect(blockEnd(day('2027-02-01'), 80, { ...threeADay, restDays: [0] }).toString()).toBe(
       '2027-03-31',
     );
+  });
+});
+
+describe('block durations (LB-016)', () => {
+  const lasting = (unit: 'month' | 'weeks' | 'days' | 'passes', value: number) => ({
+    ...threeADay,
+    defaultBlock: { unit, value },
+  });
+
+  it('runs a block of 2 months to the end of the next month', () => {
+    expect(blockEnd(day('2026-12-10'), 1, lasting('month', 2)).toString()).toBe('2027-01-31');
+  });
+
+  it('lasts a number of weeks or days', () => {
+    expect(blockEnd(day('2026-12-01'), 1, lasting('weeks', 2)).toString()).toBe('2026-12-14');
+    expect(blockEnd(day('2026-12-01'), 1, lasting('days', 10)).toString()).toBe('2026-12-10');
+  });
+
+  it('grows weeks and days until one pass fits', () => {
+    // Salmos (150) at 3 a day needs 50 days: 8 weeks, or 50 days.
+    expect(blockEnd(day('2026-12-01'), 150, lasting('weeks', 1)).toString()).toBe('2027-01-25');
+    expect(blockEnd(day('2026-12-01'), 150, lasting('days', 10)).toString()).toBe('2027-01-19');
+  });
+
+  it('lasts until the book is read a number of times', () => {
+    // Rut (4) three times at 3 a day: 12 chapters, 4 days.
+    expect(blockEnd(day('2026-12-01'), 4, lasting('passes', 3)).toString()).toBe('2026-12-04');
+  });
+
+  it('starts blocks with the number of passes as their goal', () => {
+    const plan = {
+      ...defaultPlan(day('2026-12-01'), bookCatalog),
+      defaultBlock: { unit: 'passes' as const, value: 3 },
+    };
+    const [first] = advanceBlocks(plan, [], bookCatalog, day('2026-12-01'));
+    expect(first.goalPasses).toBe(3);
+    expect(
+      advanceBlocks(
+        defaultPlan(day('2026-12-01'), bookCatalog),
+        [],
+        bookCatalog,
+        day('2026-12-01'),
+      )[0].goalPasses,
+    ).toBeNull();
   });
 });

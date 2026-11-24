@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { AdvanceBlocks, GetSchedule, type ScheduleView } from '@lectura/reading-application';
 import { ButtonComponent, CardComponent } from '@lectura/ui-components';
-import { describePace } from './plan-text';
+import { describeDuration, describePace } from './plan-text';
 
 @Component({
   selector: 'lb-plan-page',
@@ -27,7 +27,7 @@ import { describePace } from './plan-text';
           <h2 id="plan-summary" class="text-heading-2">{{ view.plan.name }}</h2>
           <ul class="flex flex-col gap-1">
             <li>{{ pace(view) }}</li>
-            <li i18n="@@reading.plan.block">Un libro por mes, leído las veces que quepan</li>
+            <li>{{ duration(view) }}</li>
             <li i18n="@@reading.plan.order">De menor a mayor número de capítulos</li>
             <li i18n="@@reading.plan.cycle">
               {{ view.entries.length }} libros en {{ view.months }} meses: del
@@ -108,6 +108,10 @@ export class PlanPage {
   protected readonly schedule = signal<ScheduleView | null>(null);
   protected readonly loaded = signal(false);
   protected readonly failed = signal(false);
+
+  protected duration(view: ScheduleView): string {
+    return describeDuration(view.plan.defaultBlock);
+  }
 
   protected pace(view: ScheduleView): string {
     return describePace(view.plan);
