@@ -1,18 +1,13 @@
-import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { render, screen } from '@testing-library/angular';
 import { App } from './app';
 
-describe('App (LB-001)', () => {
-  it('renders the app name as the main heading', async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-      providers: [provideRouter([])],
-    }).compileComponents();
+describe('App (LB-006)', () => {
+  it('shows the app name and the four main screens in the navigation', async () => {
+    await render(App, { providers: [provideRouter([])] });
 
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-
-    const heading = (fixture.nativeElement as HTMLElement).querySelector('h1');
-    expect(heading?.textContent).toContain('Lectura bíblica');
+    expect(screen.getByText('Lectura bíblica')).toBeTruthy();
+    for (const name of ['Hoy', 'Plan', 'Libros', 'Acerca de'])
+      expect(screen.getByRole('link', { name })).toBeTruthy();
   });
 });

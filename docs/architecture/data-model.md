@@ -13,7 +13,7 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
   "schemaVersion": 1,
   "app": "lectura-biblica",
   "exportedAt": "2026-12-03T21:15:00.000Z",
-  "settings": { "theme": "auto", "lastBackupAt": null },
+  "settings": { "lastBackupAt": null },
   "plan": {
     "name": "Un libro al mes",
     "startDate": "2026-12-01",
@@ -66,3 +66,4 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 - `startChapter` added to logs: the brief asks to record which chapters were read.
 - `bookId` added to notes: notes may belong to a book, not only to a block.
 - `app` added to the document to reject backups of other apps.
+- `theme` moved out of `settings` and out of backups (LB-006): it is a per-device preference kept in `localStorage` under `lectura-biblica.theme`, read synchronously before the first paint so a forced theme never flashes.
