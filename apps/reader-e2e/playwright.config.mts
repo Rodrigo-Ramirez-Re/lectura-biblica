@@ -13,6 +13,8 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
+    // The worker prefetches the whole app on every first load; only the suites about it need it.
+    serviceWorkers: 'block',
   },
   // With BASE_URL (e.g. a check against the published site) no local server is started.
   webServer: process.env['BASE_URL']

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { StorageGuard } from '@lectura/shared-kernel';
 import { CardComponent } from '@lectura/ui-components';
 import { appSettings } from '../app-config';
 import { ThemeService, type ThemeChoice } from '../theme/theme';
@@ -29,6 +30,16 @@ import { ThemeService, type ThemeChoice } from '../theme/theme';
           Tu plan y tu historial se guardan solo en este dispositivo. No pedimos cuenta, no
           recopilamos datos personales y no usamos rastreadores.
         </p>
+        @if (persisted() === true) {
+          <p class="text-success" i18n="@@reader.about.storage-persisted">
+            ✓ Almacenamiento persistente: el navegador no borrará tus datos por falta de espacio.
+          </p>
+        } @else if (persisted() === false) {
+          <p class="text-on-surface-muted" i18n="@@reader.about.storage-not-persisted">
+            Almacenamiento no persistente: el navegador podría borrar tus datos si no usas la
+            aplicación por un tiempo. Instálala y exporta respaldos para protegerlos.
+          </p>
+        }
       </section>
 
       <section lbCard aria-labelledby="about-theme">
@@ -70,4 +81,13 @@ export class AboutPage {
     { value: 'light', label: $localize`:@@reader.about.theme-light:Claro` },
     { value: 'dark', label: $localize`:@@reader.about.theme-dark:Oscuro` },
   ];
+
+  /** Null until the browser answers. */
+  protected readonly persisted = signal<boolean | null>(null);
+
+  constructor() {
+    inject(StorageGuard)
+      .isPersisted()
+      .then((persisted) => this.persisted.set(persisted));
+  }
 }

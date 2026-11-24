@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 const BASE = '/lectura-biblica/';
 
 test.describe('GitHub Pages sub-path (LB-008)', () => {
+  test.use({ serviceWorkers: 'allow' });
+
   test('requests every asset under the sub-path', async ({ page, baseURL }) => {
     const paths: string[] = [];
     page.on('request', (request) => {

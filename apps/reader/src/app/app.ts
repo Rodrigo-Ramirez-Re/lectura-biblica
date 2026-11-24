@@ -3,9 +3,10 @@ import { RouterOutlet } from '@angular/router';
 import { AppShellComponent, type NavItem } from '@lectura/ui-layout';
 import { appSettings } from './app-config';
 import { UpdateNotice } from './pwa/update-notice';
+import { StorageNotice } from './storage/storage-notice';
 
 @Component({
-  imports: [RouterOutlet, AppShellComponent, UpdateNotice],
+  imports: [RouterOutlet, AppShellComponent, UpdateNotice, StorageNotice],
   selector: 'lb-root',
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,7 +2,7 @@
 id: LB-010
 title: Local storage and data-safety notice
 epic: E1
-status: ready
+status: done
 phase: 1
 depends_on: [LB-006]
 ---
@@ -62,6 +62,14 @@ Backup files (LB-013).
 - None.
 
 ## Decisions
+
+- One IndexedDB database, `lectura-biblica` v1, opened by `libs/shared/infrastructure-browser` (stores `settings`, `plan`, `blocks`, `logs` with `date`/`blockId`/`bookId` indexes, `notes`). Contexts reach it through their own adapters; the reading one is `IndexedDbJournal`.
+- Ports: `JournalReader` (load everything) and `JournalWriter` (save plan, blocks, settings; add/remove logs; replace all in one transaction) in `reading-domain`; `StorageGuard` (available, persist, persisted) in the shared kernel.
+- Persistent storage is requested on the first write of a session, not on first load: the person has something worth keeping by then, and Firefox may show a prompt.
+- Device preferences (theme, notice seen) stay in `localStorage`; reading data in IndexedDB. Data model updated.
+- When IndexedDB cannot open, a red alert says nothing can be saved; the first-run notice is shown otherwise until "Entendido".
+- "Survives reloads" is covered by adapter tests against `fake-indexeddb` (two instances share the data); the end-to-end reload with real data lands with LB-011, the first screen that saves.
+- e2e blocks the service worker except in the PWA and sub-path suites: its prefetch on every first load made Firefox crash during axe scans and slowed lazy routes.
 
 ## Definition of done
 

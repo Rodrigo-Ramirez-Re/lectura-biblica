@@ -7,6 +7,10 @@ import {
 } from '@angular/core';
 import { TitleStrategy, provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import { JournalReader, JournalWriter } from '@lectura/reading-domain';
+import { IndexedDbJournal } from '@lectura/reading-infrastructure';
+import { BrowserStorageGuard } from '@lectura/shared-infrastructure-browser';
+import { StorageGuard } from '@lectura/shared-kernel';
 import { provideSpanishLocale } from '@lectura/shared-util-i18n';
 import { appRoutes } from './app.routes';
 import { AppTitleStrategy } from './navigation/app-title-strategy';
@@ -25,6 +29,10 @@ export const appConfig: ApplicationConfig = {
     }),
     { provide: TitleStrategy, useClass: AppTitleStrategy },
     { provide: ThemePreference, useClass: LocalStorageThemePreference },
+    { provide: StorageGuard, useFactory: () => new BrowserStorageGuard() },
+    { provide: IndexedDbJournal, useFactory: () => new IndexedDbJournal(inject(StorageGuard)) },
+    { provide: JournalReader, useExisting: IndexedDbJournal },
+    { provide: JournalWriter, useExisting: IndexedDbJournal },
     provideAppInitializer(() => {
       inject(ThemeService);
       focusHeadingOnNavigation();

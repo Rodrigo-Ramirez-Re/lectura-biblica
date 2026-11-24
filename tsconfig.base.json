@@ -18,7 +18,12 @@
       "@lectura/ui-components": ["./libs/ui/components/src/index.ts"],
       "@lectura/ui-layout": ["./libs/ui/layout/src/index.ts"],
       "@lectura/catalog-domain": ["./libs/catalog/domain/src/index.ts"],
-      "@lectura/catalog-feature-books": ["./libs/catalog/feature-books/src/index.ts"]
+      "@lectura/catalog-feature-books": ["./libs/catalog/feature-books/src/index.ts"],
+      "@lectura/shared-infrastructure-browser": [
+        "./libs/shared/infrastructure-browser/src/index.ts"
+      ],
+      "@lectura/reading-domain": ["./libs/reading/domain/src/index.ts"],
+      "@lectura/reading-infrastructure": ["./libs/reading/infrastructure/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

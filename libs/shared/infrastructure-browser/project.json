@@ -1,0 +1,17 @@
+{
+  "name": "shared-infrastructure-browser",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/infrastructure-browser/src",
+  "projectType": "library",
+  "tags": ["type:infrastructure", "scope:shared"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/shared/infrastructure-browser/tsconfig.lib.json",
+          "tsc --noEmit -p libs/shared/infrastructure-browser/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}
