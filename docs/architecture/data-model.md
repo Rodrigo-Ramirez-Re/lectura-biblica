@@ -67,3 +67,4 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 - `bookId` added to notes: notes may belong to a book, not only to a block.
 - `app` added to the document to reject backups of other apps.
 - `theme` moved out of `settings` and out of backups (LB-006): it is a per-device preference kept in `localStorage` under `lectura-biblica.theme`, read synchronously before the first paint so a forced theme never flashes.
+- The "data lives on this device" notice is remembered the same way (`lectura-biblica.data-notice`, LB-010): device preferences live in `localStorage`, reading data in IndexedDB.

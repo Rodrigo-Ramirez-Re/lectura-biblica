@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('PWA (LB-007)', () => {
+  test.use({ serviceWorkers: 'allow' });
+
   test('links the manifest and serves it', async ({ page, request }) => {
     await page.goto('./');
 

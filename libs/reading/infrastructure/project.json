@@ -1,0 +1,17 @@
+{
+  "name": "reading-infrastructure",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/reading/infrastructure/src",
+  "projectType": "library",
+  "tags": ["type:infrastructure", "scope:reading"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/reading/infrastructure/tsconfig.lib.json",
+          "tsc --noEmit -p libs/reading/infrastructure/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}

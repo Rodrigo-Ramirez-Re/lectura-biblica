@@ -1,4 +1,5 @@
 import { DOCUMENT, Injectable, inject, signal } from '@angular/core';
+import { readDevicePreference, writeDevicePreference } from '../preferences/device-preferences';
 
 export type ThemeChoice = 'auto' | 'light' | 'dark';
 
@@ -10,30 +11,18 @@ export abstract class ThemePreference {
   abstract write(choice: ThemeChoice): void;
 }
 
-/**
- * The theme is a per-device preference read before the first paint (see index.html), so it lives
- * in localStorage rather than IndexedDB, which is asynchronous. The key is namespaced because every
- * project site of the account shares the github.io origin.
- */
+/** index.html reads the same key before the first paint. */
 export const THEME_STORAGE_KEY = 'lectura-biblica.theme';
 
 @Injectable()
 export class LocalStorageThemePreference extends ThemePreference {
   read(): ThemeChoice {
-    try {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      return THEME_CHOICES.includes(stored as ThemeChoice) ? (stored as ThemeChoice) : 'auto';
-    } catch {
-      return 'auto';
-    }
+    const stored = readDevicePreference('theme');
+    return THEME_CHOICES.includes(stored as ThemeChoice) ? (stored as ThemeChoice) : 'auto';
   }
 
   write(choice: ThemeChoice): void {
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, choice);
-    } catch {
-      // Storage blocked (private mode): the choice still applies until the page is closed.
-    }
+    writeDevicePreference('theme', choice);
   }
 }
 

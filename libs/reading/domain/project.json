@@ -1,0 +1,17 @@
+{
+  "name": "reading-domain",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/reading/domain/src",
+  "projectType": "library",
+  "tags": ["type:domain", "scope:reading"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/reading/domain/tsconfig.lib.json",
+          "tsc --noEmit -p libs/reading/domain/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}
