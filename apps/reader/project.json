@@ -24,7 +24,8 @@
           }
         ],
         "styles": ["apps/reader/src/styles.css"],
-        "polyfills": ["@angular/localize/init"]
+        "polyfills": ["@angular/localize/init"],
+        "serviceWorker": "apps/reader/ngsw-config.json"
       },
       "configurations": {
         "production": {
@@ -45,7 +46,8 @@
         "development": {
           "optimization": false,
           "extractLicenses": false,
-          "sourceMap": true
+          "sourceMap": true,
+          "serviceWorker": false
         }
       }
     },

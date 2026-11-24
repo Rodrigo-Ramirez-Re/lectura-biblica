@@ -4,8 +4,18 @@
     <meta charset="utf-8" />
     <title>Lectura bíblica</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Planea, registra y analiza tu lectura de la Biblia." />
+    <meta name="theme-color" content="#1f5e5b" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#171512" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lectura" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <script>
       // Applies a forced theme before the first paint; ThemeService takes over after bootstrap.
       try {
@@ -16,5 +26,6 @@
   </head>
   <body>
     <lb-root></lb-root>
+    <noscript>Esta aplicación necesita JavaScript.</noscript>
   </body>
 </html>

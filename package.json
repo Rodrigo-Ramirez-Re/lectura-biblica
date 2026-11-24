@@ -74,6 +74,7 @@
     "nx": "24.0.6",
     "postcss": "^8.5.33",
     "prettier": "^3.8.1",
+    "sharp": "^0.34.5",
     "storybook": "^10.6.8",
     "tailwindcss": "^4.3.5",
     "tslib": "^2.3.0",
@@ -91,6 +92,7 @@
     "@angular/localize": "~22.2.6",
     "@angular/platform-browser": "~22.2.0",
     "@angular/router": "~22.2.0",
+    "@angular/service-worker": "~22.2.0",
     "rxjs": "~7.8.0"
   }
 }

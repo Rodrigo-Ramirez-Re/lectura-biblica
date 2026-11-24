@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AppShellComponent, type NavItem } from '@lectura/ui-layout';
 import { appSettings } from './app-config';
+import { UpdateNotice } from './pwa/update-notice';
 
 @Component({
-  imports: [RouterOutlet, AppShellComponent],
+  imports: [RouterOutlet, AppShellComponent, UpdateNotice],
   selector: 'lb-root',
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
