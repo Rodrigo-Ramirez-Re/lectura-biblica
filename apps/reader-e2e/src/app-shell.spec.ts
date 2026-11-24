@@ -26,8 +26,9 @@ test.describe('App shell (LB-006)', () => {
   test('titles each screen and moves focus to its heading', async ({ page }) => {
     await page.goto('./');
     await expect(page).toHaveTitle('Hoy · Lectura bíblica');
+    await expect(page.getByRole('heading', { level: 1, name: 'Hoy' })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Libros' }).click();
+    await page.getByRole('navigation').getByRole('link', { name: 'Libros' }).click();
 
     await expect(page).toHaveTitle('Libros · Lectura bíblica');
     await expect(page.getByRole('heading', { level: 1, name: 'Libros' })).toBeFocused();

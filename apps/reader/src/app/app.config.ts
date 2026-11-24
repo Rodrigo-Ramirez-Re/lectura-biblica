@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { TitleStrategy, provideRouter } from '@angular/router';
+import { TitleStrategy, provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideSpanishLocale } from '@lectura/shared-util-i18n';
 import { appRoutes } from './app.routes';
@@ -16,7 +16,7 @@ import { LocalStorageThemePreference, ThemePreference, ThemeService } from './th
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(appRoutes),
+    provideRouter(appRoutes, withComponentInputBinding()),
     provideSpanishLocale(),
     // Relative path: resolves under the GitHub Pages sub-path (ADR 0002).
     provideServiceWorker('ngsw-worker.js', {

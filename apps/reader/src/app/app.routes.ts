@@ -14,8 +14,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'libros',
-    title: $localize`:@@reader.nav.books:Libros`,
-    loadComponent: () => import('./pages/placeholder.page').then((m) => m.PlaceholderPage),
+    loadChildren: () => import('@lectura/catalog-feature-books').then((m) => m.bookRoutes),
   },
   {
     path: 'acerca',
