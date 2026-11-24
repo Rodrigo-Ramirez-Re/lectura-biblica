@@ -58,7 +58,12 @@ test.describe('Today (LB-012)', () => {
     await readingAbdias(page, '2026-12-03');
 
     await page.getByText('Otra cantidad u otro día').click();
-    await page.locator('input[type="date"]').fill('2026-12-02');
+    // The date field of 'Día': Hoy has other date fields, and a date input exposes its parts as 'Día', 'Mes', 'Año'.
+    await page
+      .locator('lb-form-field')
+      .filter({ has: page.getByText('Día', { exact: true }) })
+      .locator('input')
+      .fill('2026-12-02');
     await page.getByLabel('Capítulos').fill('4');
     await page.getByLabel('Capítulos').blur();
     await page.getByRole('button', { name: 'Registrar' }).click();
