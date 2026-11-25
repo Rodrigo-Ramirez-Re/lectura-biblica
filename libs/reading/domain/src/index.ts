@@ -2,6 +2,7 @@ export * from './lib/backup';
 export * from './lib/block-control';
 export * from './lib/journal';
 export * from './lib/journal.port';
+export * from './lib/log-edits';
 export * from './lib/pace';
 export * from './lib/progress';
 export * from './lib/reading-plan';

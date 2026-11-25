@@ -41,6 +41,14 @@ export class InMemoryJournal extends JournalReader implements JournalWriter {
     this.journal = { ...this.journal, logs: [...this.journal.logs, log] };
   }
 
+  async saveLogs(logs: readonly ReadingLogRecord[]): Promise<void> {
+    const ids = new Set(logs.map((log) => log.id));
+    this.journal = {
+      ...this.journal,
+      logs: [...this.journal.logs.filter((log) => !ids.has(log.id)), ...logs],
+    };
+  }
+
   async removeLog(id: string): Promise<void> {
     this.journal = { ...this.journal, logs: this.journal.logs.filter((log) => log.id !== id) };
   }

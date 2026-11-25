@@ -18,6 +18,11 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('@lectura/reading-feature-plan').then((m) => m.PlanEditorPage),
   },
   {
+    path: 'plan/bloque/:blockId',
+    title: $localize`:@@reading.block.title:Historial del libro`,
+    loadComponent: () => import('@lectura/reading-feature-plan').then((m) => m.BlockPage),
+  },
+  {
     path: 'libros',
     loadChildren: () => import('@lectura/catalog-feature-books').then((m) => m.bookRoutes),
   },

@@ -5,7 +5,9 @@ import {
   CheckBackupReminder,
   ControlCurrentBlock,
   DeleteAllData,
+  EditLogs,
   ExportBackup,
+  GetBlockHistory,
   GetBookProgress,
   GetPlan,
   GetSchedule,
@@ -91,6 +93,11 @@ export function provideReading(): Provider[] {
       useFactory: () => new CheckBackupReminder(inject(JournalReader), inject(Clock)),
     },
     { provide: GetPlan, useFactory: () => new GetPlan(inject(JournalReader)) },
+    { provide: GetBlockHistory, useFactory: () => new GetBlockHistory(inject(JournalReader)) },
+    {
+      provide: EditLogs,
+      useFactory: () => new EditLogs(inject(JournalReader), inject(JournalWriter), inject(Clock)),
+    },
     {
       provide: ControlCurrentBlock,
       useFactory: () =>
