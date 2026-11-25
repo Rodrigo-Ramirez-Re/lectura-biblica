@@ -2,7 +2,7 @@
 id: LB-022
 title: Plan templates
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-019]
 ---
@@ -61,14 +61,21 @@ A shared online gallery of templates.
 
 ## Open questions
 
-- [ ] What applying keeps — _Recommendation:_ the start date, the current block and the pause state; everything else comes from the template.
+- [x] What applying keeps — _Adopted:_ the start date, the current block and the pause state; everything else comes from the template.
 
 ## Decisions
 
+- Applying a template keeps the start date and the pause state and replaces the rest of the settings (name, pace, durations, order, exclusions, cycles). Stored blocks are untouched, so the current block stays and the change shows from the next projection, like any plan edit (LB-015).
+- "Un libro al mes" is a built-in template built from the default plan: it can be applied and exported, never deleted, and it is not stored.
+- "Guardar estas opciones como plantilla" saves the settings being edited, even unsaved ones, so a way of reading can be kept without applying it.
+- A template file is `{ app, kind: 'plan-template', schemaVersion, template: { name, settings } }`, validated with the same rules as a backup plan; an imported template gets a new id. File name: `plantilla-<slug>.json`.
+- A template keeps only the plan settings (`planSettings`): never the start date, the pause or unknown fields from an imported file.
+- `JournalWriter` gained `saveTemplate` and `removeTemplate`.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Docs updated

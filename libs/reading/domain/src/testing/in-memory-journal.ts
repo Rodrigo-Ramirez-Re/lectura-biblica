@@ -4,6 +4,7 @@ import {
   type Journal,
   type NoteRecord,
   type PlanRecord,
+  type PlanTemplateRecord,
   type ReadingLogRecord,
   type SettingsRecord,
 } from '../lib/journal';
@@ -63,6 +64,20 @@ export class InMemoryJournal extends JournalReader implements JournalWriter {
 
   async removeNote(id: string): Promise<void> {
     this.journal = { ...this.journal, notes: this.journal.notes.filter((n) => n.id !== id) };
+  }
+
+  async saveTemplate(template: PlanTemplateRecord): Promise<void> {
+    this.journal = {
+      ...this.journal,
+      templates: [...this.journal.templates.filter((t) => t.id !== template.id), template],
+    };
+  }
+
+  async removeTemplate(id: string): Promise<void> {
+    this.journal = {
+      ...this.journal,
+      templates: this.journal.templates.filter((t) => t.id !== id),
+    };
   }
 
   async saveSettings(settings: SettingsRecord): Promise<void> {

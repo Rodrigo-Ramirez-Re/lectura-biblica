@@ -2,11 +2,12 @@ import { Router, provideRouter } from '@angular/router';
 import {
   ControlCurrentBlock,
   GetPlan,
+  PlanTemplates,
   StartDefaultPlan,
   UpdatePlan,
 } from '@lectura/reading-application';
 import { InMemoryJournal } from '@lectura/reading-domain/testing';
-import { FixedClock } from '@lectura/shared-kernel/testing';
+import { FixedClock, InMemoryFileSaver, SequentialIds } from '@lectura/shared-kernel/testing';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { PlanEditorPage } from './plan-editor.page';
@@ -20,6 +21,10 @@ async function setup() {
       provideRouter([]),
       { provide: GetPlan, useValue: new GetPlan(journal) },
       { provide: UpdatePlan, useValue: new UpdatePlan(journal, journal) },
+      {
+        provide: PlanTemplates,
+        useValue: new PlanTemplates(journal, journal, new SequentialIds(), new InMemoryFileSaver()),
+      },
       { provide: ControlCurrentBlock, useValue: new ControlCurrentBlock(journal, journal, clock) },
     ],
   });
@@ -168,5 +173,48 @@ describe('PlanEditorPage — cycles (LB-019)', () => {
 
     expect(journal.journal.blocks.at(-1)).toMatchObject({ cycle: 2, bookId: 'abdias' });
     expect(navigate).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('PlanEditorPage — templates (LB-022)', () => {
+  it('saves the options being edited as a template', async () => {
+    const { user, journal } = await setup();
+
+    await setNumber(user, 'Capítulos al día', '5');
+    await user.type(screen.getByLabelText('Nombre de la plantilla'), 'Cinco al día');
+    await user.click(screen.getByRole('button', { name: 'Guardar estas opciones como plantilla' }));
+
+    expect(await screen.findByText('Plantilla guardada.')).toBeTruthy();
+    expect(journal.journal.templates[0]).toMatchObject({
+      name: 'Cinco al día',
+      settings: { chaptersPerDay: 5 },
+    });
+  });
+
+  it('applies a template after confirming, then goes to Plan', async () => {
+    const { user, journal, navigate } = await setup();
+    journal.journal = {
+      ...journal.journal,
+      plan: journal.journal.plan && { ...journal.journal.plan, chaptersPerDay: 7, name: 'Mío' },
+    };
+
+    await user.click(await screen.findByRole('button', { name: 'Aplicar Un libro al mes' }));
+    await user.click(screen.getByRole('button', { name: 'Sí' }));
+
+    expect(journal.journal.plan).toMatchObject({ name: 'Un libro al mes', chaptersPerDay: 3 });
+    expect(navigate).toHaveBeenCalledWith('/plan');
+  });
+
+  it('explains a file that is not a template', async () => {
+    const { user } = await setup();
+
+    await user.upload(
+      screen.getByLabelText('Importar plantilla'),
+      new File(['{"hola":1}'], 'x.json', { type: 'application/json' }),
+    );
+
+    expect(
+      await screen.findByText('El archivo no es una plantilla de esta aplicación.'),
+    ).toBeTruthy();
   });
 });

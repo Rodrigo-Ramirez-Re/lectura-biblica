@@ -111,8 +111,8 @@ export function upgradePlan(
   };
 }
 
-/** How a plan reads, without its dates: what a template keeps (LB-022). */
-export function planSettings(plan: PlanRecord): PlanSettings {
+/** Only the settings of a plan or template: drops the start date, the pause and anything unknown. */
+export function planSettings(plan: PlanSettings): PlanSettings {
   const { name, chaptersPerDay, restDays, paceByWeekday, bookOrder, excluded } = plan;
   return {
     name,
