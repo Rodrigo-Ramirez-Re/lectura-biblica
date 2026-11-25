@@ -15,6 +15,7 @@ import {
   ImportBackup,
   LogReading,
   Notes,
+  PlanTemplates,
   PreviewBackup,
   SetBlockGoal,
   StartDefaultPlan,
@@ -94,6 +95,16 @@ export function provideReading(): Provider[] {
       useFactory: () => new CheckBackupReminder(inject(JournalReader), inject(Clock)),
     },
     { provide: GetPlan, useFactory: () => new GetPlan(inject(JournalReader)) },
+    {
+      provide: PlanTemplates,
+      useFactory: () =>
+        new PlanTemplates(
+          inject(JournalReader),
+          inject(JournalWriter),
+          inject(IdGenerator),
+          inject(FileSaver),
+        ),
+    },
     {
       provide: Notes,
       useFactory: () =>

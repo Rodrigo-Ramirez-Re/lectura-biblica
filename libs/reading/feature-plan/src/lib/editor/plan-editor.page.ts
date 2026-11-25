@@ -12,6 +12,7 @@ import { CyclesSection } from './cycles-section';
 import { DurationSection } from './duration-section';
 import { OrderSection } from './order-section';
 import { PaceSection } from './pace-section';
+import { TemplatesSection } from './templates-section';
 
 /**
  * The plan editor (`/plan/editar`): a draft of the plan's settings, saved at once with
@@ -28,6 +29,7 @@ import { PaceSection } from './pace-section';
     DurationSection,
     OrderSection,
     CyclesSection,
+    TemplatesSection,
   ],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reading.editor.title">Editar plan</h1>
@@ -52,6 +54,7 @@ import { PaceSection } from './pace-section';
           (changed)="patch($event)"
           (restart)="restartCycle()"
         />
+        <lb-templates-section [settings]="plan" (applied)="toPlan()" />
 
         @if (error(); as message) {
           <p role="alert" class="font-semibold text-danger">{{ message }}</p>
@@ -106,6 +109,10 @@ export class PlanEditorPage {
     this.saving.set(false);
     if (result.ok) await this.router.navigateByUrl('/plan');
     else this.error.set(this.messages[result.error]);
+  }
+
+  protected async toPlan(): Promise<void> {
+    await this.router.navigateByUrl('/plan');
   }
 
   protected async restartCycle(): Promise<void> {

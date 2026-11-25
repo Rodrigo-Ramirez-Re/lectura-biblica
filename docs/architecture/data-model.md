@@ -57,7 +57,7 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 - **Pace:** `paceByWeekday` (7 numbers, Sunday first, 0 = rest) overrides `chaptersPerDay` and `restDays` when set.
 - **Durations:** `defaultBlock.unit` is `month`, `weeks`, `days` or `passes`; every block allows at least one pass at the plan's pace.
 - **Block statuses:** `active`, `done`, `skipped` (count as read in their cycle), `paused`, `replaced` (their book returns to the queue).
-- **Templates:** `{ id, name, settings }`, settings being the plan without `startDate` and `pausedSince`.
+- **Templates:** `{ id, name, settings }`, settings being the plan without `startDate` and `pausedSince`. Exported alone as `{ app: 'lectura-biblica', kind: 'plan-template', schemaVersion, template: { name, settings } }` (LB-022).
 
 - **Dates** are local calendar days `YYYY-MM-DD` (`LocalDate`), never timestamps, so a day never shifts with the time zone. Only `exportedAt` is an instant.
 - **Passes** over a book = Σ `chaptersRead` of its logs ÷ the book's chapters. One-chapter books are read several times a day this way.

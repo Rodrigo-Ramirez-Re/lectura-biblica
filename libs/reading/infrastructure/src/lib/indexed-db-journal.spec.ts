@@ -114,6 +114,17 @@ describe('IndexedDbJournal (LB-010)', () => {
     expect((await journal.load()).notes).toEqual([]);
   });
 
+  it('saves and removes plan templates (LB-022)', async () => {
+    const journal = new IndexedDbJournal(new FakeStorageGuard());
+    const template = { id: 't1', name: 'Mío', settings: planSettings(plan) };
+
+    await journal.saveTemplate(template);
+    expect((await journal.load()).templates).toEqual([template]);
+
+    await journal.removeTemplate('t1');
+    expect((await journal.load()).templates).toEqual([]);
+  });
+
   it('removes a log', async () => {
     const journal = new IndexedDbJournal(new FakeStorageGuard());
     await journal.addLog(log);

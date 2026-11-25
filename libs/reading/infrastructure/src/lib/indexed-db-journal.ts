@@ -91,6 +91,14 @@ export class IndexedDbJournal extends JournalReader implements JournalWriter {
     return this.write((db) => db.delete('notes', id));
   }
 
+  saveTemplate(template: PlanTemplateRecord): Promise<void> {
+    return this.write(async (db) => void (await db.put('templates', template)));
+  }
+
+  removeTemplate(id: string): Promise<void> {
+    return this.write((db) => db.delete('templates', id));
+  }
+
   saveSettings(settings: SettingsRecord): Promise<void> {
     return this.write(async (db) => void (await db.put('settings', settings, SINGLE)));
   }

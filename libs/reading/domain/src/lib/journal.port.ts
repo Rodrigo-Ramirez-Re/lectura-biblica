@@ -3,6 +3,7 @@ import type {
   Journal,
   NoteRecord,
   PlanRecord,
+  PlanTemplateRecord,
   ReadingLogRecord,
   SettingsRecord,
 } from './journal';
@@ -21,6 +22,8 @@ export abstract class JournalWriter {
   abstract saveLogs(logs: readonly ReadingLogRecord[]): Promise<void>;
   abstract saveNote(note: NoteRecord): Promise<void>;
   abstract removeNote(id: string): Promise<void>;
+  abstract saveTemplate(template: PlanTemplateRecord): Promise<void>;
+  abstract removeTemplate(id: string): Promise<void>;
   abstract saveSettings(settings: SettingsRecord): Promise<void>;
   /** Replaces everything in one transaction: all of it is written, or nothing changes. */
   abstract replaceAll(journal: Journal): Promise<void>;

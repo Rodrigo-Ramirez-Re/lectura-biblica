@@ -8,6 +8,7 @@ import {
   type BlockRecord,
   type BlockStatus,
   type BlockUnit,
+  type PlanSettings,
   type PlanTemplateRecord,
   type Journal,
   type NoteRecord,
@@ -136,6 +137,10 @@ const isCount = (value: unknown, min = 0) =>
 const isTextList = (value: unknown) => Array.isArray(value) && value.every(isText);
 const listOf = (value: unknown, check: (item: Shape) => boolean) =>
   Array.isArray(value) && value.every((item) => isObject(item) && check(item));
+
+/** The shape of plan settings, as stored in plans, templates and template files. */
+export const isPlanSettings = (plan: unknown): plan is PlanSettings =>
+  isObject(plan) && isSettings(plan);
 
 const isSettings = (plan: Shape) =>
   isText(plan['name']) &&
