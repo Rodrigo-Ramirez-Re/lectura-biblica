@@ -2,7 +2,7 @@
 id: LB-020
 title: Edit and delete logs
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-018]
 ---
@@ -52,9 +52,14 @@ Bulk edits; notes (LB-021).
 
 ## Open questions
 
-- [ ] Renumbering — _Recommendation:_ yes, renumber `startChapter` of the block's logs in date order after every change; passes do not depend on it.
+- [x] Renumbering — _Recommendation (adopted):_ yes, renumber `startChapter` of the block's logs in date order after every change; passes do not depend on it.
 
 ## Decisions
+
+- Each recorded block has its page, `/plan/bloque/:blockId`, linked from its row on Plan: book, dates, passes and every log, newest first, with "Editar" (day within the block up to today, and amount) and "Borrar" (confirmed).
+- After an edit or a delete the block's logs are renumbered in date order (logs of one day keep the order they were made), so the chapters each log covers stay consecutive; passes and progress never depended on it.
+- `JournalWriter.saveLogs` writes edited logs by id.
+- Local e2e runs use 2 workers: more made the three engines starve each other on a laptop; CI runs one.
 
 ## Definition of done
 

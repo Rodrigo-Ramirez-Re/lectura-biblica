@@ -72,6 +72,13 @@ export class IndexedDbJournal extends JournalReader implements JournalWriter {
     return this.write(async (db) => void (await db.put('logs', log)));
   }
 
+  saveLogs(logs: readonly ReadingLogRecord[]): Promise<void> {
+    return this.write(async (db) => {
+      const tx = db.transaction('logs', 'readwrite');
+      await Promise.all([...logs.map((log) => tx.store.put(log)), tx.done]);
+    });
+  }
+
   removeLog(id: string): Promise<void> {
     return this.write((db) => db.delete('logs', id));
   }

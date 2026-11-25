@@ -10,6 +10,8 @@ export abstract class JournalWriter {
   abstract removeBlock(id: string): Promise<void>;
   abstract addLog(log: ReadingLogRecord): Promise<void>;
   abstract removeLog(id: string): Promise<void>;
+  /** Saves logs that already exist or new ones, by id. */
+  abstract saveLogs(logs: readonly ReadingLogRecord[]): Promise<void>;
   abstract saveSettings(settings: SettingsRecord): Promise<void>;
   /** Replaces everything in one transaction: all of it is written, or nothing changes. */
   abstract replaceAll(journal: Journal): Promise<void>;

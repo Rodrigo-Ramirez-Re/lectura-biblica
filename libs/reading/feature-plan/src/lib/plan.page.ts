@@ -65,7 +65,15 @@ import { describeDuration, describeOrder, describePace } from './plan-text';
                 [attr.aria-current]="entry.state === 'current' ? 'step' : null"
               >
                 <span>
-                  <span class="font-display text-heading-3">{{ entry.bookName }}</span>
+                  @if (entry.blockId; as blockId) {
+                    <a
+                      class="font-display text-heading-3 text-primary underline-offset-4 hover:underline focus-visible:focus-ring"
+                      [routerLink]="['/plan/bloque', blockId]"
+                      >{{ entry.bookName }}</a
+                    >
+                  } @else {
+                    <span class="font-display text-heading-3">{{ entry.bookName }}</span>
+                  }
                   <span class="block text-body-sm text-on-surface-muted">
                     {{ entry.start.toDate() | date: 'd MMM y' }} –
                     {{ entry.end.toDate() | date: 'd MMM y' }}

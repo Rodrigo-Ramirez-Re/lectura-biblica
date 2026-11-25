@@ -94,6 +94,15 @@ describe('IndexedDbJournal (LB-010)', () => {
     expect((await journal.load()).blocks).toEqual([]);
   });
 
+  it('saves edited logs by id (LB-020)', async () => {
+    const journal = new IndexedDbJournal(new FakeStorageGuard());
+    await journal.addLog(log);
+
+    await journal.saveLogs([{ ...log, chaptersRead: 5 }]);
+
+    expect((await journal.load()).logs).toEqual([{ ...log, chaptersRead: 5 }]);
+  });
+
   it('removes a log', async () => {
     const journal = new IndexedDbJournal(new FakeStorageGuard());
     await journal.addLog(log);
