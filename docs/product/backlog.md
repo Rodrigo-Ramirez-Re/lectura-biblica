@@ -54,6 +54,15 @@ Each person builds their own way of reading and can change it without losing his
 
 The seven metrics of [[product/spec#4. Insights|spec §4]], each with an SVG chart and its equivalent table, empty states with little data, and CSV export of the history.
 
+| ID                                          | Story                                                         | Depends on |
+| ------------------------------------------- | ------------------------------------------------------------- | ---------- |
+| [[stories/LB-023-insights-on-pace\|LB-023]] | Insights page, chart kit and "¿Voy al día?"                   | 022        |
+| [[stories/LB-024-consistency\|LB-024]]      | Consistency: streaks and the month's calendar                 | 023        |
+| [[stories/LB-025-passes-per-book\|LB-025]]  | Passes per book                                               | 023        |
+| [[stories/LB-026-cycle-progress\|LB-026]]   | Cycle progress and estimated end at the real pace             | 023        |
+| [[stories/LB-027-reading-habits\|LB-027]]   | Reading habits: weekdays, 7-day average, days without reading | 023        |
+| [[stories/LB-028-monthly-history\|LB-028]]  | Monthly history and CSV export                                | 023        |
+
 ## Phase 4 — Support and polish (E5)
 
 Configurable donation link, install help (Android, iPhone, desktop), accessibility audit, Lighthouse in CI, backup reminders tuning.
