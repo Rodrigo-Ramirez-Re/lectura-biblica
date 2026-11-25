@@ -5,6 +5,7 @@ import {
   changeBook,
   moveOn,
   pause,
+  restartCycle,
   resume,
   type BlockChanges,
   type BlockControlError,
@@ -63,6 +64,11 @@ export class ControlCurrentBlock {
 
   resume(): Promise<Result<void, BlockControlError>> {
     return this.run((journal, today) => resume(journal, today, this.catalog));
+  }
+
+  /** Starts the next cycle today with the first book; the history stays (LB-019). */
+  restartCycle(): Promise<Result<void, BlockControlError>> {
+    return this.run((journal, today) => restartCycle(journal, today, this.catalog));
   }
 
   changeEnd(end: LocalDate): Promise<Result<void, BlockControlError>> {

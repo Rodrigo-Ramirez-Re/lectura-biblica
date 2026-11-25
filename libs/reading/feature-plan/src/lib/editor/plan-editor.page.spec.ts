@@ -1,5 +1,10 @@
 import { Router, provideRouter } from '@angular/router';
-import { GetPlan, StartDefaultPlan, UpdatePlan } from '@lectura/reading-application';
+import {
+  ControlCurrentBlock,
+  GetPlan,
+  StartDefaultPlan,
+  UpdatePlan,
+} from '@lectura/reading-application';
 import { InMemoryJournal } from '@lectura/reading-domain/testing';
 import { FixedClock } from '@lectura/shared-kernel/testing';
 import { render, screen } from '@testing-library/angular';
@@ -8,12 +13,14 @@ import { PlanEditorPage } from './plan-editor.page';
 
 async function setup() {
   const journal = new InMemoryJournal();
-  await new StartDefaultPlan(journal, journal, new FixedClock('2026-12-01')).execute('today');
+  const clock = new FixedClock('2026-12-01');
+  await new StartDefaultPlan(journal, journal, clock).execute('today');
   const result = await render(PlanEditorPage, {
     providers: [
       provideRouter([]),
       { provide: GetPlan, useValue: new GetPlan(journal) },
       { provide: UpdatePlan, useValue: new UpdatePlan(journal, journal) },
+      { provide: ControlCurrentBlock, useValue: new ControlCurrentBlock(journal, journal, clock) },
     ],
   });
   await result.fixture.whenStable();
@@ -138,5 +145,28 @@ describe('PlanEditorPage — order (LB-017)', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     expect(journal.journal.plan?.excluded).toEqual(['cantares']);
+  });
+});
+
+describe('PlanEditorPage — cycles (LB-019)', () => {
+  it('saves a number of cycles', async () => {
+    const { user, journal } = await setup();
+
+    await user.click(screen.getByRole('radio', { name: 'Un número de ciclos' }));
+    await setNumber(user, 'Número de ciclos', '3');
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(journal.journal.plan?.cyclesTarget).toBe(3);
+  });
+
+  it('restarts the cycle only after confirming, then goes to Hoy', async () => {
+    const { user, journal, navigate } = await setup();
+
+    await user.click(screen.getByRole('button', { name: 'Reiniciar el ciclo' }));
+    expect(journal.journal.blocks.every((block) => block.cycle === 1)).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Sí, reiniciar' }));
+
+    expect(journal.journal.blocks.at(-1)).toMatchObject({ cycle: 2, bookId: 'abdias' });
+    expect(navigate).toHaveBeenCalledWith('/');
   });
 });

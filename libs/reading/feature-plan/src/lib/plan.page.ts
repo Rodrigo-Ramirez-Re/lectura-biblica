@@ -26,6 +26,13 @@ import { describeDuration, describeOrder, describePace } from './plan-text';
         <section lbCard aria-labelledby="plan-summary" class="mt-section">
           <h2 id="plan-summary" class="text-heading-2">{{ view.plan.name }}</h2>
           <ul class="flex flex-col gap-1">
+            <li>
+              @if (view.cyclesTarget; as target) {
+                <span i18n="@@reading.plan.cycle-of">Ciclo {{ view.cycle }} de {{ target }}</span>
+              } @else {
+                <span i18n="@@reading.plan.cycle-number">Ciclo {{ view.cycle }}</span>
+              }
+            </li>
             <li>{{ pace(view) }}</li>
             <li>{{ duration(view) }}</li>
             <li>{{ order(view) }}</li>

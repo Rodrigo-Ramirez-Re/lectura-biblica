@@ -71,7 +71,7 @@ export function projectSchedule(
   recorded: readonly BlockRecord[],
   catalog: BookCatalog,
 ): ScheduledBlock[] {
-  const cycle = Math.max(1, ...recorded.map((block) => block.cycle));
+  const cycle = currentCycle(recorded);
   const past: ScheduledBlock[] = recorded
     .filter((block) => block.cycle === cycle)
     .sort((a, b) => a.start.localeCompare(b.start))
@@ -92,16 +92,34 @@ export function projectSchedule(
     .sort()
     .at(-1);
   let start = lastEnd ? date(lastEnd).plusDays(1) : date(plan.startDate);
-  const upcoming: ScheduledBlock[] = [];
-  for (const bookId of plan.bookOrder) {
-    if (read.has(bookId) || plan.excluded.includes(bookId)) continue;
-    const book = catalog.find(bookId);
-    if (!book) continue;
-    const end = blockEnd(start, book.chapters, plan);
-    upcoming.push({ bookId, cycle, start, end, id: null, status: null });
-    start = end.plusDays(1);
-  }
+  const project = (inCycle: number, skip: ReadonlySet<string>) => {
+    const blocks: ScheduledBlock[] = [];
+    for (const bookId of plan.bookOrder) {
+      if (skip.has(bookId) || plan.excluded.includes(bookId)) continue;
+      const book = catalog.find(bookId);
+      if (!book) continue;
+      const end = blockEnd(start, book.chapters, plan);
+      blocks.push({ bookId, cycle: inCycle, start, end, id: null, status: null });
+      start = end.plusDays(1);
+    }
+    return blocks;
+  };
+
+  const upcoming = project(cycle, read);
+  // A finished cycle is followed by the next one, unless the plan's number of cycles is reached.
+  if (!upcoming.length && !cycleLimitReached(plan, cycle))
+    upcoming.push(...project(cycle + 1, new Set()));
   return [...past, ...upcoming];
+}
+
+/** Whether the plan's number of cycles is reached once `cycle` is complete (LB-019). */
+export function cycleLimitReached(plan: Pick<PlanRecord, 'cyclesTarget'>, cycle: number): boolean {
+  return plan.cyclesTarget !== null && cycle >= plan.cyclesTarget;
+}
+
+/** The cycle being read: the highest one recorded, or 1 before anything is (LB-019). */
+export function currentCycle(recorded: readonly BlockRecord[]): number {
+  return Math.max(1, ...recorded.map((block) => block.cycle));
 }
 
 /**
@@ -119,11 +137,16 @@ export function advanceBlocks(
     .map((block) => ({ ...block, status: 'done' as const }));
   if (plan.pausedSince) return changes;
 
-  for (const block of projectSchedule(plan, recorded, catalog)) {
-    if (block.id || block.start.isAfter(today)) continue;
-    changes.push(recordOf(block, plan, block.end.isBefore(today) ? 'done' : 'active'));
+  // Each pass may complete a cycle and reveal the next one, so repeat until nothing new starts.
+  let all = [...recorded.filter((block) => !changes.some((c) => c.id === block.id)), ...changes];
+  for (;;) {
+    const started = projectSchedule(plan, all, catalog)
+      .filter((block) => !block.id && !block.start.isAfter(today))
+      .map((block) => recordOf(block, plan, block.end.isBefore(today) ? 'done' : 'active'));
+    if (!started.length) return changes;
+    changes.push(...started);
+    all = [...all, ...started];
   }
-  return changes;
 }
 
 /** The record of a projected block when it starts. */

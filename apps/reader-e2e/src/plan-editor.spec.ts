@@ -127,3 +127,28 @@ test.describe('Plan editor — book order (LB-017)', () => {
     await expect(page.getByText('Filemón ahora es el 1 de 66')).toBeAttached();
   });
 });
+
+test.describe('Plan editor — cycles (LB-019)', () => {
+  test('a number of cycles shows on Plan', async ({ page }) => {
+    await openEditor(page);
+
+    await page.getByRole('radio', { name: 'Un número de ciclos' }).check();
+    await setNumber(page, 'Número de ciclos', '3');
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+
+    await expect(page.getByText('Ciclo 1 de 3')).toBeVisible();
+  });
+
+  test('restarts the cycle and keeps the history', async ({ page }) => {
+    await openEditor(page);
+
+    await page.getByRole('button', { name: 'Reiniciar el ciclo' }).click();
+    await page.getByRole('button', { name: 'Sí, reiniciar' }).click();
+
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Abdías', exact: true }),
+    ).toBeVisible();
+    await page.getByRole('navigation').getByRole('link', { name: 'Plan' }).click();
+    await expect(page.getByText('Ciclo 2')).toBeVisible();
+  });
+});

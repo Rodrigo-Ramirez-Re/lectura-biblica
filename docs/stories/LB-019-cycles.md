@@ -2,7 +2,7 @@
 id: LB-019
 title: Cycles
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-018]
 ---
@@ -52,9 +52,15 @@ Per-cycle insights (phase 3).
 
 ## Open questions
 
-- [ ] Automatic next cycle — _Recommendation:_ yes, unless the plan's number of cycles is reached.
+- [x] Automatic next cycle — _Recommendation (adopted):_ yes, unless the plan's number of cycles is reached.
 
 ## Decisions
+
+- The current cycle is the highest recorded one. When every included book of it is read (done, skipped or running), the projection continues with the next cycle from the day after the last block, unless the plan's number of cycles is reached.
+- `advanceBlocks` repeats until nothing new starts, so opening the app after a long absence records the blocks of every cycle that passed.
+- "Reiniciar el ciclo" (editor, confirmed) closes the current book as read in its cycle and records the first included book of the order in the next cycle, from today (or tomorrow if today is logged); a pause ends too. Every block and log stays.
+- Plan shows "Ciclo N" or "Ciclo N de M" and only the current cycle's blocks; Hoy says the journey is finished when every cycle is read.
+- e2e assertions wait up to 10 s: the production build in three engines at once is slow to answer under load on a laptop.
 
 ## Definition of done
 
