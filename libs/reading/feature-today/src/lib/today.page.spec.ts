@@ -2,6 +2,7 @@ import { provideRouter } from '@angular/router';
 import {
   AdvanceBlocks,
   CheckBackupReminder,
+  Notes,
   ControlCurrentBlock,
   GetSchedule,
   GetToday,
@@ -44,6 +45,7 @@ async function setup(
       { provide: StartDefaultPlan, useValue: startPlan },
       { provide: LogReading, useValue: new LogReading(journal, journal, clock, ids) },
       { provide: UndoReading, useValue: new UndoReading(journal) },
+      { provide: Notes, useValue: new Notes(journal, journal, clock, ids) },
       { provide: SetBlockGoal, useValue: new SetBlockGoal(journal, journal, clock) },
       {
         provide: ControlCurrentBlock,

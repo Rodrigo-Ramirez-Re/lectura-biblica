@@ -2,7 +2,7 @@
 id: LB-021
 title: Notes
 epic: E3
-status: ready
+status: done
 phase: 2
 depends_on: [LB-020]
 ---
@@ -56,9 +56,14 @@ Rich text, notes per chapter, sharing notes.
 
 ## Open questions
 
-- [ ] Several notes per book — _Recommendation:_ yes, any number; each with its date.
+- [x] Several notes per book — _Recommendation (adopted):_ yes, any number; each with its date.
 
 ## Decisions
+
+- One component, "Tus notas", on Hoy (with a field to write about the book being read) and as a book page section registered through `BOOK_SECTIONS` (list, edit, delete with confirmation).
+- A note keeps its text as written, trimmed, up to 5,000 characters; empty notes are refused. Notes written on Hoy carry the date, the book and the current block.
+- Notes are rendered as text with `white-space: pre-line`, so line breaks show and HTML never runs.
+- `JournalWriter` gained `saveNote` and `removeNote`.
 
 ## Definition of done
 

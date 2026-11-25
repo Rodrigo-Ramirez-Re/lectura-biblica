@@ -1,4 +1,11 @@
-import type { BlockRecord, Journal, PlanRecord, ReadingLogRecord, SettingsRecord } from './journal';
+import type {
+  BlockRecord,
+  Journal,
+  NoteRecord,
+  PlanRecord,
+  ReadingLogRecord,
+  SettingsRecord,
+} from './journal';
 
 export abstract class JournalReader {
   abstract load(): Promise<Journal>;
@@ -12,6 +19,8 @@ export abstract class JournalWriter {
   abstract removeLog(id: string): Promise<void>;
   /** Saves logs that already exist or new ones, by id. */
   abstract saveLogs(logs: readonly ReadingLogRecord[]): Promise<void>;
+  abstract saveNote(note: NoteRecord): Promise<void>;
+  abstract removeNote(id: string): Promise<void>;
   abstract saveSettings(settings: SettingsRecord): Promise<void>;
   /** Replaces everything in one transaction: all of it is written, or nothing changes. */
   abstract replaceAll(journal: Journal): Promise<void>;
