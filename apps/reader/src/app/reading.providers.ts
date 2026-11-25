@@ -14,6 +14,7 @@ import {
   GetToday,
   ImportBackup,
   LogReading,
+  Notes,
   PreviewBackup,
   SetBlockGoal,
   StartDefaultPlan,
@@ -93,6 +94,19 @@ export function provideReading(): Provider[] {
       useFactory: () => new CheckBackupReminder(inject(JournalReader), inject(Clock)),
     },
     { provide: GetPlan, useFactory: () => new GetPlan(inject(JournalReader)) },
+    {
+      provide: Notes,
+      useFactory: () =>
+        new Notes(inject(JournalReader), inject(JournalWriter), inject(Clock), inject(IdGenerator)),
+    },
+    {
+      provide: BOOK_SECTIONS,
+      multi: true,
+      useValue: {
+        order: 20,
+        load: () => import('@lectura/reading-feature-today').then((m) => m.BookNotesSection),
+      },
+    },
     { provide: GetBlockHistory, useFactory: () => new GetBlockHistory(inject(JournalReader)) },
     {
       provide: EditLogs,

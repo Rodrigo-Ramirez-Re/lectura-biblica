@@ -29,6 +29,7 @@ import {
   StepperComponent,
 } from '@lectura/ui-components';
 import { BackupReminderState } from './backup-reminder.state';
+import { BookNotesSection } from './book-notes.section';
 import { describeReading } from './describe-reading';
 
 const UNDO_SECONDS = 10;
@@ -41,6 +42,7 @@ interface LastLog {
 @Component({
   selector: 'lb-today-page',
   imports: [
+    BookNotesSection,
     RouterLink,
     DatePipe,
     DecimalPipe,
@@ -341,6 +343,7 @@ interface LastLog {
             </div>
           </details>
         </section>
+        <lb-book-notes class="mt-section block" [bookId]="view.bookId" [canAdd]="true" />
       } @else if (schedule(); as plan) {
         @if (plan.plan.pausedSince; as since) {
           <section lbCard aria-labelledby="paused-title" class="mt-section">

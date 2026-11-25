@@ -2,6 +2,7 @@ import {
   emptyJournal,
   type BlockRecord,
   type Journal,
+  type NoteRecord,
   type PlanRecord,
   type ReadingLogRecord,
   type SettingsRecord,
@@ -51,6 +52,17 @@ export class InMemoryJournal extends JournalReader implements JournalWriter {
 
   async removeLog(id: string): Promise<void> {
     this.journal = { ...this.journal, logs: this.journal.logs.filter((log) => log.id !== id) };
+  }
+
+  async saveNote(note: NoteRecord): Promise<void> {
+    this.journal = {
+      ...this.journal,
+      notes: [...this.journal.notes.filter((n) => n.id !== note.id), note],
+    };
+  }
+
+  async removeNote(id: string): Promise<void> {
+    this.journal = { ...this.journal, notes: this.journal.notes.filter((n) => n.id !== id) };
   }
 
   async saveSettings(settings: SettingsRecord): Promise<void> {

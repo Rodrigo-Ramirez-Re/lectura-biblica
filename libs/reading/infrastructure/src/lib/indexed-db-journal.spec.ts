@@ -103,6 +103,17 @@ describe('IndexedDbJournal (LB-010)', () => {
     expect((await journal.load()).logs).toEqual([{ ...log, chaptersRead: 5 }]);
   });
 
+  it('saves, updates and removes notes (LB-021)', async () => {
+    const journal = new IndexedDbJournal(new FakeStorageGuard());
+    const note = { id: 'n1', blockId: 'b1', bookId: 'abdias', date: '2026-12-03', text: 'Edom' };
+    await journal.saveNote(note);
+    await journal.saveNote({ ...note, text: 'Edom y Jacob' });
+    expect((await journal.load()).notes).toEqual([{ ...note, text: 'Edom y Jacob' }]);
+
+    await journal.removeNote('n1');
+    expect((await journal.load()).notes).toEqual([]);
+  });
+
   it('removes a log', async () => {
     const journal = new IndexedDbJournal(new FakeStorageGuard());
     await journal.addLog(log);
