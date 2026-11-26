@@ -2,7 +2,7 @@
 id: LB-028
 title: Monthly history and CSV export
 epic: E4
-status: ready
+status: done
 phase: 3
 depends_on: [LB-023]
 ---
@@ -56,21 +56,27 @@ Importing CSV (the JSON backup is the way to restore, LB-013).
 
 ## Technical notes
 
-- Domain: `monthlyHistory(journal, catalog)` and `historyCsv(journal, catalog)`; the CSV is built in the domain as text and saved through `FileSaver`.
+- Domain: `monthlyHistory(journal, catalog, today)` and `historyCsv(journal, catalog)`; the CSV is built in the domain as text and saved through `FileSaver`.
 - A month is a calendar month; a block appears in each month it covers, with what was read in that month.
 
 ## Open questions
 
-- [ ] CSV columns — _Recommendation:_ `fecha, libro, desde, hasta, capitulos, ciclo`, Spanish headers and book names, comma-separated, UTF-8 with BOM so Excel keeps the accents; `hasta` wraps like a log's range (data model).
-- [ ] Goal per month — _Recommendation:_ shown on the month the block ends; a block still active shows "en curso".
+- [x] CSV columns — _Adopted:_ `fecha, libro, desde, hasta, capitulos, ciclo`, Spanish headers and book names, comma-separated, UTF-8 with BOM so Excel keeps the accents; `hasta` wraps like a log's range (data model).
+- [x] Goal per month — _Adopted:_ shown on the month the block ends; a block still active shows "en curso".
 
 ## Decisions
 
+- Both open questions were adopted as recommended: the CSV has the columns `fecha, libro, desde, hasta, capitulos, ciclo`, Spanish headers and book names, comma-separated, UTF-8 with BOM and CRLF line ends, fields quoted only when needed; a block's goal shows on the month it ends, as "cumplida", "no cumplida" or "en curso" while the block is still active.
+- A month lists one entry per book even if the book had two blocks that month (paused and resumed, or changed and back), with the chapters read of it that month as passes, and the notes written about it that month. The book name links to its book page, where the notes are.
+- Months come from the blocks that ran (up to today), newest first, so a month with a block but nothing read still shows with 0 chapters; months without any block (a pause) don't appear.
+- The history is a real table (month as row header, books, chapters) rather than a chart, scrolling inside the card when it grows; "Exportar historial (CSV)" sits under it and confirms with "Historial exportado."
+- New `ExportHistory` use case saves the file through `FileSaver` as `lectura-biblica-historial-YYYY-MM-DD.csv`; nothing is offered before the first reading.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated
