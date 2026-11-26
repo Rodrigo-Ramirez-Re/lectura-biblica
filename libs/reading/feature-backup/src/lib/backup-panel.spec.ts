@@ -141,7 +141,7 @@ describe('BackupPanel — reminders (LB-031)', () => {
   it('saves the choice', async () => {
     const { user, journal, fixture } = await setup();
 
-    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), 'Cada semana');
+    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), '7');
     await fixture.whenStable();
 
     expect(journal.journal.settings.backupEveryDays).toBe(7);
@@ -150,7 +150,7 @@ describe('BackupPanel — reminders (LB-031)', () => {
   it('says reminders are off after choosing "Nunca"', async () => {
     const { user, journal, fixture } = await setup();
 
-    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), 'Nunca');
+    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), 'never');
     await fixture.whenStable();
 
     expect(journal.journal.settings.backupEveryDays).toBeNull();

@@ -2,7 +2,7 @@
 id: LB-031
 title: Backup reminders tuning
 epic: E5
-status: ready
+status: done
 phase: 4
 depends_on: [LB-013]
 ---
@@ -67,18 +67,34 @@ Feature: Backup reminders
 
 ## Open questions
 
-- [ ] Where the preference lives — _Recommendation:_ in the journal's settings, so it travels with backups and restores on another device, instead of a per-device preference.
-- [ ] How long "Ahora no" lasts — _Recommendation:_ 7 days; with a weekly reminder that is simply the next one.
-- [ ] What counts as new — _Recommendation:_ a reading log dated after the day of the last backup; editing old logs or the plan alone doesn't trigger it, since logs are what can't be rebuilt.
-- [ ] First reminder — _Recommendation:_ unchanged: never exported and logs on 7 days (unless "nunca").
+- [x] Where the preference lives — _Adopted:_ in the journal's settings, so it travels with backups and restores on another device, instead of a per-device preference.
+- [x] How long "Ahora no" lasts — _Adopted:_ 7 days; with a weekly reminder that is simply the next one.
+- [x] What counts as new — _Adopted:_ a reading log dated after the day of the last backup; editing old logs or the plan alone doesn't trigger it, since logs are what can't be rebuilt.
+- [x] First reminder — _Adopted:_ unchanged: never exported and logs on 7 days (unless "nunca").
 
 ## Decisions
 
+- All four open questions were adopted as recommended:
+  - The preference lives in the journal's `settings`, so it travels with backups.
+  - "Ahora no" lasts 7 days.
+  - "Something new" means a reading log dated after the local day of the last backup.
+  - The first reminder is unchanged: logs on 7 days and no export ever, unless "Nunca".
+- Data model v3:
+  - `settings.backupEveryDays` (7, 14, 30 or 90, or `null` for never) and `settings.backupReminderPostponedUntil` (the first day the reminder may come back).
+  - The backup migration 2 → 3 fills 30 and `null`.
+  - The device database needs no new object store: settings stored by version 2 are completed when read (`upgradeSettings`), like plans in v2.
+  - Imports of v3 files reject other intervals and postponements that are not a day.
+- An interval keeps LB-013's meaning of "older than": with "cada semana" a backup made on the 5th is due from the 13th. That matches "over 30 days" for the monthly default.
+- The frequency is a select in the backup panel ("Recordarme hacer un respaldo"). With "Nunca" the panel says reminders are off and you decide when to export.
+- The reminder on Hoy now says when the last backup was ("Tu último respaldo fue el 3 de octubre de 2026.") or that there was none.
+- "Ahora no" and a new frequency are saved before the screen changes, so closing the app right after can't lose them.
+- `BackupReminderState` (the session-only dismissal) was removed: the postponement is stored.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated (data model)
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated (data model)
