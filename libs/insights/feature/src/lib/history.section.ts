@@ -22,9 +22,15 @@ import { ButtonComponent, CardComponent } from '@lectura/ui-components';
         ¿Qué pasó cada mes?
       </h2>
       @if (months().length) {
-        <div class="max-h-[32rem] overflow-auto">
+        <!-- Focusable so keyboard users can scroll a long history (WCAG 2.1.1). -->
+        <div
+          class="max-h-[32rem] overflow-auto rounded-control focus-visible:focus-ring"
+          tabindex="0"
+          role="region"
+          aria-labelledby="history-caption"
+        >
           <table class="w-full border-collapse text-left text-body-sm">
-            <caption class="sr-only" i18n="@@insights.history.caption">
+            <caption id="history-caption" class="sr-only" i18n="@@insights.history.caption">
               Tu historial, mes por mes
             </caption>
             <thead>

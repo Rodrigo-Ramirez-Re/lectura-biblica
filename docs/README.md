@@ -18,6 +18,7 @@ Obsidian-compatible vault (open the `docs/` folder as a vault). Never deployed.
 
 - [[operations/deploy|Deploy]] — GitHub Pages, repository settings
 - [[operations/donations|Donations]] — turn the optional donation link on or off
+- [[operations/accessibility-audit|Accessibility audit]] — WCAG 2.2 AA results per screen and the manual checks
 
 ## Domain
 
