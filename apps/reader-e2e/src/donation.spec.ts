@@ -1,5 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import config from '../../reader/src/config.json';
+
+// Read as a file: e2e may not import the app's code (module boundaries).
+const config = JSON.parse(
+  readFileSync(join(__dirname, '../../reader/src/config.json'), 'utf8'),
+) as { donation: { enabled: boolean } };
 
 // Checks the published build while donations are off (LB-029). Once the owner turns them on, the
 // section is covered by the about page's component tests and this check steps aside.
