@@ -65,6 +65,7 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 - **Blocks** are created when they start; future blocks are projected from the plan, not stored. Editing the plan therefore only changes what is still to come.
 - Changing the plan or reordering books never modifies `logs` or `notes`.
 - **Ids** are random strings generated on the device.
+- **History CSV** (LB-028): one row per log, oldest first, columns `fecha, libro, desde, hasta, capitulos, ciclo`; UTF-8 with BOM and CRLF so spreadsheets keep the accents. It is an export only: the JSON backup is what restores data.
 - **Import** validates the whole document, migrates older `schemaVersion`s, and replaces the data in one transaction — or rejects the file with a clear message and leaves current data untouched.
 
 ## Differences from the brief

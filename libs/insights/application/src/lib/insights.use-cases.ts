@@ -2,6 +2,9 @@ import {
   cycleProgress,
   finishEstimate,
   habits,
+  historyCsv,
+  historyFileName,
+  monthlyHistory,
   monthDays,
   onPace,
   passesByBook,
@@ -10,13 +13,14 @@ import {
   type CycleProgress,
   type FinishEstimate,
   type Habits,
+  type HistoryMonth,
   type MonthDays,
   type OnPace,
   type Streaks,
 } from '@lectura/insights-domain';
 import { bookCatalog, type BookCatalog } from '@lectura/catalog-domain';
 import type { JournalReader } from '@lectura/reading-domain';
-import type { Clock, LocalDate } from '@lectura/shared-kernel';
+import type { Clock, FileSaver, LocalDate } from '@lectura/shared-kernel';
 
 export interface InsightsView {
   readonly today: LocalDate;
@@ -29,6 +33,8 @@ export interface InsightsView {
   readonly cycle: CycleProgress;
   readonly finish: FinishEstimate;
   readonly habits: Habits;
+  /** Newest month first. */
+  readonly history: readonly HistoryMonth[];
 }
 
 /**
@@ -59,6 +65,28 @@ export class GetInsights {
       cycle,
       finish,
       habits: habits(journal, today),
+      history: monthlyHistory(journal, this.catalog, today),
     };
+  }
+}
+
+/** Saves the whole reading history as a CSV file (LB-028). False when nothing is logged yet. */
+export class ExportHistory {
+  constructor(
+    private readonly reader: JournalReader,
+    private readonly clock: Clock,
+    private readonly files: FileSaver,
+    private readonly catalog: BookCatalog = bookCatalog,
+  ) {}
+
+  async execute(): Promise<boolean> {
+    const journal = await this.reader.load();
+    if (!journal.logs.length) return false;
+    this.files.save(
+      historyFileName(this.clock.today()),
+      historyCsv(journal, this.catalog),
+      'text/csv;charset=utf-8',
+    );
+    return true;
   }
 }

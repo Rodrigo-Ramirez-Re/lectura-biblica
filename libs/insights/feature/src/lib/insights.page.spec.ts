@@ -1,8 +1,8 @@
 import { provideRouter } from '@angular/router';
-import { GetInsights } from '@lectura/insights-application';
+import { ExportHistory, GetInsights } from '@lectura/insights-application';
 import { AdvanceBlocks, StartDefaultPlan } from '@lectura/reading-application';
 import { InMemoryJournal } from '@lectura/reading-domain/testing';
-import { FixedClock } from '@lectura/shared-kernel/testing';
+import { FixedClock, InMemoryFileSaver } from '@lectura/shared-kernel/testing';
 import { provideSpanishLocale } from '@lectura/shared-util-i18n';
 import { render, screen, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
@@ -28,16 +28,18 @@ async function setup(options: { plan?: boolean; today?: string; logs?: Record<st
       });
   }
   clock.set(options.today ?? '2026-12-10');
+  const files = new InMemoryFileSaver();
   const result = await render(InsightsPage, {
     providers: [
       provideRouter([]),
       provideSpanishLocale(),
       { provide: AdvanceBlocks, useValue: new AdvanceBlocks(journal, journal, clock) },
       { provide: GetInsights, useValue: new GetInsights(journal, clock) },
+      { provide: ExportHistory, useValue: new ExportHistory(journal, clock, files) },
     ],
   });
   await result.fixture.whenStable();
-  return result;
+  return { ...result, files };
 }
 
 const days = (count: number, chapters: number) =>
@@ -189,5 +191,38 @@ describe('InsightsPage — cycle and habits (LB-026, LB-027)', () => {
     ])
       expect(screen.getByRole('region', { name })).toBeTruthy();
     expect(screen.getByText(/Con una semana de lectura verás/)).toBeTruthy();
+  });
+});
+
+describe('InsightsPage — monthly history (LB-028)', () => {
+  it('shows a row per month with its books and exports the history', async () => {
+    const user = userEvent.setup();
+    const { files } = await setup({
+      today: '2026-12-03',
+      logs: { '2026-12-01': 3, '2026-12-02': 3 },
+    });
+
+    const section = screen.getByRole('region', { name: '¿Qué pasó cada mes?' });
+    const rows = within(within(section).getByRole('table')).getAllByRole('row');
+    expect(rows.map((row) => row.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Mes Libros Capítulos',
+      'Diciembre de 2026 Abdías · 6 vueltas 6',
+    ]);
+    expect(within(section).getByRole('link', { name: 'Abdías' }).getAttribute('href')).toBe(
+      '/libros/abdias',
+    );
+
+    await user.click(within(section).getByRole('button', { name: 'Exportar historial (CSV)' }));
+
+    expect(await within(section).findByText('Historial exportado.')).toBeTruthy();
+    expect(files.files[0]?.fileName).toBe('lectura-biblica-historial-2026-12-03.csv');
+  });
+
+  it('says the first month appears with the first reading, without an export', async () => {
+    await setup({ today: '2026-12-03' });
+
+    const section = screen.getByRole('region', { name: '¿Qué pasó cada mes?' });
+    expect(section.textContent).toContain('Tu primer mes aparecerá aquí con tu primera lectura.');
+    expect(within(section).queryByRole('button')).toBeNull();
   });
 });
