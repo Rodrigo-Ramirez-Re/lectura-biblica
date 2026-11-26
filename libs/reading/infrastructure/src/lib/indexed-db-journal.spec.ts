@@ -1,6 +1,6 @@
 import { IDBFactory } from 'fake-indexeddb';
 import 'fake-indexeddb/auto';
-import { planSettings, type Journal } from '@lectura/reading-domain';
+import { emptyJournal, planSettings, type Journal } from '@lectura/reading-domain';
 import { openDB } from 'idb';
 import { StorageGuard } from '@lectura/shared-kernel';
 import { IndexedDbJournal } from './indexed-db-journal';
@@ -52,7 +52,7 @@ beforeEach(() => {
 describe('IndexedDbJournal (LB-010)', () => {
   it('starts empty', async () => {
     expect(await new IndexedDbJournal(new FakeStorageGuard()).load()).toEqual({
-      settings: { lastBackupAt: null },
+      settings: emptyJournal.settings,
       plan: null,
       blocks: [],
       logs: [],
@@ -66,7 +66,10 @@ describe('IndexedDbJournal (LB-010)', () => {
     await writer.savePlan(plan);
     await writer.saveBlocks([block]);
     await writer.addLog(log);
-    await writer.saveSettings({ lastBackupAt: '2026-12-05T10:00:00.000Z' });
+    await writer.saveSettings({
+      ...emptyJournal.settings,
+      lastBackupAt: '2026-12-05T10:00:00.000Z',
+    });
 
     const journal = await new IndexedDbJournal(new FakeStorageGuard()).load();
 
@@ -139,7 +142,7 @@ describe('IndexedDbJournal (LB-010)', () => {
     await journal.savePlan(plan);
     await journal.addLog(log);
     const replacement: Journal = {
-      settings: { lastBackupAt: null },
+      settings: emptyJournal.settings,
       plan: { ...plan, chaptersPerDay: 5 },
       blocks: [block],
       logs: [{ ...log, id: 'l2' }],
@@ -201,5 +204,21 @@ describe('database upgrade to v2 (LB-014)', () => {
     expect(journal.blocks).toEqual([block]);
     expect(journal.logs).toEqual([log]);
     expect(journal.templates).toEqual([]);
+  });
+});
+
+describe('settings stored by version 2 (LB-031)', () => {
+  it('are completed with the monthly reminder when loaded', async () => {
+    const writer = new IndexedDbJournal(new FakeStorageGuard());
+    await writer.load();
+    const db = await openDB('lectura-biblica');
+    await db.put('settings', { lastBackupAt: '2026-12-05T10:00:00.000Z' }, 'current');
+    db.close();
+
+    expect((await new IndexedDbJournal(new FakeStorageGuard()).load()).settings).toEqual({
+      lastBackupAt: '2026-12-05T10:00:00.000Z',
+      backupEveryDays: 30,
+      backupReminderPostponedUntil: null,
+    });
   });
 });

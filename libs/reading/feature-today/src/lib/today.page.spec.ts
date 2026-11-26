@@ -2,6 +2,7 @@ import { provideRouter } from '@angular/router';
 import {
   AdvanceBlocks,
   CheckBackupReminder,
+  PostponeBackupReminder,
   Notes,
   ControlCurrentBlock,
   GetSchedule,
@@ -16,14 +17,12 @@ import { FixedClock, SequentialIds } from '@lectura/shared-kernel/testing';
 import { provideSpanishLocale } from '@lectura/shared-util-i18n';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { TestBed } from '@angular/core/testing';
-import { BackupReminderState } from './backup-reminder.state';
 import { TodayPage } from './today.page';
 
 /** `started` starts the plan today; `daysLogged` starts it on 1 December and logs that many days. */
 async function setup(
   today = '2026-11-24',
-  options: { started?: boolean; daysLogged?: number } = {},
+  options: { started?: boolean; daysLogged?: number; lastBackupAt?: string } = {},
 ) {
   const journal = new InMemoryJournal();
   const clock = new FixedClock(options.daysLogged ? '2026-12-01' : today);
@@ -34,11 +33,17 @@ async function setup(
   const logReading = new LogReading(journal, journal, clock, ids);
   for (let d = 0; d < (options.daysLogged ?? 0); d++)
     await logReading.execute({ chapters: 3, date: clock.today().plusDays(-d) });
+  if (options.lastBackupAt)
+    await journal.saveSettings({ ...journal.journal.settings, lastBackupAt: options.lastBackupAt });
   const result = await render(TodayPage, {
     providers: [
       provideRouter([]),
       provideSpanishLocale(),
       { provide: CheckBackupReminder, useValue: new CheckBackupReminder(journal, clock) },
+      {
+        provide: PostponeBackupReminder,
+        useValue: new PostponeBackupReminder(journal, journal, clock),
+      },
       { provide: AdvanceBlocks, useValue: new AdvanceBlocks(journal, journal, clock) },
       { provide: GetSchedule, useValue: new GetSchedule(journal, clock) },
       { provide: GetToday, useValue: new GetToday(journal, clock) },
@@ -178,15 +183,32 @@ describe('TodayPage — backup reminder (LB-013)', () => {
     expect(screen.queryByRole('region', { name: 'Haz un respaldo' })).toBeNull();
   });
 
-  it('reminds after 7 days of reading without a backup, until "Ahora no"', async () => {
-    const { user } = await setup('2026-12-07', { daysLogged: 7 });
+  it('reminds after 7 days of reading without a backup, saying there was none', async () => {
+    await setup('2026-12-07', { daysLogged: 7 });
 
     const reminder = screen.getByRole('region', { name: 'Haz un respaldo' });
     expect(reminder.textContent).toContain('Exporta un respaldo');
+    expect(reminder.textContent).toContain('Aún no has hecho ningún respaldo.');
+  });
+
+  it('says the date of the last backup (LB-031)', async () => {
+    await setup('2026-12-07', {
+      daysLogged: 7,
+      lastBackupAt: new Date(2026, 9, 3, 12).toISOString(),
+    });
+
+    expect(screen.getByRole('region', { name: 'Haz un respaldo' }).textContent).toContain(
+      'Tu último respaldo fue el 3 de octubre de 2026.',
+    );
+  });
+
+  it('postpones it for 7 days with "Ahora no" (LB-031)', async () => {
+    const { user, journal } = await setup('2026-12-07', { daysLogged: 7 });
+
     await user.click(screen.getByRole('button', { name: 'Ahora no' }));
 
     expect(screen.queryByRole('region', { name: 'Haz un respaldo' })).toBeNull();
-    expect(TestBed.inject(BackupReminderState).dismissed()).toBe(true);
+    expect(journal.journal.settings.backupReminderPostponedUntil).toBe('2026-12-14');
   });
 });
 

@@ -1,6 +1,6 @@
 # Data model
 
-Version 2 (LB-014). Version 1 files and databases are migrated on import and on first open. The plan (editable), the history (blocks and reading logs, never lost) and notes are separate. **Nothing derived is stored**: passes, progress, streaks and every metric are computed from logs + plan, so correcting a past day updates everything.
+Version 3 (LB-031). Files and databases of versions 1 and 2 are migrated on import and on first open. The plan (editable), the history (blocks and reading logs, never lost) and notes are separate. **Nothing derived is stored**: passes, progress, streaks and every metric are computed from logs + plan, so correcting a past day updates everything.
 
 Changing this model needs a decision in a story and a `schemaVersion` migration ([[architecture/adr/0007-chapters-as-the-unit-of-progress|ADR 0007]]).
 
@@ -10,10 +10,10 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "app": "lectura-biblica",
   "exportedAt": "2026-12-03T21:15:00.000Z",
-  "settings": { "lastBackupAt": null },
+  "settings": { "lastBackupAt": null, "backupEveryDays": 30, "backupReminderPostponedUntil": null },
   "plan": {
     "name": "Un libro al mes",
     "startDate": "2026-12-01",
@@ -57,6 +57,7 @@ The JSON export is the whole dataset. IndexedDB stores the same records, one obj
 - **Pace:** `paceByWeekday` (7 numbers, Sunday first, 0 = rest) overrides `chaptersPerDay` and `restDays` when set.
 - **Durations:** `defaultBlock.unit` is `month`, `weeks`, `days` or `passes`; every block allows at least one pass at the plan's pace.
 - **Block statuses:** `active`, `done`, `skipped` (count as read in their cycle), `paused`, `replaced` (their book returns to the queue).
+- **Backup reminder** (LB-031): `backupEveryDays` is 7, 14, 30 or 90, or `null` for never; `backupReminderPostponedUntil` is the first day the reminder may come back after "Ahora no". Both live in `settings`, so they travel with backups. Version 2 settings get 30 and `null`.
 - **Templates:** `{ id, name, settings }`, settings being the plan without `startDate` and `pausedSince`. Exported alone as `{ app: 'lectura-biblica', kind: 'plan-template', schemaVersion, template: { name, settings } }` (LB-022).
 
 - **Dates** are local calendar days `YYYY-MM-DD` (`LocalDate`), never timestamps, so a day never shifts with the time zone. Only `exportedAt` is an instant.

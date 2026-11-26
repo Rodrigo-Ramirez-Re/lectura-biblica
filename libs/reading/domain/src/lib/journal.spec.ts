@@ -3,7 +3,7 @@ import { SCHEMA_VERSION, emptyJournal } from './journal';
 describe('journal (LB-010)', () => {
   it('starts with no plan, no history and no backup', () => {
     expect(emptyJournal).toEqual({
-      settings: { lastBackupAt: null },
+      settings: { lastBackupAt: null, backupEveryDays: 30, backupReminderPostponedUntil: null },
       plan: null,
       blocks: [],
       logs: [],
@@ -12,7 +12,7 @@ describe('journal (LB-010)', () => {
     });
   });
 
-  it('is at schema version 2', () => {
-    expect(SCHEMA_VERSION).toBe(2);
+  it('is at schema version 3 (LB-031)', () => {
+    expect(SCHEMA_VERSION).toBe(3);
   });
 });

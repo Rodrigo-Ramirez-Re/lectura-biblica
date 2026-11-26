@@ -4,6 +4,7 @@ import {
   DeleteAllData,
   ExportBackup,
   ImportBackup,
+  SetBackupReminder,
   LogReading,
   PreviewBackup,
   StartDefaultPlan,
@@ -33,6 +34,7 @@ async function setup() {
       { provide: PreviewBackup, useValue: new PreviewBackup() },
       { provide: ImportBackup, useValue: new ImportBackup(journal) },
       { provide: DeleteAllData, useValue: new DeleteAllData(journal) },
+      { provide: SetBackupReminder, useValue: new SetBackupReminder(journal, journal) },
     ],
   });
   await result.fixture.whenStable();
@@ -118,5 +120,40 @@ describe('BackupPanel (LB-013)', () => {
 
     expect(journal.journal.plan).toBeNull();
     expect(navigate).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('BackupPanel — reminders (LB-031)', () => {
+  it('offers how often to be reminded, monthly by default', async () => {
+    await setup();
+
+    const select = screen.getByLabelText('Recordarme hacer un respaldo') as HTMLSelectElement;
+    expect([...select.options].map((option) => option.textContent?.trim())).toEqual([
+      'Cada semana',
+      'Cada 2 semanas',
+      'Cada mes',
+      'Cada 3 meses',
+      'Nunca',
+    ]);
+    expect(select.selectedOptions[0]?.textContent?.trim()).toBe('Cada mes');
+  });
+
+  it('saves the choice', async () => {
+    const { user, journal, fixture } = await setup();
+
+    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), 'Cada semana');
+    await fixture.whenStable();
+
+    expect(journal.journal.settings.backupEveryDays).toBe(7);
+  });
+
+  it('says reminders are off after choosing "Nunca"', async () => {
+    const { user, journal, fixture } = await setup();
+
+    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), 'Nunca');
+    await fixture.whenStable();
+
+    expect(journal.journal.settings.backupEveryDays).toBeNull();
+    expect(screen.getByText(/recordatorios están desactivados/)).toBeTruthy();
   });
 });

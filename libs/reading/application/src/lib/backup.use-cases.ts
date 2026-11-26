@@ -3,9 +3,11 @@ import {
   emptyJournal,
   isBackupDue,
   parseBackup,
+  postponeBackupReminder,
   summarize,
   toBackup,
   type BackupError,
+  type BackupInterval,
   type BackupSummary,
   type JournalReader,
   type JournalWriter,
@@ -70,14 +72,50 @@ export class DeleteAllData {
   }
 }
 
-/** Whether Hoy should remind the person to export a backup (LB-013). */
+/** What the reminder on Hoy says. */
+export interface BackupReminder {
+  /** Instant of the last export, ISO 8601; null if there never was one. */
+  readonly lastBackupAt: string | null;
+}
+
+/** Whether Hoy should remind the person to export a backup, or null (LB-013, LB-031). */
 export class CheckBackupReminder {
   constructor(
     private readonly reader: JournalReader,
     private readonly clock: Clock,
   ) {}
 
-  async execute(): Promise<boolean> {
-    return isBackupDue(await this.reader.load(), this.clock.today());
+  async execute(): Promise<BackupReminder | null> {
+    const journal = await this.reader.load();
+    return isBackupDue(journal, this.clock.today())
+      ? { lastBackupAt: journal.settings.lastBackupAt }
+      : null;
+  }
+}
+
+/** How often to remind of a backup; null turns the reminder off (LB-031). */
+export class SetBackupReminder {
+  constructor(
+    private readonly reader: JournalReader,
+    private readonly writer: JournalWriter,
+  ) {}
+
+  async execute(everyDays: BackupInterval | null): Promise<void> {
+    const { settings } = await this.reader.load();
+    await this.writer.saveSettings({ ...settings, backupEveryDays: everyDays });
+  }
+}
+
+/** "Ahora no" on the reminder (LB-031). */
+export class PostponeBackupReminder {
+  constructor(
+    private readonly reader: JournalReader,
+    private readonly writer: JournalWriter,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(): Promise<void> {
+    const { settings } = await this.reader.load();
+    await this.writer.saveSettings(postponeBackupReminder(settings, this.clock.today()));
   }
 }

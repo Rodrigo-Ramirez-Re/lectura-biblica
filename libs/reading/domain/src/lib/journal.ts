@@ -2,7 +2,7 @@
  * The stored shape of the reading data (docs/architecture/data-model.md). Changing any of these
  * needs a story decision and a `schemaVersion` migration (ADR 0007).
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** A local calendar day, `YYYY-MM-DD`. */
 export type IsoDate = string;
@@ -76,9 +76,18 @@ export interface NoteRecord {
   readonly text: string;
 }
 
+/** How often the backup reminder may come, in days (LB-031). */
+export const BACKUP_INTERVALS = [7, 14, 30, 90] as const;
+
+export type BackupInterval = (typeof BACKUP_INTERVALS)[number];
+
 export interface SettingsRecord {
   /** Instant of the last backup export, ISO 8601. */
   readonly lastBackupAt: string | null;
+  /** Days between backup reminders; null never reminds. */
+  readonly backupEveryDays: BackupInterval | null;
+  /** After "Ahora no", the first day the reminder may come back. */
+  readonly backupReminderPostponedUntil: IsoDate | null;
 }
 
 /** Everything a person has recorded: what a backup contains. */
@@ -92,7 +101,7 @@ export interface Journal {
 }
 
 export const emptyJournal: Journal = {
-  settings: { lastBackupAt: null },
+  settings: { lastBackupAt: null, backupEveryDays: 30, backupReminderPostponedUntil: null },
   plan: null,
   blocks: [],
   logs: [],
@@ -109,6 +118,13 @@ export function upgradePlan(
     paceByWeekday: plan.paceByWeekday ?? null,
     pausedSince: plan.pausedSince ?? null,
   };
+}
+
+/** Settings stored by version 2, completed with the defaults of the fields version 3 added. */
+export function upgradeSettings(
+  settings: Pick<SettingsRecord, 'lastBackupAt'> & Partial<SettingsRecord>,
+): SettingsRecord {
+  return { ...emptyJournal.settings, ...settings };
 }
 
 /** Only the settings of a plan or template: drops the start date, the pause and anything unknown. */

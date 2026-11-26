@@ -2,6 +2,7 @@ import type { BookCatalog } from '@lectura/catalog-domain';
 import { LocalDate, err, ok, type Result } from '@lectura/shared-kernel';
 import { validatePlan } from './reading-plan';
 import {
+  BACKUP_INTERVALS,
   BLOCK_STATUSES,
   BLOCK_UNITS,
   SCHEMA_VERSION,
@@ -14,6 +15,7 @@ import {
   type NoteRecord,
   type PlanRecord,
   type ReadingLogRecord,
+  type SettingsRecord,
 } from './journal';
 
 export const BACKUP_APP = 'lectura-biblica';
@@ -63,6 +65,14 @@ const migrations: Record<number, (document: Record<string, unknown>) => Record<s
       : document['plan'],
     templates: [],
   }),
+  // v3 (LB-031): how often to remind of a backup, and "Ahora no".
+  2: (document) => ({
+    ...document,
+    schemaVersion: 3,
+    settings: isObject(document['settings'])
+      ? { backupEveryDays: 30, backupReminderPostponedUntil: null, ...document['settings'] }
+      : document['settings'],
+  }),
 };
 
 /**
@@ -108,18 +118,27 @@ export function summarize(backup: BackupDocument): BackupSummary {
 }
 
 const REMINDER_MIN_DAYS = 7;
-const REMINDER_AFTER_DAYS = 30;
+const POSTPONE_DAYS = 7;
 
 /**
- * A backup is due once there are logs on at least 7 days and none was ever exported, or the last
- * export is more than 30 days old (LB-013).
+ * A backup is due once there are logs on at least 7 days and none was ever exported (LB-013), or
+ * the last export is older than the chosen interval and something was logged after its day
+ * (LB-031). Never while turned off or postponed.
  */
 export function isBackupDue(journal: Journal, today: LocalDate): boolean {
-  const { lastBackupAt } = journal.settings;
+  const { lastBackupAt, backupEveryDays, backupReminderPostponedUntil } = journal.settings;
+  if (backupEveryDays === null) return false;
+  if (backupReminderPostponedUntil && today.toString() < backupReminderPostponedUntil) return false;
   if (!lastBackupAt) return new Set(journal.logs.map((log) => log.date)).size >= REMINDER_MIN_DAYS;
   // The local day of the export instant: an evening export in Mexico is already tomorrow in UTC.
   const lastDay = LocalDate.fromDate(new Date(lastBackupAt));
-  return today.plusDays(-REMINDER_AFTER_DAYS).isAfter(lastDay);
+  const logsSince = journal.logs.some((log) => log.date > lastDay.toString());
+  return logsSince && today.plusDays(-backupEveryDays).isAfter(lastDay);
+}
+
+/** "Ahora no": the reminder stays away for a week, across app restarts (LB-031). */
+export function postponeBackupReminder(settings: SettingsRecord, today: LocalDate): SettingsRecord {
+  return { ...settings, backupReminderPostponedUntil: today.plusDays(POSTPONE_DAYS).toString() };
 }
 
 // --- validation -------------------------------------------------------------------------------
@@ -199,6 +218,10 @@ function isValidDocument(document: Shape): document is Shape & BackupDocument {
     isInstant(document['exportedAt']) &&
     isObject(settings) &&
     (settings['lastBackupAt'] === null || isInstant(settings['lastBackupAt'])) &&
+    (settings['backupEveryDays'] === null ||
+      BACKUP_INTERVALS.some((days) => days === settings['backupEveryDays'])) &&
+    (settings['backupReminderPostponedUntil'] === null ||
+      isDay(settings['backupReminderPostponedUntil'])) &&
     (document['plan'] === null || (isObject(document['plan']) && isPlan(document['plan']))) &&
     listOf(document['blocks'], isBlock) &&
     listOf(document['logs'], isLog) &&
