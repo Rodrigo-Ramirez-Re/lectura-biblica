@@ -2,7 +2,7 @@
 id: LB-025
 title: Passes per book
 epic: E4
-status: ready
+status: done
 phase: 3
 depends_on: [LB-023]
 ---
@@ -54,15 +54,21 @@ Passes per block (shown in the block history, LB-020).
 
 ## Open questions
 
-- [ ] Bars of very different lengths (31 vs 0.4) — _Recommendation:_ one scale from 0 to the most-read book; the label carries the exact value, so a short bar is still readable.
+- [x] Bars of very different lengths (31 vs 0.4) — _Adopted:_ one scale from 0 to the most-read book; the label carries the exact value, so a short bar is still readable.
 
 ## Decisions
 
+- The open question was adopted: one scale from 0 to the most-read book, and the exact value always written next to each bar.
+- `lb-bar-list` (ui-components): horizontal bars as an HTML list, each row with the book and its passes in words; the bars only add the comparison. Because every value is already written, this chart has no tooltip, and the table under "Ver como tabla" adds chapters read.
+- Wording: "31 vueltas", "1 vuelta", "0 vueltas y 40 % de la siguiente". A pass that has started is never shown as 0 % or 100 %: the share is kept between 1 % and 99 %.
+- Books follow the plan's order; books read and later left out of the plan follow in canonical order, so nothing read ever disappears from the chart.
+- `GetInsights` now takes the book catalog (defaulting to the 66 books), like the reading use cases.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated

@@ -1,11 +1,14 @@
 import {
   monthDays,
   onPace,
+  passesByBook,
   streaks,
+  type BookPasses,
   type MonthDays,
   type OnPace,
   type Streaks,
 } from '@lectura/insights-domain';
+import { bookCatalog, type BookCatalog } from '@lectura/catalog-domain';
 import type { JournalReader } from '@lectura/reading-domain';
 import type { Clock, LocalDate } from '@lectura/shared-kernel';
 
@@ -15,6 +18,8 @@ export interface InsightsView {
   /** Null until something is read. */
   readonly streaks: Streaks | null;
   readonly month: MonthDays;
+  /** Books with something read, in the plan's order. */
+  readonly books: readonly BookPasses[];
 }
 
 /**
@@ -25,6 +30,7 @@ export class GetInsights {
   constructor(
     private readonly reader: JournalReader,
     private readonly clock: Clock,
+    private readonly catalog: BookCatalog = bookCatalog,
   ) {}
 
   async execute(): Promise<InsightsView | null> {
@@ -33,6 +39,12 @@ export class GetInsights {
     const pace = onPace(journal, today);
     const month = monthDays(journal, today);
     if (!pace || !month) return null;
-    return { today, onPace: pace, streaks: streaks(journal, today), month };
+    return {
+      today,
+      onPace: pace,
+      streaks: streaks(journal, today),
+      month,
+      books: passesByBook(journal, this.catalog),
+    };
   }
 }

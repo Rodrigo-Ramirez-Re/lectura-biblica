@@ -80,3 +80,15 @@ test.describe('Insights — consistency (LB-024)', () => {
     await expect(section.getByText('2 de diciembre: 3 capítulos', { exact: true })).toBeVisible();
   });
 });
+
+test.describe('Insights — passes per book (LB-025)', () => {
+  test('shows how many times each book was read', async ({ page }) => {
+    await readFirstDay(page);
+    await openOn(page, '2026-12-01', './avance');
+
+    const section = page.getByRole('region', { name: '¿Cuántas veces he leído cada libro?' });
+    await expect(section.getByRole('listitem')).toHaveText(['Abdías 3 vueltas']);
+    await section.getByText('Ver como tabla').click();
+    await expect(section.getByRole('row').nth(1)).toContainText('Abdías');
+  });
+});
