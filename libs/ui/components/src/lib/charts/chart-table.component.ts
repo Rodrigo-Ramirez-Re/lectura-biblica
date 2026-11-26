@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
+let nextId = 0;
+
 export type ChartCell = string | number;
 
 /** The data of a chart as a table, collapsed under "Ver como tabla" (spec §4 chart rules). */
@@ -18,10 +20,10 @@ export type ChartCell = string | number;
         class="mt-2 max-h-80 overflow-auto rounded-control focus-visible:focus-ring"
         tabindex="0"
         role="region"
-        [attr.aria-label]="caption()"
+        [attr.aria-labelledby]="captionId"
       >
         <table class="w-full border-collapse text-left text-body-sm">
-          <caption class="sr-only">
+          <caption class="sr-only" [id]="captionId">
             {{
               caption()
             }}
@@ -59,6 +61,8 @@ export type ChartCell = string | number;
 })
 export class ChartTableComponent {
   readonly caption = input.required<string>();
+  /** The scroll box is named by the caption itself, so screen readers don't say it twice. */
+  protected readonly captionId = `lb-chart-table-${nextId++}`;
   readonly columns = input.required<readonly string[]>();
   readonly rows = input.required<readonly (readonly ChartCell[])[]>();
 }

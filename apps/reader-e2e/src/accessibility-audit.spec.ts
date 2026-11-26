@@ -101,22 +101,27 @@ async function open(page: Page, screen: Screen) {
   await screen.ready?.(page);
 }
 
-/** Wider than the viewport: the page scrolls sideways. Boxes that scroll on their own are fine. */
+/**
+ * Wider than the viewport: the page scrolls sideways. `clientWidth` leaves out a classic scrollbar,
+ * so even a small overflow counts. Boxes that scroll on their own are fine.
+ */
 const horizontalOverflow = (page: Page) =>
-  page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
-/** Elements that cut their own text off instead of wrapping or scrolling it. */
+/**
+ * Elements that cut their own text off, sideways or at the bottom, instead of wrapping or
+ * scrolling it. Overlapping text is not measured here; the manual checks cover it.
+ */
 const clippedText = (page: Page) =>
   page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('body *')]
       .filter((element) => {
+        if (!element.textContent?.trim() || element.classList.contains('sr-only')) return false;
         const style = getComputedStyle(element);
-        const clips = ['hidden', 'clip'].includes(style.overflowX);
+        const clips = (overflow: string) => ['hidden', 'clip'].includes(overflow);
         return (
-          clips &&
-          element.textContent?.trim() &&
-          element.scrollWidth > element.clientWidth + 1 &&
-          !element.classList.contains('sr-only')
+          (clips(style.overflowX) && element.scrollWidth > element.clientWidth + 1) ||
+          (clips(style.overflowY) && element.scrollHeight > element.clientHeight + 1)
         );
       })
       .map(
@@ -165,24 +170,42 @@ for (const screen of SCREENS) {
       test.skip(browserName === 'webkit', 'Safari tabs to links only with a system setting');
       await open(page, screen);
 
-      const stops: string[] = [];
-      for (let i = 0; i < 40; i++) {
+      // Walks the whole tab order once: each stop is marked, and the walk ends when the focus
+      // comes back to a marked element (or leaves the page). Reaching the cap is a failure.
+      // Editar plan alone has over 200 stops: three controls for each of the 66 books.
+      const CAP = 400;
+      let stops = 0;
+      for (; stops < CAP; stops++) {
         await page.keyboard.press('Tab');
-        const stop = await page.evaluate(() => {
+        const stop = await page.evaluate((index) => {
           const element = document.activeElement as HTMLElement | null;
-          if (!element || element === document.body) return null;
-          const style = getComputedStyle(element);
-          const outlined = style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0;
-          const ringed = style.boxShadow !== 'none';
-          const name = `${element.tagName.toLowerCase()} "${(element.textContent ?? element.getAttribute('aria-label') ?? '').trim().slice(0, 30)}"`;
-          return { name, visible: outlined || ringed };
-        });
-        if (!stop) break;
-        if (stops.includes(stop.name)) break;
-        stops.push(stop.name);
+          if (!element || element === document.body) return { done: true } as const;
+          if (element.dataset['auditStop']) return { done: true } as const;
+          element.dataset['auditStop'] = String(index);
+          const ring = (style: CSSStyleDeclaration) =>
+            `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor} | ${style.boxShadow}`;
+          const shows = (style: CSSStyleDeclaration) =>
+            (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0) ||
+            style.boxShadow !== 'none';
+          const focused = getComputedStyle(element);
+          const withFocus = { ring: ring(focused), shows: shows(focused) };
+          // The same element without focus: the indicator must be something focus adds.
+          element.blur();
+          const withoutFocus = ring(getComputedStyle(element));
+          element.focus();
+          const label =
+            element.getAttribute('aria-label') || element.textContent?.trim() || element.id;
+          return {
+            done: false,
+            name: `${element.tagName.toLowerCase()} #${index} "${label.slice(0, 30)}"`,
+            visible: withFocus.shows && withFocus.ring !== withoutFocus,
+          } as const;
+        }, stops);
+        if (stop.done) break;
         expect(stop.visible, `focus visible on ${stop.name}`).toBe(true);
       }
-      expect(stops.length).toBeGreaterThan(0);
+      expect(stops, 'the walk reached every stop before the cap').toBeLessThan(CAP);
+      expect(stops).toBeGreaterThan(0);
     });
 
     test('does not animate when the device asks for reduced motion', async ({ page }) => {
@@ -213,3 +236,20 @@ for (const screen of SCREENS) {
     });
   });
 }
+
+test.describe('Accessibility audit — skip link (LB-032)', () => {
+  test('is the first stop and takes the keyboard to the content', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'Safari tabs to links only with a system setting');
+    await openOn(page, TODAY, './libros');
+
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'Saltar al contenido' });
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeVisible();
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('main')).toBeFocused();
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => !!document.activeElement?.closest('main'))).toBe(true);
+  });
+});

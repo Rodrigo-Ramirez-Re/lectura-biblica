@@ -73,6 +73,15 @@ Feature: Accessibility audit
 - One defect found and fixed: the scrolling boxes of "Ver como tabla" and of the monthly history couldn't be reached by keyboard (`scrollable-region-focusable`). Each is now a focusable region named after its table, with the focus ring. Unit tests cover both.
 - A dark-mode contrast report turned out to be axe measuring buttons mid-fade after the theme switched on an open page. The suite now waits for CSS transitions (at most 1 s) before scanning in dark.
 - `docs/operations/accessibility-audit.md` has the method, the results per screen, the findings and the checks the owner should do with TalkBack, VoiceOver, large system text, 400 % zoom, forced colours and Safari's keyboard setting.
+- Review fixes (`lb-review`):
+  - The keyboard walk marks each element it visits and goes through the whole tab order. Before, it stopped at the first repeated name: an empty input, or the second "Ver como tabla". It fails if it reaches its cap (400).
+  - A stop counts as visible only if its outline or ring differs from the same element without focus.
+  - Clipped text is now detected at the bottom as well as sideways. Overlapping text isn't measured, and the report says so.
+  - Sideways scrolling is measured against `clientWidth`, so a classic scrollbar can't hide a small overflow.
+  - New e2e check: the skip link is the first stop and Enter takes the focus to the content.
+  - The scroll regions are named by their table's caption (`aria-labelledby`) instead of repeating it.
+  - A duplicated test block left by a merge was removed.
+  - Not adopted: seeding once per screen. The suite adds about 3–5 minutes to CI with one worker, well within the job's limit.
 
 ## Definition of done
 

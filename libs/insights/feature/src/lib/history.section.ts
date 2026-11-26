@@ -27,11 +27,10 @@ import { ButtonComponent, CardComponent } from '@lectura/ui-components';
           class="max-h-[32rem] overflow-auto rounded-control focus-visible:focus-ring"
           tabindex="0"
           role="region"
-          aria-label="Tu historial, mes por mes"
-          i18n-aria-label="@@insights.history.caption"
+          aria-labelledby="history-caption"
         >
           <table class="w-full border-collapse text-left text-body-sm">
-            <caption class="sr-only" i18n="@@insights.history.caption">
+            <caption id="history-caption" class="sr-only" i18n="@@insights.history.caption">
               Tu historial, mes por mes
             </caption>
             <thead>
