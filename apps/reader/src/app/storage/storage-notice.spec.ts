@@ -2,14 +2,17 @@ import { provideRouter } from '@angular/router';
 import { StorageGuard } from '@lectura/shared-kernel';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { signal } from '@angular/core';
 import { FakeStorageGuard } from '../../testing/fake-storage-guard';
+import { InstallPrompt } from '../pwa/install-prompt';
 import { StorageNotice } from './storage-notice';
 
-async function renderNotice(available = true) {
+async function renderNotice(available = true, installed = false) {
   const result = await render(StorageNotice, {
     providers: [
       provideRouter([]),
       { provide: StorageGuard, useValue: new FakeStorageGuard(available) },
+      { provide: InstallPrompt, useValue: { installed: signal(installed) } },
     ],
   });
   await result.fixture.whenStable();
@@ -33,6 +36,15 @@ describe('StorageNotice (LB-010)', () => {
     expect(screen.getByRole('link', { name: 'Cómo instalarla' }).getAttribute('href')).toBe(
       '/instalar',
     );
+  });
+
+  it('does not offer installing inside the installed app (LB-030 review)', async () => {
+    await renderNotice(true, true);
+
+    expect(
+      screen.getByRole('region', { name: 'Tus datos viven en este dispositivo' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Cómo instalarla' })).toBeNull();
   });
 
   it('closes with "Entendido" and remembers it on this device', async () => {

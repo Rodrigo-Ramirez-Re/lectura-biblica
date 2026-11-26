@@ -1,4 +1,4 @@
-import { DOCUMENT, Injectable, computed, inject, signal } from '@angular/core';
+import { DOCUMENT, DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { detectPlatform, type Platform } from './platform';
 
 /** Chrome's and Edge's offer to install; not in TypeScript's DOM types. */
@@ -25,12 +25,16 @@ export class InstallPrompt {
   readonly canInstall = computed(() => this.offer() !== null && !this.installed());
 
   constructor() {
-    this.window?.addEventListener('beforeinstallprompt', (event) =>
-      this.offer.set(event as BeforeInstallPromptEvent),
-    );
-    this.window?.addEventListener('appinstalled', () => {
+    const keepOffer = (event: Event) => this.offer.set(event as BeforeInstallPromptEvent);
+    const markInstalled = () => {
       this.offer.set(null);
       this.installed.set(true);
+    };
+    this.window?.addEventListener('beforeinstallprompt', keepOffer);
+    this.window?.addEventListener('appinstalled', markInstalled);
+    inject(DestroyRef).onDestroy(() => {
+      this.window?.removeEventListener('beforeinstallprompt', keepOffer);
+      this.window?.removeEventListener('appinstalled', markInstalled);
     });
   }
 
