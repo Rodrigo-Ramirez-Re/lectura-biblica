@@ -60,3 +60,38 @@ describe('InstallPrompt (LB-030)', () => {
     expect(service.canInstall()).toBe(false);
   });
 });
+
+describe('InstallPrompt (LB-030 review)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window.navigator, 'standalone');
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
+
+  it('knows it runs installed when the display mode is standalone', () => {
+    window.matchMedia = vi.fn(
+      (query: string) => ({ matches: query === '(display-mode: standalone)' }) as MediaQueryList,
+    );
+
+    expect(TestBed.inject(InstallPrompt).installed()).toBe(true);
+  });
+
+  it('knows it runs installed from the home screen of an iPhone', () => {
+    Object.defineProperty(window.navigator, 'standalone', { value: true, configurable: true });
+
+    expect(TestBed.inject(InstallPrompt).installed()).toBe(true);
+  });
+
+  it('answers no when there is no offer to open', async () => {
+    await expect(TestBed.inject(InstallPrompt).install()).resolves.toBe(false);
+  });
+
+  it('stops listening once destroyed', () => {
+    const old = TestBed.inject(InstallPrompt);
+    TestBed.resetTestingModule();
+
+    offerToInstall('accepted');
+
+    expect(old.canInstall()).toBe(false);
+  });
+});

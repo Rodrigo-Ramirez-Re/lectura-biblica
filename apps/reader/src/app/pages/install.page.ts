@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ButtonComponent, CardComponent } from '@lectura/ui-components';
 import { APP_SETTINGS } from '../app-config';
 import { InstallPrompt } from '../pwa/install-prompt';
@@ -10,18 +17,31 @@ const ORDER: readonly Platform[] = ['desktop', 'android', 'ios'];
   selector: 'lb-install-page',
   imports: [ButtonComponent, CardComponent],
   template: `
-    <h1 class="font-display text-heading-1" i18n="@@reader.install.title">
+    <h1 #title tabindex="-1" class="font-display text-heading-1" i18n="@@reader.install.title">
       Instalar la aplicación
     </h1>
 
     <div class="mt-section flex flex-col gap-section">
-      @if (prompt.installed()) {
-        <section lbCard>
-          <p class="text-success" role="status" i18n="@@reader.install.installed">
-            ✓ Ya estás usando la aplicación instalada.
-          </p>
-        </section>
-      } @else if (prompt.canInstall()) {
+      <!-- Always present, so screen readers announce what is written into it later. -->
+      <div role="status" class="contents">
+        @if (prompt.installed()) {
+          <section lbCard>
+            <p class="text-success">
+              <span aria-hidden="true">✓</span>
+              <ng-container i18n="@@reader.install.installed"
+                >Ya estás usando la aplicación instalada.</ng-container
+              >
+            </p>
+          </section>
+        } @else if (declined()) {
+          <section lbCard>
+            <p i18n="@@reader.install.declined">
+              No se instaló. Puedes hacerlo cuando quieras con los pasos de abajo.
+            </p>
+          </section>
+        }
+      </div>
+      @if (!prompt.installed() && prompt.canInstall()) {
         <section lbCard aria-labelledby="install-now">
           <h2 id="install-now" class="text-heading-2" i18n="@@reader.install.now-heading">
             Instálala ahora
@@ -146,7 +166,13 @@ export class InstallPage {
     ...ORDER.filter((platform) => platform !== this.prompt.platform),
   ];
 
-  protected install(): void {
-    void this.prompt.install();
+  protected readonly declined = signal(false);
+  private readonly title = viewChild.required<ElementRef<HTMLElement>>('title');
+
+  /** The button disappears once used, so the focus goes to the title rather than to nowhere. */
+  protected async install(): Promise<void> {
+    const accepted = await this.prompt.install();
+    this.declined.set(!accepted);
+    this.title().nativeElement.focus();
   }
 }

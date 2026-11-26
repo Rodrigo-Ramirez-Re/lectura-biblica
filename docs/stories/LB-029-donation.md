@@ -72,6 +72,11 @@ Feature: Donation section
 - The bank-details guard rejects any run of 10 or more digits in `config.json`, after removing spaces, dots and dashes. That covers CLABE (18), cards (13–19) and account numbers. A donation URL rarely needs such a run.
 - `appSettings` is now also an injection token (`APP_SETTINGS`) so tests can turn the section on; the app still reads `src/config.json` at build time.
 - `docs/operations/donations.md` explains how to turn it on and off, what never to publish, and the tax note.
+- Review fixes (retrospective `lb-review`):
+  - The link is validated with `new URL` instead of `URL.canParse`, which Safari only has from version 17: on older iPhones Acerca de would have failed to render once donations were on.
+  - URLs with a user name or password are rejected.
+  - The bank-details guard is now `looksLikeBankNumber()`, with its own tests. It removes any separator between digits (spaces, dots, dashes, slashes, underscores, commas).
+  - The published-config e2e steps aside once donations are turned on, so the owner's PR that turns them on can pass CI.
 
 ## Definition of done
 

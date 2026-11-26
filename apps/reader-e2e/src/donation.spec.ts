@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import config from '../../reader/src/config.json';
 
-// The published config keeps donations off until the owner picks a service (LB-029); the section
-// itself is covered by the about page's component tests.
+// Checks the published build while donations are off (LB-029). Once the owner turns them on, the
+// section is covered by the about page's component tests and this check steps aside.
 test('shows no donation section while it is turned off (LB-029)', async ({ page }) => {
+  test.skip(config.donation.enabled, 'donations are turned on in config.json');
   await page.goto('./acerca');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Acerca de' })).toBeVisible();

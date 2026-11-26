@@ -3,6 +3,7 @@ import { StorageGuard } from '@lectura/shared-kernel';
 import { RouterLink } from '@angular/router';
 import { ButtonComponent, CardComponent } from '@lectura/ui-components';
 import { readDevicePreference, writeDevicePreference } from '../preferences/device-preferences';
+import { InstallPrompt } from '../pwa/install-prompt';
 
 const NOTICE_SEEN = 'data-notice';
 
@@ -38,9 +39,16 @@ const NOTICE_SEEN = 'data-notice';
           <button lbButton type="button" (click)="dismiss()" i18n="@@reader.storage.notice-ok">
             Entendido
           </button>
-          <a lbButton variant="ghost" routerLink="/instalar" i18n="@@reader.storage.notice-install">
-            Cómo instalarla
-          </a>
+          @if (!installed()) {
+            <a
+              lbButton
+              variant="ghost"
+              routerLink="/instalar"
+              i18n="@@reader.storage.notice-install"
+            >
+              Cómo instalarla
+            </a>
+          }
         </div>
       </section>
     }
@@ -48,6 +56,7 @@ const NOTICE_SEEN = 'data-notice';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StorageNotice {
+  protected readonly installed = inject(InstallPrompt).installed;
   protected readonly unavailable = signal(false);
   protected readonly showNotice = signal(readDevicePreference(NOTICE_SEEN) === null);
 
