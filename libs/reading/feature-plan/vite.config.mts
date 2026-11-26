@@ -1,6 +1,7 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
+import { coverage } from '../../../vitest.coverage.mjs';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -23,9 +24,6 @@ export default defineConfig(() => ({
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     setupFiles: ['src/test-setup.ts'],
     reporters: ['default'],
-    coverage: {
-      reportsDirectory: '../../../coverage/libs/reading/feature-plan',
-      provider: 'v8' as const,
-    },
+    coverage: coverage('../../../coverage/libs/reading/feature-plan'),
   },
 }));

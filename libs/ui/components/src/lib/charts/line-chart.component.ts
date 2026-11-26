@@ -2,16 +2,14 @@ import { formatNumber } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
-  ElementRef,
   LOCALE_ID,
-  afterNextRender,
   computed,
   inject,
   input,
   signal,
 } from '@angular/core';
 import { niceScale } from './chart-scale';
+import { trackHostWidth } from './chart-width';
 
 export interface LineSeries {
   readonly label: string;
@@ -154,17 +152,7 @@ export class LineChartComponent {
   private readonly locale = inject(LOCALE_ID);
 
   constructor() {
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-    const destroyRef = inject(DestroyRef);
-    afterNextRender(() => {
-      if (typeof ResizeObserver === 'undefined') return;
-      const observer = new ResizeObserver(([entry]) => {
-        const width = Math.round(entry?.contentRect.width ?? 0);
-        if (width > 0) this.width.set(width);
-      });
-      observer.observe(host);
-      destroyRef.onDestroy(() => observer.disconnect());
-    });
+    trackHostWidth(this.width);
   }
 
   /** The drawn width in CSS pixels, so text and strokes keep their size on any screen. */

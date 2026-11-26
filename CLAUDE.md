@@ -9,7 +9,7 @@ A free, installable, offline-first PWA to plan, log and analyse Bible reading. E
 ## Working agreement (mandatory)
 
 1. **No story, no code.** Every change maps to a story in `docs/stories/`.
-2. Per story: **questions phase → code (TDD) → review with the `lb-review` skill → PR**. Do not start coding until the story's open questions are resolved.
+2. Per story: **questions phase → code (TDD) → review with the `lb-review` skill → PR**. Do not start coding until the story's open questions are resolved. Tests come first, and every project keeps **≥ 90 % coverage** of statements, lines and functions (enforced by `nx test`, LB-034).
 3. Do not assume — ask when the story or docs don't answer something.
 4. **Batch mode:** when the owner asks for a set of stories, do not stop for open questions inside that range. Decide using the recommendation written in the story, record it in the story's `## Decisions` section, and report every decision made on the owner's behalf at the end (in Spanish).
 5. **Data model changes** (`docs/architecture/data-model.md`) need an explicit decision in the story and a `schemaVersion` migration.

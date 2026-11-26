@@ -81,8 +81,23 @@
     },
     "test": {
       "executor": "@angular/build:unit-test",
+      "outputs": ["{workspaceRoot}/coverage/reader"],
       "options": {
-        "watch": false
+        "watch": false,
+        "coverage": true,
+        "coverageInclude": ["apps/reader/src/**/*.ts"],
+        "coverageExclude": [
+          "apps/reader/src/**/*.spec.ts",
+          "apps/reader/src/testing/**",
+          "apps/reader/src/main.ts"
+        ],
+        "coverageReporters": ["text-summary", "json", "html"],
+        "coverageThresholds": {
+          "statements": 90,
+          "lines": 90,
+          "functions": 90,
+          "branches": 70
+        }
       }
     },
     "extract-i18n": {

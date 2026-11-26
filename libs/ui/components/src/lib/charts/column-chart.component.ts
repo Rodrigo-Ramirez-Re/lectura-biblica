@@ -1,15 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  ElementRef,
-  afterNextRender,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { niceScale } from './chart-scale';
+import { trackHostWidth } from './chart-width';
 
 export interface ColumnItem {
   readonly label: string;
@@ -151,16 +142,6 @@ export class ColumnChartComponent {
   });
 
   constructor() {
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-    const destroyRef = inject(DestroyRef);
-    afterNextRender(() => {
-      if (typeof ResizeObserver === 'undefined') return;
-      const observer = new ResizeObserver(([entry]) => {
-        const width = Math.round(entry?.contentRect.width ?? 0);
-        if (width > 0) this.width.set(width);
-      });
-      observer.observe(host);
-      destroyRef.onDestroy(() => observer.disconnect());
-    });
+    trackHostWidth(this.width);
   }
 }

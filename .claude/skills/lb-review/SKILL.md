@@ -51,6 +51,7 @@ Review the changes on the current branch versus `development` for the story in t
 - Tests describe behaviour (user-visible or domain rules), not implementation details.
 - Unit tests use in-memory fakes and a fake `Clock`; adapters tested with `fake-indexeddb`.
 - Edge and error cases covered (one-chapter books, wrapping ranges, month ends, leap years), not just the happy path.
+- Coverage gate: every affected project passes `nx test` with ≥ 90 % statements, lines and functions and ≥ 70 % branches (LB-034); new code has no uncovered lines. Never lower a threshold to pass.
 
 ### 6. SOLID & clean code
 

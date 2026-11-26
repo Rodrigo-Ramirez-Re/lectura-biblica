@@ -44,6 +44,10 @@ jobs:
 
       - run: npx nx affected -t lint typecheck test build build-storybook extract-i18n
 
+      # The gate lives in each project config; a PR touching only one of them would not affect
+      # tools/quality, so its check runs on every PR (LB-034).
+      - run: npx nx test quality
+
       # Only dist/apps/reader/browser is deployed; docs, markdown and agent files must never end up there.
       - name: Deploy output has no docs
         run: |

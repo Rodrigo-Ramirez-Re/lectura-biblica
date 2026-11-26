@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { coverage } from '../../vitest.coverage.mjs';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -12,5 +13,6 @@ export default defineConfig(() => ({
     // Loading the full ESLint config per test is slow on a cold cache.
     testTimeout: 30_000,
     reporters: ['default'],
+    coverage: coverage('../../coverage/tools/quality', { include: ['eslint/**/*.mjs'] }),
   },
 }));
