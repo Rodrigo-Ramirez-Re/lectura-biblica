@@ -175,3 +175,19 @@ describe('InsightsPage — passes per book (LB-025)', () => {
     expect(section.textContent).toContain('Cada libro aparecerá aquí');
   });
 });
+
+describe('InsightsPage — cycle and habits (LB-026, LB-027)', () => {
+  it('shows every section', async () => {
+    await setup({ today: '2026-12-03', logs: { '2026-12-01': 3 } });
+
+    for (const name of [
+      '¿Voy al día?',
+      '¿Qué tan constante soy?',
+      '¿Cuántas veces he leído cada libro?',
+      '¿Cuánto llevo del ciclo?',
+      '¿Cómo leo?',
+    ])
+      expect(screen.getByRole('region', { name })).toBeTruthy();
+    expect(screen.getByText(/Con una semana de lectura verás/)).toBeTruthy();
+  });
+});

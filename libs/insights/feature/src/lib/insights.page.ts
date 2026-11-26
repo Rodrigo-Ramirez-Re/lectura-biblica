@@ -5,6 +5,7 @@ import { AdvanceBlocks } from '@lectura/reading-application';
 import { ButtonComponent } from '@lectura/ui-components';
 import { ConsistencySection } from './consistency.section';
 import { CycleSection } from './cycle.section';
+import { HabitsSection } from './habits.section';
 import { OnPaceSection } from './on-pace.section';
 import { PassesSection } from './passes.section';
 
@@ -16,6 +17,7 @@ import { PassesSection } from './passes.section';
     ButtonComponent,
     ConsistencySection,
     CycleSection,
+    HabitsSection,
     OnPaceSection,
     PassesSection,
   ],
@@ -40,6 +42,7 @@ import { PassesSection } from './passes.section';
           />
           <lb-passes-section [books]="view.books" />
           <lb-cycle-section [cycle]="view.cycle" [finish]="view.finish" />
+          <lb-habits-section [habits]="view.habits" />
         </div>
       } @else {
         <p class="mt-section" i18n="@@insights.empty">

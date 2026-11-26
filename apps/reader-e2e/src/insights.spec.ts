@@ -111,3 +111,35 @@ test.describe('Insights — cycle progress (LB-026)', () => {
     await expect(section).toContainText('Con una semana de lectura podré estimar');
   });
 });
+
+test.describe('Insights — reading habits (LB-027)', () => {
+  test('asks for a week of reading before showing habits', async ({ page }) => {
+    await readFirstDay(page);
+    await openOn(page, '2026-12-02', './avance');
+
+    const section = page.getByRole('region', { name: '¿Cómo leo?' });
+    await expect(section).toContainText('Con una semana de lectura verás');
+  });
+
+  test('shows the weekdays after a week of reading', async ({ page }) => {
+    await readFirstDay(page);
+    for (const day of ['02', '03', '04', '05', '06', '07']) {
+      await openOn(page, `2026-12-${day}`);
+      await page.getByRole('button', { name: 'Ya leí' }).click();
+      await expect(page.getByText('Listo por hoy')).toBeVisible();
+    }
+    await openOn(page, '2026-12-07', './avance');
+
+    const section = page.getByRole('region', { name: '¿Cómo leo?' });
+    await expect(section.getByTestId('habits-last7')).toHaveText(
+      'Promedio de 7 días: 3 capítulos al día',
+    );
+    await expect(section.getByTestId('habits-zero')).toHaveText(
+      'Ningún día sin leer en los últimos 30.',
+    );
+    await expect(
+      section.getByRole('img', { name: /Capítulos en promedio por día de la semana/ }),
+    ).toBeVisible();
+    await expect(section).toContainText('Tu promedio diario: 3 capítulos');
+  });
+});
