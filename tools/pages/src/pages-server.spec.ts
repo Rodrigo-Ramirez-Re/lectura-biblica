@@ -24,6 +24,8 @@ async function serve(root: string, deepLinkStatus?: 200 | 404) {
     root,
     get: (path: string, headers: Record<string, string> = {}) =>
       fetch(`http://localhost:${port}${path}`, { redirect: 'manual', headers }),
+    head: (path: string, headers: Record<string, string> = {}) =>
+      fetch(`http://localhost:${port}${path}`, { method: 'HEAD', headers }),
     close: () => new Promise((resolve) => server.close(resolve)),
   };
 }
@@ -79,6 +81,13 @@ describe('GitHub Pages emulation (LB-008)', () => {
     expect((await server.get('/otro-sitio/')).status).toBe(404);
   });
 
+  it('still answers 404 for a missing file when deep links get 200 (LB-033 review)', async () => {
+    server = await serve(site(), 200);
+
+    expect((await server.get(`${BASE}chunk-missing.js`)).status).toBe(404);
+    expect((await server.get(`${BASE}icons/missing.png`)).status).toBe(404);
+  });
+
   it('compresses text with gzip when the browser accepts it, as Pages does (LB-033)', async () => {
     server = await serve(site());
 
@@ -89,11 +98,40 @@ describe('GitHub Pages emulation (LB-008)', () => {
     expect(await response.text()).toBe('console.log(1)');
   });
 
-  it('sends text as is to a client that does not accept gzip (LB-033)', async () => {
+  it.each([
+    ['icons/icon.svg', '<svg/>'],
+    ['manifest.webmanifest', '{"name":"x"}'],
+    ['data.json', '{}'],
+    ['index.html', '<p>index</p>'],
+  ])('compresses %s too (LB-033 review)', async (file, content) => {
+    const root = site();
+    writeFileSync(join(root, file), content);
+    server = await serve(root);
+
+    const response = await server.get(`${BASE}${file}`, { 'accept-encoding': 'br, gzip' });
+    expect(response.headers.get('content-encoding')).toBe('gzip');
+    expect(await response.text()).toBe(content);
+  });
+
+  it.each([['identity'], ['gzip;q=0'], ['gzip; q=0.0, identity']])(
+    'sends text as is when the client says "%s", varying on the header (LB-033)',
+    async (acceptEncoding) => {
+      server = await serve(site());
+
+      const response = await server.get(`${BASE}main.js`, { 'accept-encoding': acceptEncoding });
+      expect(response.headers.get('content-encoding')).toBeNull();
+      expect(response.headers.get('vary')).toBe('accept-encoding');
+      expect(await response.text()).toBe('console.log(1)');
+    },
+  );
+
+  it('answers HEAD with the headers only (LB-033 review)', async () => {
     server = await serve(site());
 
-    const response = await server.get(`${BASE}main.js`, { 'accept-encoding': 'identity' });
-    expect(response.headers.get('content-encoding')).toBeNull();
+    const response = await server.head(`${BASE}main.js`, { 'accept-encoding': 'gzip' });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('text/javascript; charset=utf-8');
+    expect(await response.text()).toBe('');
   });
 
   it('never compresses images (LB-033)', async () => {

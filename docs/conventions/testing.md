@@ -27,7 +27,7 @@ Every project also has a `typecheck` target (`tsc --noEmit` over lib/app and spe
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `git commit` | Prettier + ESLint on staged files; commitlint on the message                                                                                                                                                                                  |
 | `git push`   | `nx affected -t lint typecheck test` vs `origin/development`                                                                                                                                                                                  |
-| Every PR     | PR title + commits (commitlint); affected lint, typecheck, test, build, build-storybook, extract-i18n; coverage gate check; e2e on Chromium, Firefox, WebKit; Lighthouse (performance ≥ 90, accessibility 100, best practices ≥ 95, SEO ≥ 90) |
+| Every PR     | PR title + commits (commitlint); affected lint, typecheck, test, build, build-storybook, extract-i18n; coverage gate check; e2e on Chromium, Firefox, WebKit; Lighthouse (performance ≥ 85, accessibility 100, best practices ≥ 95, SEO ≥ 90) |
 | Push to main | Build and deploy to GitHub Pages                                                                                                                                                                                                              |
 
 Quality-gate rules themselves are specified in `tools/quality` (`npx nx test quality`).

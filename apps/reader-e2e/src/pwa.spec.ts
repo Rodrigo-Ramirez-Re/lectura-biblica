@@ -37,6 +37,7 @@ test.describe('PWA (LB-007)', () => {
       expect(response.headers()['content-type']).toBe('image/png');
     }
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+    await expect(page.locator('meta[name="theme-color"]')).toHaveCount(2);
   });
 
   test('works offline after the first visit', async ({ page, context }) => {

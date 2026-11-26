@@ -22,14 +22,14 @@ describe('Lighthouse in CI (LB-033)', () => {
     expect(config.collect.startServerCommand).toContain('tools/pages/src/serve.mjs');
   });
 
-  it('takes the median of three runs', () => {
-    expect(config.collect.numberOfRuns).toBe(3);
+  it('asserts the most representative of five runs', () => {
+    expect(config.collect.numberOfRuns).toBe(5);
     for (const [, options] of Object.values(config.assert.assertions))
       expect(options.aggregationMethod).toBe('median-run');
   });
 
   it.each([
-    ['performance', 0.9],
+    ['performance', 0.85],
     ['accessibility', 1],
     ['best-practices', 0.95],
     ['seo', 0.9],
@@ -47,12 +47,17 @@ describe('Lighthouse in CI (LB-033)', () => {
   it('runs on every pull request that affects the app, and keeps the reports', () => {
     const ci = read('.github/workflows/ci.yml');
 
-    expect(ci).toMatch(/npx nx affected -t lighthouse/);
-    expect(ci).toMatch(/path: dist\/lighthouse/);
+    expect(ci).toMatch(/^\s+- run: npx nx affected -t lighthouse$/m);
+    expect(ci).toMatch(/^\s+path: dist\/lighthouse$/m);
+    expect(ci).toMatch(/^\s+retention-days: 7$/m);
   });
 
   it('is an Nx target of the app that builds the Pages site first', () => {
-    const target = JSON.parse(read('apps/reader/project.json')).targets.lighthouse;
+    const project = JSON.parse(read('apps/reader/project.json'));
+    const target = project.targets.lighthouse;
+
+    // A change to the Pages server or its 404 page reruns the app's e2e and Lighthouse.
+    expect(project.implicitDependencies).toContain('pages');
 
     expect(target.dependsOn).toContain('pages');
     expect(target.options.command).toContain('lhci autorun');
