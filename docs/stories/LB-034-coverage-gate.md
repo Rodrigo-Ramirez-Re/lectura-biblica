@@ -60,7 +60,7 @@ Feature: Coverage gate
 ## Decisions
 
 - Both open questions were adopted as recommended: statements, lines and functions at 90 % and branches at 70 %, per project. Angular's template control flow adds branches that make branch coverage lag; after this story every project is at 75 % or more, so a later story can raise the bar.
-- Coverage is always on: the shared preset `vitest.coverage.ts` sets `enabled: true`, so `npx nx test <project>` measures it and fails below the thresholds, locally, on `git push` and in CI. No extra flag. The reader app does the same through `coverage`, `coverageInclude`, `coverageExclude` and `coverageThresholds` in its `project.json`.
+- Coverage is always on: the shared preset `vitest.coverage.mjs` sets `enabled: true`, so `npx nx test <project>` measures it and fails below the thresholds, locally, on `git push` and in CI. No extra flag. The reader app does the same through `coverage`, `coverageInclude`, `coverageExclude` and `coverageThresholds` in its `project.json`.
 - Each report counts every file of the project's `src`, tested or not. Before, the reader app only counted files some test loaded, so the app configuration, routes, providers, screen titles, focus on navigation and the not-found page had no tests at all.
 - Tests added to reach the bar:
   - `shared-infrastructure-browser` (76 % → 100 %): current instant, file download through a temporary link, persistence errors.
@@ -69,6 +69,16 @@ Feature: Coverage gate
   - `reader` (82 % → 99.6 %): every use case wired, every route loads its screen, tab titles, focus after navigating, not-found page.
 - Refactor: the width tracking repeated in the line and column charts became `trackHostWidth()` in `ui-components`.
 - `tools/quality/src/coverage.spec.ts` fails if a project's config stops using the preset or the thresholds change. CLAUDE.md, the testing conventions and the `lb-review` skill state the rule.
+- Review fixes (`lb-review`):
+  - The preset is in Nx's `sharedGlobals`, so changing it marks every project affected and reruns its tests; before, lowering a threshold ran no test at all.
+  - CI runs `nx test quality` on every PR. A PR that drops the preset from one project's config affects only that project, so the guard would otherwise never run.
+  - The guard loads each config and checks what it really resolves to (enabled, thresholds, excludes), and that its include patterns match files. The tools measured nothing before: `tools/pages` now counts `src/**/*.mjs` and `tools/quality` its ESLint rule.
+  - The preset is plain ESM (`vitest.coverage.mjs` with a `.d.mts`), imported with its extension. That removes Vite's CommonJS warning.
+  - The Pages preparation moved to `prepareForPages()`, which now has tests. `serve.mjs` and `prepare.mjs` are one-line entry points, excluded like the app's `main.ts`.
+  - The ESLint rule has its own `RuleTester` spec.
+  - The reader's test target declares `coverage/reader` as its output.
+  - The route tests assert the exact screen of each path.
+  - The README mentions coverage.
 
 ## Definition of done
 

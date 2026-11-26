@@ -1,7 +1,7 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
-import { coverage } from '../../../vitest.coverage';
+import { coverage } from '../../../vitest.coverage.mjs';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,

@@ -53,3 +53,5 @@ npx playwright install        # once, downloads Chromium, Firefox and WebKit for
 | Format                               | `npm run format`    |
 
 Any single target: `npx nx <target> <project>` (e.g. `npx nx test shared-kernel`). Project graph: `npx nx graph`.
+
+`test` also measures coverage and fails below 90 % (LB-034); reports land in `coverage/` (see `docs/conventions/testing.md`).

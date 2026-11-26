@@ -81,6 +81,7 @@
     },
     "test": {
       "executor": "@angular/build:unit-test",
+      "outputs": ["{workspaceRoot}/coverage/reader"],
       "options": {
         "watch": false,
         "coverage": true,

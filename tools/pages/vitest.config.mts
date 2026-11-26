@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { coverage } from '../../vitest.coverage';
+import { coverage } from '../../vitest.coverage.mjs';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -11,6 +11,9 @@ export default defineConfig(() => ({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     reporters: ['default'],
-    coverage: coverage('../../coverage/tools/pages'),
+    coverage: coverage('../../coverage/tools/pages', {
+      include: ['src/**/*.mjs'],
+      exclude: ['src/serve.mjs', 'src/prepare.mjs'],
+    }),
   },
 }));
