@@ -9,3 +9,4 @@ export * from './lib/charts/chart-table.component';
 export * from './lib/charts/line-chart.component';
 export * from './lib/charts/calendar-heatmap.component';
 export * from './lib/charts/bar-list.component';
+export * from './lib/charts/column-chart.component';

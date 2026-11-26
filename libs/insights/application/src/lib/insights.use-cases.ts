@@ -1,6 +1,7 @@
 import {
   cycleProgress,
   finishEstimate,
+  habits,
   monthDays,
   onPace,
   passesByBook,
@@ -8,6 +9,7 @@ import {
   type BookPasses,
   type CycleProgress,
   type FinishEstimate,
+  type Habits,
   type MonthDays,
   type OnPace,
   type Streaks,
@@ -26,6 +28,7 @@ export interface InsightsView {
   readonly books: readonly BookPasses[];
   readonly cycle: CycleProgress;
   readonly finish: FinishEstimate;
+  readonly habits: Habits;
 }
 
 /**
@@ -55,6 +58,7 @@ export class GetInsights {
       books: passesByBook(journal, this.catalog),
       cycle,
       finish,
+      habits: habits(journal, today),
     };
   }
 }

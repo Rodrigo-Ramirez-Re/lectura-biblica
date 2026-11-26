@@ -3,3 +3,4 @@ export * from './lib/on-pace';
 export * from './lib/consistency';
 export * from './lib/passes-by-book';
 export * from './lib/cycle-progress';
+export * from './lib/habits';
