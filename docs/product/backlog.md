@@ -67,6 +67,14 @@ The seven metrics of [[product/spec#4. Insights|spec §4]], each with an SVG cha
 
 Configurable donation link, install help (Android, iPhone, desktop), accessibility audit, Lighthouse in CI, backup reminders tuning.
 
+| ID                                             | Story                                        | Depends on         |
+| ---------------------------------------------- | -------------------------------------------- | ------------------ |
+| [[stories/LB-029-donation\|LB-029]]            | Configurable donation section                | 006                |
+| [[stories/LB-030-install-help\|LB-030]]        | Install help for Android, iPhone and desktop | 007                |
+| [[stories/LB-031-backup-reminders\|LB-031]]    | Backup reminders tuning                      | 013                |
+| [[stories/LB-032-accessibility-audit\|LB-032]] | Accessibility audit                          | 028, 029, 030, 031 |
+| [[stories/LB-033-lighthouse-ci\|LB-033]]       | Lighthouse in CI                             | 032                |
+
 ## Phase 5 — Study material (E6)
 
 One content file per book, a "Material de estudio" book section, reading practices and guide questions, highlighted during the book's block.
