@@ -147,13 +147,28 @@ describe('BackupPanel — reminders (LB-031)', () => {
     expect(journal.journal.settings.backupEveryDays).toBe(7);
   });
 
-  it('says reminders are off after choosing "Nunca"', async () => {
+  it('says reminders are off after choosing "Nunca", tied to the select', async () => {
     const { user, journal, fixture } = await setup();
+    const select = screen.getByLabelText('Recordarme hacer un respaldo');
 
-    await user.selectOptions(screen.getByLabelText('Recordarme hacer un respaldo'), 'never');
+    await user.selectOptions(select, 'never');
     await fixture.whenStable();
 
     expect(journal.journal.settings.backupEveryDays).toBeNull();
-    expect(screen.getByText(/recordatorios están desactivados/)).toBeTruthy();
+    const off = screen.getByText(/recordatorios están desactivados/);
+    expect(select.getAttribute('aria-describedby')).toContain(off.id);
+  });
+
+  it('keeps the previous choice and says so when it cannot be saved (review)', async () => {
+    const { user, journal, fixture } = await setup();
+    vi.spyOn(journal, 'saveSettings').mockRejectedValueOnce(new Error('quota'));
+    const select = screen.getByLabelText('Recordarme hacer un respaldo') as HTMLSelectElement;
+
+    await user.selectOptions(select, '7');
+    await fixture.whenStable();
+
+    expect(select.value).toBe('30');
+    expect(select.getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByText('No se pudo guardar. Inténtalo de nuevo.')).toBeTruthy();
   });
 });

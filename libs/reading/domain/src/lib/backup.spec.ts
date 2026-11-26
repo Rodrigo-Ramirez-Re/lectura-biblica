@@ -139,9 +139,9 @@ describe('backup reminder (LB-013)', () => {
     expect(isBackupDue(sameDay, day('2026-12-10'))).toBe(false);
   });
 
-  it('is due again 30 days after the last backup', () => {
-    expect(isBackupDue(withLogs(7, '2026-12-05T21:15:00.000Z'), day('2027-01-04'))).toBe(false);
-    expect(isBackupDue(withLogs(7, '2026-12-05T21:15:00.000Z'), day('2027-01-05'))).toBe(true);
+  it('is due again 30 days after the last backup (LB-031: on the 30th day)', () => {
+    expect(isBackupDue(withLogs(7, '2026-12-05T21:15:00.000Z'), day('2027-01-03'))).toBe(false);
+    expect(isBackupDue(withLogs(7, '2026-12-05T21:15:00.000Z'), day('2027-01-04'))).toBe(true);
   });
 });
 
@@ -187,8 +187,8 @@ describe('backup consistency (LB-013 review)', () => {
       logs: [...journal.logs, log('2026-12-20')],
     });
 
-    expect(isBackupDue(journalAt(evening), day('2027-01-04'))).toBe(false);
-    expect(isBackupDue(journalAt(evening), day('2027-01-05'))).toBe(true);
+    expect(isBackupDue(journalAt(evening), day('2027-01-03'))).toBe(false);
+    expect(isBackupDue(journalAt(evening), day('2027-01-04'))).toBe(true);
   });
 });
 
@@ -263,14 +263,14 @@ describe('backup reminder tuning (LB-031)', () => {
 
   it('reminds monthly by default', () => {
     expect(emptyJournal.settings.backupEveryDays).toBe(30);
-    expect(isBackupDue(at({}), day('2027-01-04'))).toBe(false);
-    expect(isBackupDue(at({}), day('2027-01-05'))).toBe(true);
+    expect(isBackupDue(at({}), day('2027-01-03'))).toBe(false);
+    expect(isBackupDue(at({}), day('2027-01-04'))).toBe(true);
   });
 
   it.each([
-    [7, '2026-12-12', '2026-12-13'],
-    [14, '2026-12-19', '2026-12-20'],
-    [90, '2027-03-05', '2027-03-06'],
+    [7, '2026-12-11', '2026-12-12'],
+    [14, '2026-12-18', '2026-12-19'],
+    [90, '2027-03-04', '2027-03-05'],
   ] as const)('reminds every %i days when chosen', (backupEveryDays, before, due) => {
     expect(isBackupDue(at({ backupEveryDays }), day(before))).toBe(false);
     expect(isBackupDue(at({ backupEveryDays }), day(due))).toBe(true);
@@ -283,9 +283,12 @@ describe('backup reminder tuning (LB-031)', () => {
     );
   });
 
-  it('does not remind when nothing was logged after the day of the last backup', () => {
-    expect(isBackupDue(at({}, 5), day('2027-02-01'))).toBe(false);
-    expect(isBackupDue(at({}, 6), day('2027-02-01'))).toBe(true);
+  it('does not remind when nothing was logged since the day of the last backup', () => {
+    expect(isBackupDue(at({}, 4), day('2027-02-01'))).toBe(false);
+  });
+
+  it('counts a reading logged on the day of the backup, which may come after it (review)', () => {
+    expect(isBackupDue(at({}, 5), day('2027-02-01'))).toBe(true);
   });
 
   it('keeps quiet while postponed and comes back on the day it was postponed to', () => {
@@ -352,6 +355,13 @@ describe('data model v3 (LB-031)', () => {
     const document = JSON.parse(exported());
     document.settings = { ...document.settings, ...change };
     expect(parseBackup(JSON.stringify(document), bookCatalog)).toEqual({
+      ok: false,
+      error: 'invalid',
+    });
+  });
+
+  it('rejects a v2 backup whose settings are missing', () => {
+    expect(parseBackup(JSON.stringify({ ...v2Backup(), settings: null }), bookCatalog)).toEqual({
       ok: false,
       error: 'invalid',
     });

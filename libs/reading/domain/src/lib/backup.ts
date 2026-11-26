@@ -122,8 +122,8 @@ const POSTPONE_DAYS = 7;
 
 /**
  * A backup is due once there are logs on at least 7 days and none was ever exported (LB-013), or
- * the last export is older than the chosen interval and something was logged after its day
- * (LB-031). Never while turned off or postponed.
+ * the chosen interval has passed since the day of the last export and something was logged on or
+ * after that day (LB-031). Never while turned off or postponed.
  */
 export function isBackupDue(journal: Journal, today: LocalDate): boolean {
   const { lastBackupAt, backupEveryDays, backupReminderPostponedUntil } = journal.settings;
@@ -132,8 +132,9 @@ export function isBackupDue(journal: Journal, today: LocalDate): boolean {
   if (!lastBackupAt) return new Set(journal.logs.map((log) => log.date)).size >= REMINDER_MIN_DAYS;
   // The local day of the export instant: an evening export in Mexico is already tomorrow in UTC.
   const lastDay = LocalDate.fromDate(new Date(lastBackupAt));
-  const logsSince = journal.logs.some((log) => log.date > lastDay.toString());
-  return logsSince && today.plusDays(-backupEveryDays).isAfter(lastDay);
+  // Logs carry no time: one on the backup day may have been made after it, so it counts.
+  const logsSince = journal.logs.some((log) => log.date >= lastDay.toString());
+  return logsSince && !today.plusDays(-backupEveryDays).isBefore(lastDay);
 }
 
 /** "Ahora no": the reminder stays away for a week, across app restarts (LB-031). */

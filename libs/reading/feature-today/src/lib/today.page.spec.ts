@@ -202,6 +202,16 @@ describe('TodayPage — backup reminder (LB-013)', () => {
     );
   });
 
+  it('keeps the reminder when "Ahora no" cannot be saved (LB-031 review)', async () => {
+    const { user, journal, fixture } = await setup('2026-12-07', { daysLogged: 7 });
+    vi.spyOn(journal, 'saveSettings').mockRejectedValueOnce(new Error('quota'));
+
+    await user.click(screen.getByRole('button', { name: 'Ahora no' }));
+    await fixture.whenStable();
+
+    expect(screen.getByRole('region', { name: 'Haz un respaldo' })).toBeTruthy();
+  });
+
   it('postpones it for 7 days with "Ahora no" (LB-031)', async () => {
     const { user, journal } = await setup('2026-12-07', { daysLogged: 7 });
 

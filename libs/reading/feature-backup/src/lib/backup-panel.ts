@@ -52,8 +52,13 @@ type ReminderChoice = `${BackupInterval}` | 'never';
         Exportar respaldo
       </button>
 
-      <lb-form-field label="Recordarme hacer un respaldo" i18n-label="@@reading.backup.reminder">
-        <select lbControl [value]="reminder()" (change)="chooseReminder(asText($event))">
+      <lb-form-field
+        label="Recordarme hacer un respaldo"
+        i18n-label="@@reading.backup.reminder"
+        [hint]="reminder() === 'never' ? reminderOff : undefined"
+        [error]="reminderError()"
+      >
+        <select lbControl [value]="reminder()" (change)="chooseReminder($event)">
           @for (option of reminderOptions; track option.value) {
             <option [value]="option.value" [selected]="option.value === reminder()">
               {{ option.label }}
@@ -61,11 +66,6 @@ type ReminderChoice = `${BackupInterval}` | 'never';
           }
         </select>
       </lb-form-field>
-      @if (reminder() === 'never') {
-        <p class="text-body-sm text-on-surface-muted" i18n="@@reading.backup.reminder-off">
-          Los recordatorios están desactivados: tú decides cuándo exportar.
-        </p>
-      }
 
       <lb-form-field
         label="Importar respaldo"
@@ -179,6 +179,8 @@ export class BackupPanel {
   protected readonly confirmWord = CONFIRM_WORD;
   protected readonly lastBackupAt = signal<Date | null>(null);
   protected readonly reminder = signal<ReminderChoice>('30');
+  protected readonly reminderError = signal<string | undefined>(undefined);
+  protected readonly reminderOff = $localize`:@@reading.backup.reminder-off:Los recordatorios están desactivados: tú decides cuándo exportar.`;
   protected readonly reminderOptions: readonly { value: ReminderChoice; label: string }[] = [
     { value: '7', label: $localize`:@@reading.backup.reminder-7:Cada semana` },
     { value: '14', label: $localize`:@@reading.backup.reminder-14:Cada 2 semanas` },
@@ -207,13 +209,22 @@ export class BackupPanel {
     await this.loadLastBackup();
   }
 
-  protected async chooseReminder(choice: string): Promise<void> {
-    const option = this.reminderOptions.find((candidate) => candidate.value === choice);
-    if (!option) return;
-    await this.setReminder.execute(
-      option.value === 'never' ? null : (Number(option.value) as BackupInterval),
-    );
-    this.reminder.set(option.value);
+  /** Shown once saved; if saving fails the select goes back to what is stored. */
+  protected async chooseReminder(event: Event): Promise<void> {
+    const select = event.target as HTMLSelectElement;
+    const choice = select.value as ReminderChoice;
+    try {
+      await this.setReminder.execute(
+        choice === 'never' ? null : (Number(choice) as BackupInterval),
+      );
+      this.reminderError.set(undefined);
+      this.reminder.set(choice);
+    } catch {
+      select.value = this.reminder();
+      this.reminderError.set(
+        $localize`:@@reading.backup.reminder-error:No se pudo guardar. Inténtalo de nuevo.`,
+      );
+    }
   }
 
   protected async choose(event: Event): Promise<void> {

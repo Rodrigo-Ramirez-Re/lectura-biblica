@@ -609,10 +609,17 @@ export class TodayPage {
     }
   }
 
-  /** "Ahora no": hidden once saved, so it stays away for a week even after a restart. */
+  /**
+   * "Ahora no": hidden once saved, so it stays away for a week even after a restart. If it can't
+   * be saved the reminder simply stays.
+   */
   protected async postponeReminder(): Promise<void> {
-    await this.postponeBackup.execute();
-    this.backupReminder.set(null);
+    try {
+      await this.postponeBackup.execute();
+      this.backupReminder.set(null);
+    } catch {
+      // Nothing to undo: the reminder is still showing.
+    }
   }
 
   // Blocks that started while the app was closed are recorded before anything is read.

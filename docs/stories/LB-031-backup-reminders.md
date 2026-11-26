@@ -77,18 +77,24 @@ Feature: Backup reminders
 - All four open questions were adopted as recommended:
   - The preference lives in the journal's `settings`, so it travels with backups.
   - "Ahora no" lasts 7 days.
-  - "Something new" means a reading log dated after the local day of the last backup.
+  - "Something new" means a reading log dated on or after the local day of the last backup (see review fixes).
   - The first reminder is unchanged: logs on 7 days and no export ever, unless "Nunca".
 - Data model v3:
   - `settings.backupEveryDays` (7, 14, 30 or 90, or `null` for never) and `settings.backupReminderPostponedUntil` (the first day the reminder may come back).
   - The backup migration 2 → 3 fills 30 and `null`.
   - The device database needs no new object store: settings stored by version 2 are completed when read (`upgradeSettings`), like plans in v2.
   - Imports of v3 files reject other intervals and postponements that are not a day.
-- An interval keeps LB-013's meaning of "older than": with "cada semana" a backup made on the 5th is due from the 13th. That matches "over 30 days" for the monthly default.
+- An interval counts whole days from the backup day: with "cada semana" a backup made on the 5th is due from the 12th, as the scenario says ("7 days after"), and the same day "Ahora no" would bring it back. The monthly default is therefore due on day 30, one day earlier than LB-013's "over 30 days".
 - The frequency is a select in the backup panel ("Recordarme hacer un respaldo"). With "Nunca" the panel says reminders are off and you decide when to export.
 - The reminder on Hoy now says when the last backup was ("Tu último respaldo fue el 3 de octubre de 2026.") or that there was none.
 - "Ahora no" and a new frequency are saved before the screen changes, so closing the app right after can't lose them.
 - `BackupReminderState` (the session-only dismissal) was removed: the postponement is stored.
+- Review fixes (`lb-review`):
+  - Logs carry no time, so a reading logged on the backup day counts as new: it may have been made after the export.
+  - If saving the frequency fails, the select goes back to the stored value and says "No se pudo guardar. Inténtalo de nuevo."; if "Ahora no" can't be saved, the reminder stays.
+  - "Los recordatorios están desactivados" is the select's hint, so screen readers read it with the field.
+  - Tests added for a v2 file without settings.
+  - The new terms are in the ubiquitous language.
 
 ## Definition of done
 
