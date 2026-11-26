@@ -9,10 +9,11 @@ class FakeInstallPrompt {
   readonly canInstall = signal(false);
   readonly installed = signal(false);
   platform: Platform = 'desktop';
+  accepts = true;
   install = vi.fn(async () => {
     this.canInstall.set(false);
-    this.installed.set(true);
-    return true;
+    this.installed.set(this.accepts);
+    return this.accepts;
   });
 }
 
@@ -85,5 +86,48 @@ describe('InstallPage (LB-030)', () => {
     await setup((prompt) => prompt.installed.set(true));
 
     expect(screen.getByText(/Ya estás usando la aplicación instalada/)).toBeTruthy();
+  });
+
+  describe('after "Instalar ahora" (LB-030 review)', () => {
+    it('announces the result in a status region that was already there', async () => {
+      const { fixture } = await setup((prompt) => prompt.canInstall.set(true));
+      const status = screen.getByRole('status');
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Instalar ahora' }));
+      await fixture.whenStable();
+
+      expect(screen.getByRole('status')).toBe(status);
+      expect(status.textContent).toMatch(/Ya estás usando la aplicación instalada/);
+    });
+
+    it('says it was not installed when the person says no', async () => {
+      const { fixture } = await setup((prompt) => {
+        prompt.canInstall.set(true);
+        prompt.accepts = false;
+      });
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Instalar ahora' }));
+      await fixture.whenStable();
+
+      expect(screen.getByRole('status').textContent).toMatch(
+        /No se instaló. Puedes hacerlo cuando quieras con los pasos de abajo./,
+      );
+    });
+
+    it('moves the focus to the page title instead of losing it with the button', async () => {
+      const { fixture } = await setup((prompt) => prompt.canInstall.set(true));
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Instalar ahora' }));
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+    });
+
+    it('keeps the check mark away from screen readers', async () => {
+      await setup((prompt) => prompt.installed.set(true));
+
+      const mark = screen.getByText('✓');
+      expect(mark.getAttribute('aria-hidden')).toBe('true');
+    });
   });
 });

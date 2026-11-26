@@ -39,3 +39,26 @@ describe('donationLink (LB-029)', () => {
     },
   );
 });
+
+describe('donationLink (LB-029 review)', () => {
+  it('works where URL.canParse does not exist, as in Safari 16', () => {
+    const canParse = URL.canParse;
+    Reflect.deleteProperty(URL, 'canParse');
+    try {
+      expect(
+        donationLink(settings({ enabled: true, label: '', url: 'https://example.org/d' })),
+      ).toEqual({ label: null, url: 'https://example.org/d' });
+      expect(
+        donationLink(settings({ enabled: true, label: '', url: 'no es un enlace' })),
+      ).toBeNull();
+    } finally {
+      URL.canParse = canParse;
+    }
+  });
+
+  it('rejects a link carrying a user name or password', () => {
+    expect(
+      donationLink(settings({ enabled: true, label: '', url: 'https://yo:clave@example.org/d' })),
+    ).toBeNull();
+  });
+});

@@ -72,6 +72,13 @@ Feature: Install help
 - An offer is used once. If the person declines it, the button disappears until the browser offers again.
 - "Installed" means the app runs in standalone mode (`display-mode: standalone`, or `navigator.standalone` on iOS), or the browser reported `appinstalled`. In that case the page says "Ya estás usando la aplicación instalada." and Acerca de stops suggesting installing it.
 - Text steps only, no screenshots: browser menus change and images would go stale.
+- Review fixes (retrospective `lb-review`):
+  - Standalone detection (`display-mode: standalone` and iOS `navigator.standalone`) and installing without an offer now have tests.
+  - The service removes its listeners when destroyed.
+  - After "Instalar ahora", the focus moves to the page title instead of being lost with the button. The result is announced in a status region that is always present: "Ya estás usando la aplicación instalada." or "No se instaló. Puedes hacerlo cuando quieras con los pasos de abajo."
+  - The check mark is hidden from screen readers.
+  - The first-run notice no longer offers to install inside the installed app.
+  - Not adopted: headings inside the `<summary>` elements. Screen readers flatten a summary into a button, so a heading there adds noise rather than navigation.
 
 ## Definition of done
 
