@@ -2,7 +2,7 @@
 id: LB-024
 title: Consistency — streaks and the month's calendar
 epic: E4
-status: ready
+status: done
 phase: 3
 depends_on: [LB-023]
 ---
@@ -56,21 +56,28 @@ Calendars of previous months (the monthly history is LB-028).
 
 ## Technical notes
 
-- Domain: `streaks(journal, plan, today)` and `monthDays(journal, plan, today)`, table-driven tests.
+- Domain: `streaks(journal, today)` and `monthDays(journal, today)`, table-driven tests.
 - Chart kit: a calendar heatmap component (7 columns, Monday first like es-MX calendars).
 
 ## Open questions
 
-- [ ] Which days count for a streak — _Recommendation:_ days the plan expects reading (same rule as LB-023); a day with any chapter logged counts, even if fewer than expected; days that expect nothing are neutral.
-- [ ] "Days in the month" — _Recommendation:_ days of the month so far, today included, that expect reading.
+- [x] Which days count for a streak — _Adopted:_ days the plan expects reading (same rule as LB-023); a day with any chapter logged counts, even if fewer than expected; days that expect nothing are neutral.
+- [x] "Days in the month" — _Adopted:_ days of the month so far, today included, that expect reading.
 
 ## Decisions
 
+- Both open questions were adopted as recommended: a day with any chapter counts for a streak, a missed day that expected reading breaks it, and days that expect nothing (rest, pause, before the plan) leave it as it is; today only breaks it once it's over.
+- "Días con lectura": the days so far with any chapter, out of the days so far that expected reading plus the rest days read on, so the first number never exceeds the second.
+- `lb-calendar-heatmap` (ui-components): Monday first; each day is a button named with its whole detail ("3 de diciembre: 5 capítulos"), with one day in the tab order and the arrow keys moving by day or week (roving tab index). The detail of the day tapped shows under the calendar. Each state has its own symbol (✓ read, ✗ missed, ○ today, — nothing expected), so the shade is never the only cue.
+- The shade is the share of the day's pace that was read: under half, under the pace, up to twice, more; a rest day read on shows as a full day.
+- Days still to come show what the plan will expect (nothing while paused); the table lists the days so far.
+- With nothing read yet the section says "Tus rachas empiezan con tu primer día de lectura." instead of drawing an empty calendar.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated

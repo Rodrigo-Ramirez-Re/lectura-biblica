@@ -33,5 +33,7 @@ describe('GetInsights (LB-023)', () => {
 
     expect(view?.today.toString()).toBe('2026-12-03');
     expect(view?.onPace).toMatchObject({ read: 12, expected: 9, difference: 3, days: 1 });
+    expect(view?.streaks).toEqual({ current: 1, best: 1 });
+    expect(view?.month).toMatchObject({ readDays: 1, readingDays: 3 });
   });
 });
