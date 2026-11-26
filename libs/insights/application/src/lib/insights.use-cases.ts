@@ -1,10 +1,20 @@
-import { onPace, type OnPace } from '@lectura/insights-domain';
+import {
+  monthDays,
+  onPace,
+  streaks,
+  type MonthDays,
+  type OnPace,
+  type Streaks,
+} from '@lectura/insights-domain';
 import type { JournalReader } from '@lectura/reading-domain';
 import type { Clock, LocalDate } from '@lectura/shared-kernel';
 
 export interface InsightsView {
   readonly today: LocalDate;
   readonly onPace: OnPace;
+  /** Null until something is read. */
+  readonly streaks: Streaks | null;
+  readonly month: MonthDays;
 }
 
 /**
@@ -21,7 +31,8 @@ export class GetInsights {
     const journal = await this.reader.load();
     const today = this.clock.today();
     const pace = onPace(journal, today);
-    if (!pace) return null;
-    return { today, onPace: pace };
+    const month = monthDays(journal, today);
+    if (!pace || !month) return null;
+    return { today, onPace: pace, streaks: streaks(journal, today), month };
   }
 }

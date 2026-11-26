@@ -97,8 +97,9 @@ describe('InsightsPage (LB-023)', () => {
         name: 'Capítulos acumulados de diciembre de 2026, leídos y según el plan, día por día',
       }),
     ).toBeTruthy();
-    await user.click(screen.getByText('Ver como tabla'));
-    const rows = within(screen.getByRole('table')).getAllByRole('row');
+    const section = screen.getByRole('region', { name: '¿Voy al día?' });
+    await user.click(within(section).getByText('Ver como tabla'));
+    const rows = within(within(section).getByRole('table')).getAllByRole('row');
     const cells = (row: HTMLElement) =>
       [...row.querySelectorAll('th, td')].map((cell) => cell.textContent?.trim()).join('|');
     expect(rows.map(cells)).toEqual([
@@ -107,5 +108,50 @@ describe('InsightsPage (LB-023)', () => {
       '2 de diciembre|5|6',
       '3 de diciembre|5|9',
     ]);
+  });
+});
+
+describe('InsightsPage — consistency (LB-024)', () => {
+  const run = (from: number, to: number) =>
+    Object.fromEntries(
+      Array.from({ length: to - from + 1 }, (_, i) => [
+        `2026-12-${String(from + i).padStart(2, '0')}`,
+        3,
+      ]),
+    );
+
+  it('shows the current and the best streak', async () => {
+    await setup({ today: '2026-12-11', logs: { ...run(1, 8), ...run(10, 11) } });
+
+    expect(screen.getByTestId('streak-current').textContent?.trim()).toBe('2 días');
+    expect(screen.getByTestId('streak-best').textContent?.trim()).toBe('8 días');
+    expect(
+      screen
+        .getByText(/de 11 días con lectura/)
+        .textContent?.replace(/\s+/g, ' ')
+        .trim(),
+    ).toBe('10 de 11 días con lectura este mes.');
+  });
+
+  it('shows the month as a calendar and tells a day on tap', async () => {
+    const user = userEvent.setup();
+    await setup({ today: '2026-12-03', logs: { '2026-12-01': 5 } });
+
+    const calendar = screen.getByRole('group', { name: 'Días de lectura de diciembre de 2026' });
+    await user.click(within(calendar).getByRole('button', { name: '1 de diciembre: 5 capítulos' }));
+    expect(
+      within(calendar).getByText('1 de diciembre: 5 capítulos', { selector: 'p' }),
+    ).toBeTruthy();
+    expect(within(calendar).getByRole('button', { name: '2 de diciembre: Sin leer' })).toBeTruthy();
+    expect(
+      within(calendar).getByRole('button', { name: '3 de diciembre: Hoy, falta leer' }),
+    ).toBeTruthy();
+  });
+
+  it('says the streaks start with the first day read', async () => {
+    await setup({ today: '2026-12-03' });
+
+    const section = screen.getByRole('region', { name: '¿Qué tan constante soy?' });
+    expect(section.textContent).toContain('Tus rachas empiezan con tu primer día de lectura.');
   });
 });

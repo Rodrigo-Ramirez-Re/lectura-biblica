@@ -55,8 +55,28 @@ test.describe('Insights — on pace (LB-023)', () => {
     await readFirstDay(page);
     await openOn(page, '2026-12-03', './avance');
     await expect(page.getByTestId('on-pace-verdict')).toBeVisible();
-    await page.getByText('Ver como tabla').click();
+    for (const toggle of await page.getByText('Ver como tabla').all()) await toggle.click();
 
     await expectNoAccessibilityViolations(page);
+  });
+});
+
+test.describe('Insights — consistency (LB-024)', () => {
+  test('shows the streaks and the month as a calendar', async ({ page }) => {
+    await readFirstDay(page);
+    await openOn(page, '2026-12-02');
+    await page.getByRole('button', { name: 'Ya leí' }).click();
+    await expect(page.getByText('Listo por hoy')).toBeVisible();
+    await openOn(page, '2026-12-03', './avance');
+
+    const section = page.getByRole('region', { name: '¿Qué tan constante soy?' });
+    await expect(section.getByTestId('streak-current')).toHaveText('2 días');
+    await expect(section.getByTestId('streak-best')).toHaveText('2 días');
+    await expect(section).toContainText('2 de 3 días con lectura este mes.');
+
+    await section.getByRole('button', { name: '1 de diciembre: 3 capítulos' }).click();
+    await expect(section.getByText('1 de diciembre: 3 capítulos', { exact: true })).toBeVisible();
+    await page.keyboard.press('ArrowRight');
+    await expect(section.getByText('2 de diciembre: 3 capítulos', { exact: true })).toBeVisible();
   });
 });

@@ -3,12 +3,13 @@ import { RouterLink } from '@angular/router';
 import { GetInsights, type InsightsView } from '@lectura/insights-application';
 import { AdvanceBlocks } from '@lectura/reading-application';
 import { ButtonComponent } from '@lectura/ui-components';
+import { ConsistencySection } from './consistency.section';
 import { OnPaceSection } from './on-pace.section';
 
 /** "Avance": the insights of spec §4, all computed from the reading log and the plan. */
 @Component({
   selector: 'lb-insights-page',
-  imports: [RouterLink, ButtonComponent, OnPaceSection],
+  imports: [RouterLink, ButtonComponent, ConsistencySection, OnPaceSection],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@insights.title">Avance</h1>
 
@@ -23,6 +24,11 @@ import { OnPaceSection } from './on-pace.section';
       @if (view(); as view) {
         <div class="mt-section flex flex-col gap-section">
           <lb-on-pace-section [pace]="view.onPace" [today]="view.today" />
+          <lb-consistency-section
+            [streaks]="view.streaks"
+            [month]="view.month"
+            [today]="view.today"
+          />
         </div>
       } @else {
         <p class="mt-section" i18n="@@insights.empty">
