@@ -1,0 +1,17 @@
+{
+  "name": "insights-domain",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/insights/domain/src",
+  "projectType": "library",
+  "tags": ["type:domain", "scope:insights"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/insights/domain/tsconfig.lib.json",
+          "tsc --noEmit -p libs/insights/domain/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}

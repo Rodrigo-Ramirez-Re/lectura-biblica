@@ -30,7 +30,10 @@
       "@lectura/reading-feature-today": ["./libs/reading/feature-today/src/index.ts"],
       "@lectura/reading-feature-plan": ["./libs/reading/feature-plan/src/index.ts"],
       "@lectura/catalog-util-book-sections": ["./libs/catalog/util-book-sections/src/index.ts"],
-      "@lectura/reading-feature-backup": ["./libs/reading/feature-backup/src/index.ts"]
+      "@lectura/reading-feature-backup": ["./libs/reading/feature-backup/src/index.ts"],
+      "@lectura/insights-domain": ["./libs/insights/domain/src/index.ts"],
+      "@lectura/insights-application": ["./libs/insights/application/src/index.ts"],
+      "@lectura/insights-feature": ["./libs/insights/feature/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

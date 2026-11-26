@@ -2,7 +2,7 @@
 id: LB-023
 title: Insights page, chart kit and "¿Voy al día?"
 epic: E4
-status: ready
+status: done
 phase: 3
 depends_on: [LB-022]
 ---
@@ -63,17 +63,25 @@ The other six questions (LB-024 to LB-028). Previous months (LB-028).
 
 ## Open questions
 
-- [ ] What a day expects — _Recommendation:_ the current plan's pace for that weekday, only on days a recorded block covers (so days before the plan started and paused days expect nothing). The pace history isn't stored, and a changed pace shows from the day it applies on Plan anyway.
-- [ ] How to turn chapters into days — _Recommendation:_ divide by the plan's average chapters per reading day, rounding to the nearest whole day; say nothing about days when it rounds to 0.
-- [ ] "This month" — _Recommendation:_ the calendar month of today, up to today.
+- [x] What a day expects — _Adopted:_ the current plan's pace for that weekday, only on days a recorded block covers (so days before the plan started and paused days expect nothing). The pace history isn't stored, and a changed pace shows from the day it applies on Plan anyway.
+- [x] How to turn chapters into days — _Adopted:_ divide by the plan's average chapters per reading day, rounding to the nearest whole day; say nothing about days when it rounds to 0.
+- [x] "This month" — _Adopted:_ the calendar month of today, up to today.
 
 ## Decisions
 
+- The three open questions were adopted as recommended: a day expects the current plan's pace only on days a recorded block covers; days = chapters ÷ the plan's average per reading day, rounded and left out when it rounds to 0; "this month" is today's calendar month up to today.
+- The chart kit lives in `ui-components` (`lib/charts/`) instead of a new `ui-charts` lib: same tags, same Storybook. It can be split if it grows.
+- `lb-line-chart`: the drawing follows the width it gets (`ResizeObserver`), so text and strokes keep their size on a phone and on a desktop. Series differ by dash as well as colour and are named in a legend. A tooltip shows a day on hover, on tap (it stays until the next tap) and with the arrow keys, Home, End and Escape once the chart has focus. The chart is an image with a one-sentence summary; `lb-chart-table` ("Ver como tabla") is the equivalent for assistive technology.
+- Both lines run from the 1st to today; the plan's line doesn't run ahead to the end of the month.
+- Wording: "Vas N capítulos adelantado/atrasado (M días)", "Vas al día", singular for 1, and "Llevas R de E capítulos que tu plan espera este mes." A month with nothing read or expected yet says so instead of drawing empty lines.
+- Avance records blocks that started while the app was closed (`AdvanceBlocks`) before computing, like Hoy and Plan.
+- New libs `insights-domain`, `insights-application` and `insights-feature`; `GetInsights` returns null until a plan starts. Navigation has five tabs, with "Avance" (chart icon) between Plan and Libros.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated

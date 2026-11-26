@@ -4,3 +4,6 @@ export * from './lib/form-field/form-field.component';
 export * from './lib/progress/progress.component';
 export * from './lib/stepper/stepper.component';
 export * from './lib/icon/icon.component';
+export * from './lib/charts/chart-scale';
+export * from './lib/charts/chart-table.component';
+export * from './lib/charts/line-chart.component';
