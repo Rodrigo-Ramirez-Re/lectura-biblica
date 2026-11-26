@@ -17,6 +17,7 @@ Obsidian-compatible vault (open the `docs/` folder as a vault). Never deployed.
 ## Operations
 
 - [[operations/deploy|Deploy]] — GitHub Pages, repository settings
+- [[operations/donations|Donations]] — turn the optional donation link on or off
 
 ## Domain
 

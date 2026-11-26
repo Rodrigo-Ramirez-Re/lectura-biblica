@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { StorageGuard } from '@lectura/shared-kernel';
 import { BackupPanel } from '@lectura/reading-feature-backup';
 import { CardComponent } from '@lectura/ui-components';
-import { appSettings } from '../app-config';
+import { APP_SETTINGS } from '../app-config';
+import { DonationSection } from '../support/donation.section';
 import { ThemeService, type ThemeChoice } from '../theme/theme';
 
 @Component({
   selector: 'lb-about-page',
-  imports: [CardComponent, BackupPanel],
+  imports: [CardComponent, BackupPanel, DonationSection],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reader.about.title">Acerca de</h1>
 
@@ -22,6 +23,8 @@ import { ThemeService, type ThemeChoice } from '../theme/theme';
         </p>
         <p i18n="@@reader.about.free">Es gratuita y todas sus funciones lo seguirán siendo.</p>
       </section>
+
+      <lb-donation-section />
 
       <section lbCard aria-labelledby="about-privacy">
         <h2 id="about-privacy" class="text-heading-2" i18n="@@reader.about.privacy-heading">
@@ -74,7 +77,7 @@ import { ThemeService, type ThemeChoice } from '../theme/theme';
 })
 export class AboutPage {
   protected readonly theme = inject(ThemeService);
-  protected readonly appName = appSettings.appName;
+  protected readonly appName = inject(APP_SETTINGS).appName;
 
   protected readonly options: readonly { value: ThemeChoice; label: string }[] = [
     {

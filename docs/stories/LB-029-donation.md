@@ -2,7 +2,7 @@
 id: LB-029
 title: Configurable donation section
 epic: E5
-status: ready
+status: done
 phase: 4
 depends_on: [LB-006]
 ---
@@ -60,17 +60,24 @@ Feature: Donation section
 
 ## Open questions
 
-- [ ] Where it is shown — _Recommendation:_ only in "Acerca de", right after "Qué es", never in the footer or on Hoy: spec §6 forbids nagging and the about page is where "es gratuita" already lives.
-- [ ] Is the label translatable? — _Recommendation:_ the configured label is the owner's text and is shown as is; the default and the surrounding copy are i18n-marked.
-- [ ] Should it be on in the repo? — _Recommendation:_ no: it stays `enabled: false` until the owner picks a service (spec §6); the doc explains how to turn it on.
+- [x] Where it is shown — _Adopted:_ only in "Acerca de", right after "Qué es", never in the footer or on Hoy: spec §6 forbids nagging and the about page is where "es gratuita" already lives.
+- [x] Is the label translatable? — _Adopted:_ the configured label is the owner's text and is shown as is; the default and the surrounding copy are i18n-marked.
+- [x] Should it be on in the repo? — _Adopted:_ no: it stays `enabled: false` until the owner picks a service (spec §6); the doc explains how to turn it on.
 
 ## Decisions
 
+- All three open questions were adopted as recommended. The section shows only in "Acerca de", right after "Qué es", never in the footer or on Hoy. The configured label is shown as written; the default "Hacer una donación" and the surrounding copy are i18n-marked. The repo keeps `enabled: false` until the owner picks a service.
+- The link opens in a new tab with `rel="noopener noreferrer"`, an external-link icon and "(se abre en otro sitio)" for screen readers, styled as a secondary button so it doesn't compete with the app's own actions.
+- Only a well-formed `https://` URL turns the section on; `http`, `javascript:`, relative paths and bare domains are ignored, so a typo can't publish an unsafe link.
+- The bank-details guard rejects any run of 10 or more digits in `config.json`, after removing spaces, dots and dashes. That covers CLABE (18), cards (13–19) and account numbers. A donation URL rarely needs such a run.
+- `appSettings` is now also an injection token (`APP_SETTINGS`) so tests can turn the section on; the app still reads `src/config.json` at build time.
+- `docs/operations/donations.md` explains how to turn it on and off, what never to publish, and the tax note.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated
