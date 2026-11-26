@@ -36,5 +36,7 @@ describe('GetInsights (LB-023)', () => {
     expect(view?.streaks).toEqual({ current: 1, best: 1 });
     expect(view?.month).toMatchObject({ readDays: 1, readingDays: 3 });
     expect(view?.books).toEqual([expect.objectContaining({ bookId: 'abdias', complete: 12 })]);
+    expect(view?.cycle).toMatchObject({ cycle: 1, finished: 0, total: 66 });
+    expect(view?.finish).toEqual({ kind: 'too-early' });
   });
 });

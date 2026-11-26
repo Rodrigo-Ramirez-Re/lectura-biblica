@@ -1,9 +1,13 @@
 import {
+  cycleProgress,
+  finishEstimate,
   monthDays,
   onPace,
   passesByBook,
   streaks,
   type BookPasses,
+  type CycleProgress,
+  type FinishEstimate,
   type MonthDays,
   type OnPace,
   type Streaks,
@@ -20,6 +24,8 @@ export interface InsightsView {
   readonly month: MonthDays;
   /** Books with something read, in the plan's order. */
   readonly books: readonly BookPasses[];
+  readonly cycle: CycleProgress;
+  readonly finish: FinishEstimate;
 }
 
 /**
@@ -38,13 +44,17 @@ export class GetInsights {
     const today = this.clock.today();
     const pace = onPace(journal, today);
     const month = monthDays(journal, today);
-    if (!pace || !month) return null;
+    const cycle = cycleProgress(journal, this.catalog, today);
+    const finish = finishEstimate(journal, this.catalog, today);
+    if (!pace || !month || !cycle || !finish) return null;
     return {
       today,
       onPace: pace,
       streaks: streaks(journal, today),
       month,
       books: passesByBook(journal, this.catalog),
+      cycle,
+      finish,
     };
   }
 }
