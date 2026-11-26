@@ -95,3 +95,101 @@ describe('ChartTableComponent (LB-023)', () => {
     expect(screen.getByRole('columnheader', { name: 'Según el plan' })).toBeTruthy();
   });
 });
+
+describe('LineChartComponent — pointer and size (LB-034)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function renderWith(labels: string[], values: number[][]) {
+    const lines: LineSeries[] = values.map((line, i) => ({
+      label: i ? 'Según el plan' : 'Leídos',
+      values: line,
+      style: i ? 'dashed' : 'solid',
+    }));
+    const { fixture } = await render(
+      `<lb-line-chart [series]="series" [labels]="labels" summary="Capítulos" />`,
+      { imports: [LineChartComponent], componentProperties: { series: lines, labels } },
+    );
+    const svg = screen
+      .getByRole('img', { name: 'Capítulos' })
+      .querySelector('svg') as SVGSVGElement;
+    svg.getBoundingClientRect = () => ({ left: 0, width: 320 }) as DOMRect;
+    const pointer = async (type: string, clientX: number, pointerType = 'mouse') => {
+      svg.dispatchEvent(
+        Object.assign(new MouseEvent(type, { clientX, bubbles: true }), { pointerType }),
+      );
+      await fixture.whenStable();
+    };
+    return { fixture, svg, pointer };
+  }
+
+  const tooltip = () => screen.queryByTestId('chart-tooltip')?.textContent ?? null;
+
+  it('shows the day under the pointer and hides it when the mouse leaves', async () => {
+    const { pointer } = await renderWith(['1 de dic', '2 de dic', '3 de dic'], [[0, 5, 5]]);
+
+    await pointer('pointermove', 316);
+    expect(tooltip()).toContain('3 de dic');
+    await pointer('pointermove', 0);
+    expect(tooltip()).toContain('1 de dic');
+
+    await pointer('pointerleave', 0);
+    expect(tooltip()).toBeNull();
+  });
+
+  it('keeps a tapped day visible when the finger lifts', async () => {
+    const { pointer } = await renderWith(['1 de dic', '2 de dic'], [[1, 2]]);
+
+    await pointer('pointerdown', 316, 'touch');
+    await pointer('pointerleave', 316, 'touch');
+
+    expect(tooltip()).toContain('2 de dic');
+  });
+
+  it('shows the only day of a one-day chart wherever it is touched', async () => {
+    const { pointer } = await renderWith(['1 de dic'], [[3], [3]]);
+
+    await pointer('pointerdown', 40, 'touch');
+
+    expect(tooltip()).toContain('Leídos: 3');
+  });
+
+  it('jumps to the first and last day with Home and End', async () => {
+    const user = userEvent.setup();
+    await renderWith(['1 de dic', '2 de dic', '3 de dic'], [[0, 5, 5]]);
+    screen.getByRole('img', { name: 'Capítulos' }).focus();
+
+    await user.keyboard('{End}');
+    expect(tooltip()).toContain('3 de dic');
+    await user.keyboard('{Home}');
+    expect(tooltip()).toContain('1 de dic');
+    await user.keyboard('{ArrowLeft}');
+    expect(tooltip()).toContain('1 de dic');
+  });
+
+  it('draws at the width of its box, so text keeps its size', async () => {
+    let resize: ResizeObserverCallback = () => undefined;
+    const disconnect = vi.fn();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resize = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnect;
+      },
+    );
+    const { fixture, svg } = await renderWith(['1 de dic', '2 de dic'], [[1, 2]]);
+
+    resize([{ contentRect: { width: 612.4 } } as ResizeObserverEntry], {} as ResizeObserver);
+    await fixture.whenStable();
+    expect(svg.getAttribute('viewBox')).toMatch(/^0 0 612 /);
+
+    resize([{ contentRect: { width: 0 } } as ResizeObserverEntry], {} as ResizeObserver);
+    await fixture.whenStable();
+    expect(svg.getAttribute('viewBox')).toMatch(/^0 0 612 /);
+
+    fixture.destroy();
+    expect(disconnect).toHaveBeenCalled();
+  });
+});

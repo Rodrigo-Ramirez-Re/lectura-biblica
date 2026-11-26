@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { coverage } from '../../../vitest.coverage';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -13,9 +14,6 @@ export default defineConfig(() => ({
     environment: 'node',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
-    coverage: {
-      reportsDirectory: '../../../coverage/libs/shared/infrastructure-browser',
-      provider: 'v8' as const,
-    },
+    coverage: coverage('../../../coverage/libs/shared/infrastructure-browser'),
   },
 }));

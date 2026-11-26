@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { coverage } from '../../vitest.coverage';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -10,5 +11,6 @@ export default defineConfig(() => ({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     reporters: ['default'],
+    coverage: coverage('../../coverage/tools/pages'),
   },
 }));

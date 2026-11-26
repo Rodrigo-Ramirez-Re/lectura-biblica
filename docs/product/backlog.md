@@ -74,6 +74,7 @@ Configurable donation link, install help (Android, iPhone, desktop), accessibili
 | [[stories/LB-031-backup-reminders\|LB-031]]    | Backup reminders tuning                      | 013                |
 | [[stories/LB-032-accessibility-audit\|LB-032]] | Accessibility audit                          | 028, 029, 030, 031 |
 | [[stories/LB-033-lighthouse-ci\|LB-033]]       | Lighthouse in CI                             | 032                |
+| [[stories/LB-034-coverage-gate\|LB-034]]       | Coverage gate at 90 %                        | 002                |
 
 ## Phase 5 — Study material (E6)
 

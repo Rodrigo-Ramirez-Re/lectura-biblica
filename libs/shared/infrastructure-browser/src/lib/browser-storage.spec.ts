@@ -57,6 +57,21 @@ describe('BrowserStorageGuard (LB-010)', () => {
     expect(await new BrowserStorageGuard(undefined).isPersisted()).toBe(false);
   });
 
+  it('says whether the data is already persistent (LB-034)', async () => {
+    expect(await new BrowserStorageGuard(storageManager(true, true)).isPersisted()).toBe(true);
+    expect(await new BrowserStorageGuard(storageManager(false, true)).isPersisted()).toBe(false);
+  });
+
+  it('treats a browser error as not persistent (LB-034)', async () => {
+    const failing = {
+      persisted: vi.fn().mockRejectedValue(new Error('denied')),
+      persist: vi.fn(),
+    } as unknown as StorageManager;
+
+    expect(await new BrowserStorageGuard(failing).persist()).toBe(false);
+    expect(await new BrowserStorageGuard(failing).isPersisted()).toBe(false);
+  });
+
   it('reports storage as available when the database opens', async () => {
     expect(await new BrowserStorageGuard(undefined).isAvailable()).toBe(true);
   });
