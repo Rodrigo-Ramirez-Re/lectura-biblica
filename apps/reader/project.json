@@ -5,6 +5,7 @@
   "prefix": "lb",
   "sourceRoot": "apps/reader/src",
   "tags": ["type:app", "scope:reader"],
+  "implicitDependencies": ["pages"],
   "i18n": {
     "sourceLocale": "es-MX"
   },
@@ -124,6 +125,14 @@
       "dependsOn": ["pages"],
       "options": {
         "command": "node tools/pages/src/serve.mjs 4210"
+      }
+    },
+    "lighthouse": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["pages"],
+      "cache": false,
+      "options": {
+        "command": "lhci autorun --config=apps/reader/lighthouserc.cjs"
       }
     }
   }

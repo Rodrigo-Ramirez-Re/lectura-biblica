@@ -39,6 +39,7 @@
     "@commitlint/types": "^21.2.3",
     "@eslint/css": "^2.0.1",
     "@eslint/js": "^9.8.0",
+    "@lhci/cli": "0.16.1",
     "@nx/angular": "24.0.6",
     "@nx/devkit": "24.0.6",
     "@nx/eslint": "24.0.6",
