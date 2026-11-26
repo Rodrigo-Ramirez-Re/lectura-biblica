@@ -92,3 +92,22 @@ test.describe('Insights — passes per book (LB-025)', () => {
     await expect(section.getByRole('row').nth(1)).toContainText('Abdías');
   });
 });
+
+test.describe('Insights — cycle progress (LB-026)', () => {
+  test('shows the books finished, the end of the cycle and when it can estimate', async ({
+    page,
+  }) => {
+    await readFirstDay(page);
+    await openOn(page, '2026-12-01', './avance');
+
+    const section = page.getByRole('region', { name: '¿Cuánto llevo del ciclo?' });
+    await expect(
+      section.getByRole('progressbar', { name: 'Libros terminados del ciclo 1' }),
+    ).toBeVisible();
+    await expect(section).toContainText('0 de 66 libros');
+    await expect(section.getByTestId('cycle-end')).toHaveText(
+      'Según tu plan, este ciclo termina el 30 de junio de 2032 (faltan 67 meses, contando este).',
+    );
+    await expect(section).toContainText('Con una semana de lectura podré estimar');
+  });
+});
