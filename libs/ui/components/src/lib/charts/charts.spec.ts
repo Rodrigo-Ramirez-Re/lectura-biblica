@@ -94,6 +94,20 @@ describe('ChartTableComponent (LB-023)', () => {
     expect(screen.getByRole('rowheader', { name: '2 de dic' })).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'Según el plan' })).toBeTruthy();
   });
+
+  it('lets the keyboard scroll a long table: its box is a named, focusable region (LB-032)', async () => {
+    await render(
+      `<lb-chart-table caption="Capítulos de diciembre" [columns]="columns" [rows]="rows" />`,
+      {
+        imports: [ChartTableComponent],
+        componentProperties: { columns: ['Día', 'Leídos'], rows: [['1 de dic', 0]] },
+      },
+    );
+
+    const box = screen.getByRole('region', { name: 'Capítulos de diciembre', hidden: true });
+    expect(box.getAttribute('tabindex')).toBe('0');
+    expect(box.querySelector('table')).toBeTruthy();
+  });
 });
 
 describe('LineChartComponent — pointer and size (LB-034)', () => {

@@ -67,4 +67,26 @@ describe('HistorySection (LB-028)', () => {
     ]);
     expect(screen.getByRole('rowheader', { name: 'Enero de 2027' })).toBeTruthy();
   });
+
+  it('lets the keyboard scroll a long history: its box is a named, focusable region (LB-032)', async () => {
+    await render(HistorySection, {
+      providers: [
+        provideRouter([]),
+        provideSpanishLocale(),
+        {
+          provide: ExportHistory,
+          useValue: new ExportHistory(
+            new InMemoryJournal(),
+            new FixedClock('2027-01-10'),
+            new InMemoryFileSaver(),
+          ),
+        },
+      ],
+      inputs: { months },
+    });
+
+    const box = screen.getByRole('region', { name: 'Tu historial, mes por mes' });
+    expect(box.getAttribute('tabindex')).toBe('0');
+    expect(box.querySelector('table')).toBeTruthy();
+  });
 });

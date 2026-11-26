@@ -13,7 +13,13 @@ export type ChartCell = string | number;
       >
         Ver como tabla
       </summary>
-      <div class="mt-2 max-h-80 overflow-auto">
+      <!-- Focusable so keyboard users can scroll a long table (WCAG 2.1.1). -->
+      <div
+        class="mt-2 max-h-80 overflow-auto rounded-control focus-visible:focus-ring"
+        tabindex="0"
+        role="region"
+        [attr.aria-label]="caption()"
+      >
         <table class="w-full border-collapse text-left text-body-sm">
           <caption class="sr-only">
             {{
