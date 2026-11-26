@@ -12,6 +12,7 @@ import { FixedClock, InMemoryFileSaver } from '@lectura/shared-kernel/testing';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { FakeStorageGuard } from '../../testing/fake-storage-guard';
+import { APP_SETTINGS, appSettings, type AppSettings } from '../app-config';
 import { ThemePreference, ThemeService, type ThemeChoice } from '../theme/theme';
 import { AboutPage } from './about.page';
 
@@ -26,7 +27,10 @@ class InMemoryThemePreference extends ThemePreference {
 describe('AboutPage (LB-006)', () => {
   afterEach(() => document.documentElement.removeAttribute('data-theme'));
 
-  async function setup(persisted = false) {
+  async function setup(
+    persisted = false,
+    donation: AppSettings['donation'] = appSettings.donation,
+  ) {
     const preference = new InMemoryThemePreference();
     const journal = new InMemoryJournal();
     const clock = new FixedClock('2026-12-03');
@@ -34,6 +38,7 @@ describe('AboutPage (LB-006)', () => {
       providers: [
         provideRouter([]),
         { provide: ThemePreference, useValue: preference },
+        { provide: APP_SETTINGS, useValue: { ...appSettings, donation } },
         { provide: StorageGuard, useValue: new FakeStorageGuard(true, persisted) },
         { provide: JournalReader, useValue: journal },
         {
@@ -84,5 +89,43 @@ describe('AboutPage (LB-006)', () => {
     await setup(false);
 
     expect(screen.getByText(/Almacenamiento no persistente/).textContent).toContain('respaldos');
+  });
+
+  describe('donation (LB-029)', () => {
+    it('shows nothing while donations are turned off', async () => {
+      await setup(false, { enabled: false, label: 'Donar', url: 'https://example.org/d' });
+
+      expect(screen.queryByRole('heading', { name: 'Apoya este proyecto' })).toBeNull();
+      expect(screen.queryByText(/donación/i)).toBeNull();
+    });
+
+    it('offers the configured link, saying the app stays free and support is voluntary', async () => {
+      await setup(false, {
+        enabled: true,
+        label: 'Invítame un café',
+        url: 'https://example.org/d',
+      });
+
+      const section = screen.getByRole('region', { name: 'Apoya este proyecto' });
+      expect(section.textContent).toMatch(/gratuita/);
+      expect(section.textContent).toMatch(/voluntari/);
+      const link = screen.getByRole('link', { name: /Invítame un café/ });
+      expect(link.getAttribute('href')).toBe('https://example.org/d');
+      expect(link.getAttribute('target')).toBe('_blank');
+      expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+      expect(link.textContent).toMatch(/se abre en otro sitio/);
+    });
+
+    it('names the link "Hacer una donación" without a configured label', async () => {
+      await setup(false, { enabled: true, label: '', url: 'https://example.org/d' });
+
+      expect(screen.getByRole('link', { name: /Hacer una donación/ })).toBeTruthy();
+    });
+
+    it('never shows a link that is not https', async () => {
+      await setup(false, { enabled: true, label: 'Donar', url: 'javascript:alert(1)' });
+
+      expect(screen.queryByRole('link', { name: /Donar/ })).toBeNull();
+    });
   });
 });
