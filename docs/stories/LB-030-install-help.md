@@ -2,7 +2,7 @@
 id: LB-030
 title: Install help for Android, iPhone and desktop
 epic: E5
-status: ready
+status: done
 phase: 4
 depends_on: [LB-007]
 ---
@@ -59,16 +59,25 @@ Feature: Install help
 
 ## Open questions
 
-- [ ] Section in Acerca de or its own page? — _Recommendation:_ its own page `instalar`: Acerca de is already long, and the storage notice needs a direct link.
-- [ ] Browsers covered — _Recommendation:_ Android (Chrome, also Samsung Internet and Edge), iPhone/iPad (Safari, and since iOS 16.4 also other browsers via Compartir), computer (Chrome and Edge from the address bar; Safari on Mac with "Agregar al Dock"; Firefox doesn't install web apps, so it says to use another browser or keep using it in the tab).
+- [x] Section in Acerca de or its own page? — _Adopted:_ its own page `instalar`: Acerca de is already long, and the storage notice needs a direct link.
+- [x] Browsers covered — _Adopted:_ Android (Chrome, also Samsung Internet and Edge), iPhone/iPad (Safari, and since iOS 16.4 also other browsers via Compartir), computer (Chrome and Edge from the address bar; Safari on Mac with "Agregar al Dock"; Firefox doesn't install web apps, so it says to use another browser or keep using it in the tab).
 
 ## Decisions
 
+- Both open questions were adopted as recommended:
+  - Install help is its own page, `instalar`, kept out of the bottom navigation and linked from Acerca de ("Cómo instalar la aplicación") and from the first-run storage notice ("Cómo instalarla").
+  - It covers Android (Chrome, plus Samsung Internet and Edge), iPhone or iPad (Safari, plus Chrome and Edge since iOS 16.4) and computer (Chrome and Edge, Safari on Mac). It says that Firefox does not install web apps.
+- The steps for the person's own device come first and open; the other two are collapsed `<details>` that open with the keyboard. Detection is only a hint: an iPad that reports itself as a Mac is recognised by its touch screen, and every platform's steps stay on the page.
+- "Instalar ahora" appears only when the browser has offered to install (Chrome and Edge fire `beforeinstallprompt`). The app listens from start-up, since the browser fires the offer once, early. The browser's own install hint is not suppressed, because the button lives on a page people choose to open.
+- An offer is used once. If the person declines it, the button disappears until the browser offers again.
+- "Installed" means the app runs in standalone mode (`display-mode: standalone`, or `navigator.standalone` on iOS), or the browser reported `appinstalled`. In that case the page says "Ya estás usando la aplicación instalada." and Acerca de stops suggesting installing it.
+- Text steps only, no screenshots: browser menus change and images would go stale.
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Accessible (keyboard + axe) and i18n-marked
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Accessible (keyboard + axe) and i18n-marked
+- [x] Works offline on the sub-path build
+- [x] Docs updated

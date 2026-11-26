@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { StorageGuard } from '@lectura/shared-kernel';
+import { RouterLink } from '@angular/router';
 import { ButtonComponent, CardComponent } from '@lectura/ui-components';
 import { readDevicePreference, writeDevicePreference } from '../preferences/device-preferences';
 
@@ -11,7 +12,7 @@ const NOTICE_SEEN = 'data-notice';
  */
 @Component({
   selector: 'lb-storage-notice',
-  imports: [ButtonComponent, CardComponent],
+  imports: [RouterLink, ButtonComponent, CardComponent],
   template: `
     @if (unavailable()) {
       <section lbCard role="alert" class="mb-section border border-danger">
@@ -33,15 +34,14 @@ const NOTICE_SEEN = 'data-notice';
           como Safari, pueden borrarlos si no usas la aplicación por un tiempo. Instalarla en tu
           pantalla de inicio y exportar respaldos de vez en cuando los protege.
         </p>
-        <button
-          lbButton
-          type="button"
-          class="self-start"
-          (click)="dismiss()"
-          i18n="@@reader.storage.notice-ok"
-        >
-          Entendido
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button lbButton type="button" (click)="dismiss()" i18n="@@reader.storage.notice-ok">
+            Entendido
+          </button>
+          <a lbButton variant="ghost" routerLink="/instalar" i18n="@@reader.storage.notice-install">
+            Cómo instalarla
+          </a>
+        </div>
       </section>
     }
   `,

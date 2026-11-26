@@ -11,6 +11,7 @@ import { provideSpanishLocale } from '@lectura/shared-util-i18n';
 import { appRoutes } from './app.routes';
 import { AppTitleStrategy } from './navigation/app-title-strategy';
 import { focusHeadingOnNavigation } from './navigation/focus-on-navigation';
+import { InstallPrompt } from './pwa/install-prompt';
 import { provideReading } from './reading.providers';
 import { LocalStorageThemePreference, ThemePreference, ThemeService } from './theme/theme';
 
@@ -29,6 +30,8 @@ export const appConfig: ApplicationConfig = {
     ...provideReading(),
     provideAppInitializer(() => {
       inject(ThemeService);
+      // The browser offers to install once, early: listen before any screen asks (LB-030).
+      inject(InstallPrompt);
       focusHeadingOnNavigation();
     }),
   ],

@@ -37,6 +37,11 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./pages/about.page').then((m) => m.AboutPage),
   },
   {
+    path: 'instalar',
+    title: $localize`:@@reader.install.title:Instalar la aplicación`,
+    loadComponent: () => import('./pages/install.page').then((m) => m.InstallPage),
+  },
+  {
     path: '**',
     title: $localize`:@@reader.not-found.title:Página no encontrada`,
     loadComponent: () => import('./pages/not-found.page').then((m) => m.NotFoundPage),

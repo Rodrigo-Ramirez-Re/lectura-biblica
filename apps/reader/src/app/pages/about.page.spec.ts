@@ -11,8 +11,10 @@ import { StorageGuard } from '@lectura/shared-kernel';
 import { FixedClock, InMemoryFileSaver } from '@lectura/shared-kernel/testing';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { signal } from '@angular/core';
 import { FakeStorageGuard } from '../../testing/fake-storage-guard';
 import { APP_SETTINGS, appSettings, type AppSettings } from '../app-config';
+import { InstallPrompt } from '../pwa/install-prompt';
 import { ThemePreference, ThemeService, type ThemeChoice } from '../theme/theme';
 import { AboutPage } from './about.page';
 
@@ -30,6 +32,7 @@ describe('AboutPage (LB-006)', () => {
   async function setup(
     persisted = false,
     donation: AppSettings['donation'] = appSettings.donation,
+    installed = false,
   ) {
     const preference = new InMemoryThemePreference();
     const journal = new InMemoryJournal();
@@ -39,6 +42,7 @@ describe('AboutPage (LB-006)', () => {
         provideRouter([]),
         { provide: ThemePreference, useValue: preference },
         { provide: APP_SETTINGS, useValue: { ...appSettings, donation } },
+        { provide: InstallPrompt, useValue: { installed: signal(installed) } },
         { provide: StorageGuard, useValue: new FakeStorageGuard(true, persisted) },
         { provide: JournalReader, useValue: journal },
         {
@@ -89,6 +93,20 @@ describe('AboutPage (LB-006)', () => {
     await setup(false);
 
     expect(screen.getByText(/Almacenamiento no persistente/).textContent).toContain('respaldos');
+  });
+
+  it('links to the install help (LB-030)', async () => {
+    await setup();
+
+    expect(
+      screen.getByRole('link', { name: 'Cómo instalar la aplicación' }).getAttribute('href'),
+    ).toBe('/instalar');
+  });
+
+  it('does not suggest installing an app that is already installed (LB-030)', async () => {
+    await setup(false, appSettings.donation, true);
+
+    expect(screen.queryByRole('link', { name: 'Cómo instalar la aplicación' })).toBeNull();
   });
 
   describe('donation (LB-029)', () => {

@@ -25,7 +25,7 @@ test.describe('Book catalog (LB-009)', () => {
     await page.getByRole('searchbox', { name: 'Buscar libro' }).fill('GENESIS');
 
     await expect(page.getByRole('link', { name: /Génesis/ })).toBeVisible();
-    await expect(page.getByRole('main').getByRole('link')).toHaveCount(1);
+    await expect(page.getByRole('main').getByRole('list').getByRole('link')).toHaveCount(1);
   });
 
   test('opens a book page from its address', async ({ page }) => {
