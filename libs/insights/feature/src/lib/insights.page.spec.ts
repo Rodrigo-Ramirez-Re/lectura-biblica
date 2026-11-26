@@ -155,3 +155,23 @@ describe('InsightsPage — consistency (LB-024)', () => {
     expect(section.textContent).toContain('Tus rachas empiezan con tu primer día de lectura.');
   });
 });
+
+describe('InsightsPage — passes per book (LB-025)', () => {
+  it('shows a bar per book read, with its passes in words', async () => {
+    await setup({ today: '2026-12-03', logs: { '2026-12-01': 31, '2026-12-02': 1 } });
+
+    const list = screen.getByRole('list', { name: 'Vueltas por libro, en el orden de tu plan' });
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((row) => row.textContent?.replace(/\s+/g, ' ').trim()),
+    ).toEqual(['Abdías 32 vueltas']);
+  });
+
+  it('says when nothing is read yet', async () => {
+    await setup({ today: '2026-12-03' });
+
+    const section = screen.getByRole('region', { name: '¿Cuántas veces he leído cada libro?' });
+    expect(section.textContent).toContain('Cada libro aparecerá aquí');
+  });
+});

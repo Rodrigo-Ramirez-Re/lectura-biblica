@@ -5,11 +5,12 @@ import { AdvanceBlocks } from '@lectura/reading-application';
 import { ButtonComponent } from '@lectura/ui-components';
 import { ConsistencySection } from './consistency.section';
 import { OnPaceSection } from './on-pace.section';
+import { PassesSection } from './passes.section';
 
 /** "Avance": the insights of spec §4, all computed from the reading log and the plan. */
 @Component({
   selector: 'lb-insights-page',
-  imports: [RouterLink, ButtonComponent, ConsistencySection, OnPaceSection],
+  imports: [RouterLink, ButtonComponent, ConsistencySection, OnPaceSection, PassesSection],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@insights.title">Avance</h1>
 
@@ -29,6 +30,7 @@ import { OnPaceSection } from './on-pace.section';
             [month]="view.month"
             [today]="view.today"
           />
+          <lb-passes-section [books]="view.books" />
         </div>
       } @else {
         <p class="mt-section" i18n="@@insights.empty">
