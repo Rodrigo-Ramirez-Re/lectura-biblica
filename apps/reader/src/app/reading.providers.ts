@@ -22,6 +22,7 @@ import {
   UndoReading,
   UpdatePlan,
 } from '@lectura/reading-application';
+import { GetInsights } from '@lectura/insights-application';
 import { JournalReader, JournalWriter } from '@lectura/reading-domain';
 import { IndexedDbJournal } from '@lectura/reading-infrastructure';
 import {
@@ -51,6 +52,10 @@ export function provideReading(): Provider[] {
       provide: AdvanceBlocks,
       useFactory: () =>
         new AdvanceBlocks(inject(JournalReader), inject(JournalWriter), inject(Clock)),
+    },
+    {
+      provide: GetInsights,
+      useFactory: () => new GetInsights(inject(JournalReader), inject(Clock)),
     },
     {
       provide: GetSchedule,

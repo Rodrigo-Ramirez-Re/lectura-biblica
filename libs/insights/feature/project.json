@@ -1,0 +1,18 @@
+{
+  "name": "insights-feature",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/insights/feature/src",
+  "prefix": "lb",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:insights"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/insights/feature/tsconfig.lib.json",
+          "tsc --noEmit -p libs/insights/feature/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}

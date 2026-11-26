@@ -55,9 +55,13 @@ libs/
     feature-books/     book list and book page (extensible sections)
   reading/
     domain/ application/ infrastructure/ feature-*/
+  insights/
+    domain/            metrics computed from the journal (nothing stored)
+    application/       GetInsights
+    feature/           the Avance page
   ui/
     tokens/            CSS variables + Tailwind theme (light / dark)
-    components/        design system components
+    components/        design system components, charts (hand-drawn SVG + table)
     layout/            app shell: header, tab bar
 ```
 

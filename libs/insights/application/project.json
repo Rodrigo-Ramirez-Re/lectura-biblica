@@ -1,0 +1,17 @@
+{
+  "name": "insights-application",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/insights/application/src",
+  "projectType": "library",
+  "tags": ["type:application", "scope:insights"],
+  "targets": {
+    "typecheck": {
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/insights/application/tsconfig.lib.json",
+          "tsc --noEmit -p libs/insights/application/tsconfig.spec.json"
+        ]
+      }
+    }
+  }
+}
