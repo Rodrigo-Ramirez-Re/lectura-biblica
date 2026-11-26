@@ -4,6 +4,7 @@ import {
   ExportBackup,
   ImportBackup,
   PreviewBackup,
+  SetBackupReminder,
 } from '@lectura/reading-application';
 import { JournalReader } from '@lectura/reading-domain';
 import { InMemoryJournal } from '@lectura/reading-domain/testing';
@@ -52,6 +53,7 @@ describe('AboutPage (LB-006)', () => {
         { provide: PreviewBackup, useValue: new PreviewBackup() },
         { provide: ImportBackup, useValue: new ImportBackup(journal) },
         { provide: DeleteAllData, useValue: new DeleteAllData(journal) },
+        { provide: SetBackupReminder, useValue: new SetBackupReminder(journal, journal) },
       ],
     });
     await fixture.whenStable();

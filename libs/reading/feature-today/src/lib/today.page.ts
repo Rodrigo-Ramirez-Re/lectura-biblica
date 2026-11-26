@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import {
   AdvanceBlocks,
   CheckBackupReminder,
+  PostponeBackupReminder,
   ControlCurrentBlock,
   GetSchedule,
   GetToday,
@@ -11,6 +12,7 @@ import {
   SetBlockGoal,
   StartDefaultPlan,
   UndoReading,
+  type BackupReminder,
   type ScheduleView,
   type StartChoice,
   type BookChoice,
@@ -28,7 +30,6 @@ import {
   ProgressComponent,
   StepperComponent,
 } from '@lectura/ui-components';
-import { BackupReminderState } from './backup-reminder.state';
 import { BookNotesSection } from './book-notes.section';
 import { describeReading } from './describe-reading';
 
@@ -58,7 +59,7 @@ interface LastLog {
     <h1 class="font-display text-heading-1" i18n="@@reading.today.title">Hoy</h1>
 
     @if (loaded()) {
-      @if (backupDue() && !reminderDismissed()) {
+      @if (backupReminder(); as reminder) {
         <section lbCard aria-labelledby="backup-reminder" class="mt-section border border-accent">
           <h2 id="backup-reminder" class="text-heading-3" i18n="@@reading.reminder.title">
             Haz un respaldo
@@ -67,13 +68,20 @@ interface LastLog {
             Tus datos viven solo en este dispositivo. Exporta un respaldo de vez en cuando para no
             perderlos.
           </p>
+          @if (reminder.lastBackupAt; as last) {
+            <p i18n="@@reading.reminder.last">
+              Tu último respaldo fue el {{ last | date: 'longDate' }}.
+            </p>
+          } @else {
+            <p i18n="@@reading.reminder.never">Aún no has hecho ningún respaldo.</p>
+          }
           <div class="flex flex-wrap gap-2">
             <a lbButton routerLink="/acerca" i18n="@@reading.reminder.go">Ir a Respaldo</a>
             <button
               lbButton
               variant="ghost"
               type="button"
-              (click)="reminderDismissed.set(true)"
+              (click)="postponeReminder()"
               i18n="@@reading.reminder.later"
             >
               Ahora no
@@ -469,6 +477,7 @@ export class TodayPage {
   private readonly logReading = inject(LogReading);
   private readonly undoReading = inject(UndoReading);
   private readonly checkBackup = inject(CheckBackupReminder);
+  private readonly postponeBackup = inject(PostponeBackupReminder);
   private readonly setBlockGoal = inject(SetBlockGoal);
   private readonly controlBlock = inject(ControlCurrentBlock);
 
@@ -481,7 +490,7 @@ export class TodayPage {
   protected readonly amount = signal(3);
   protected readonly date = signal(this.options.today.toString());
   protected readonly lastLog = signal<LastLog | null>(null);
-  protected readonly backupDue = signal(false);
+  protected readonly backupReminder = signal<BackupReminder | null>(null);
   protected readonly goal = signal(2);
   protected readonly choices = signal<readonly BookChoice[]>([]);
   protected readonly bookChoice = signal('');
@@ -495,7 +504,6 @@ export class TodayPage {
     'not-paused': $localize`:@@reading.control.error-not-paused:El plan no está en pausa.`,
     'invalid-end': $localize`:@@reading.control.error-end:Elige una fecha desde hoy.`,
   };
-  protected readonly reminderDismissed = inject(BackupReminderState).dismissed;
   protected readonly logError = signal<string | undefined>(undefined);
   protected readonly failed = signal(false);
   private undoTimer?: ReturnType<typeof setTimeout>;
@@ -601,16 +609,29 @@ export class TodayPage {
     }
   }
 
+  /**
+   * "Ahora no": hidden once saved, so it stays away for a week even after a restart. If it can't
+   * be saved the reminder simply stays.
+   */
+  protected async postponeReminder(): Promise<void> {
+    try {
+      await this.postponeBackup.execute();
+      this.backupReminder.set(null);
+    } catch {
+      // Nothing to undo: the reminder is still showing.
+    }
+  }
+
   // Blocks that started while the app was closed are recorded before anything is read.
   private async load(): Promise<void> {
     await this.advanceBlocks.execute();
-    const [schedule, today, backupDue, choices] = await Promise.all([
+    const [schedule, today, backupReminder, choices] = await Promise.all([
       this.getSchedule.execute(),
       this.getToday.execute(),
       this.checkBackup.execute(),
       this.controlBlock.choices(),
     ]);
-    this.backupDue.set(backupDue);
+    this.backupReminder.set(backupReminder);
     this.schedule.set(schedule);
     this.today.set(today);
     this.choices.set(choices);

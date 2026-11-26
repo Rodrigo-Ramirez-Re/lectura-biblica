@@ -48,7 +48,7 @@ test.describe('Backup (LB-013)', () => {
 
     expect(name).toBe('lectura-biblica-respaldo-2026-12-01.json');
     const backup = JSON.parse(text);
-    expect(backup).toMatchObject({ schemaVersion: 2, app: 'lectura-biblica' });
+    expect(backup).toMatchObject({ schemaVersion: 3, app: 'lectura-biblica' });
     expect(backup.plan.name).toBe('Un libro al mes');
     expect(backup.logs).toHaveLength(1);
     await expect(page.getByText(/Último respaldo: 1 de diciembre de 2026/)).toBeVisible();
@@ -107,8 +107,42 @@ test.describe('Backup (LB-013)', () => {
 
     const reminder = page.getByRole('region', { name: 'Haz un respaldo' });
     await expect(reminder).toBeVisible();
+    await expect(reminder).toContainText('Aún no has hecho ningún respaldo.');
     await reminder.getByRole('button', { name: 'Ahora no' }).click();
     await expect(reminder).toBeHidden();
+
+    // LB-031: "Ahora no" survives closing the app and lasts a week.
+    await openOn(page, '2026-12-14');
+    await expect(page.getByText('Libro de este bloque')).toBeVisible();
+    await expect(reminder).toBeHidden();
+    await openOn(page, '2026-12-15');
+    await expect(reminder).toBeVisible();
+  });
+
+  test('never reminds once the person chooses "Nunca" (LB-031)', async ({ page }) => {
+    await readAndOpenAbout(page);
+    await page.getByLabel('Recordarme hacer un respaldo').selectOption({ label: 'Nunca' });
+    await expect(page.getByText(/recordatorios están desactivados/)).toBeVisible();
+
+    await page.reload();
+
+    await expect(page.getByLabel('Recordarme hacer un respaldo')).toHaveValue('never');
+  });
+
+  test('imports a backup made before the reminder settings existed (LB-031)', async ({ page }) => {
+    await readAndOpenAbout(page);
+    const backup = JSON.parse((await exportBackup(page)).text);
+    backup.settings = { lastBackupAt: backup.settings.lastBackupAt };
+    backup.schemaVersion = 2;
+    await deleteEverything(page);
+
+    await page.getByRole('navigation').getByRole('link', { name: 'Acerca de' }).click();
+    await importText(page, JSON.stringify(backup));
+    await page.getByRole('button', { name: 'Reemplazar mis datos' }).click();
+
+    await expect(page.getByText('Listo por hoy')).toBeVisible();
+    await page.getByRole('navigation').getByRole('link', { name: 'Acerca de' }).click();
+    await expect(page.getByLabel('Recordarme hacer un respaldo')).toHaveValue('30');
   });
 
   test('imports a backup made by the first version of the app (LB-014)', async ({ page }) => {

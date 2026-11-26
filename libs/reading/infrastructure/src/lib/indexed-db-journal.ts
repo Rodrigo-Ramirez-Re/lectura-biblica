@@ -2,6 +2,7 @@ import {
   JournalReader,
   emptyJournal,
   upgradePlan,
+  upgradeSettings,
   type BlockRecord,
   type Journal,
   type JournalWriter,
@@ -43,7 +44,7 @@ export class IndexedDbJournal extends JournalReader implements JournalWriter {
         tx.objectStore('templates').getAll(),
       ]);
       return {
-        settings: (settings as SettingsRecord | undefined) ?? emptyJournal.settings,
+        settings: settings ? upgradeSettings(settings as SettingsRecord) : emptyJournal.settings,
         plan: plan ? upgradePlan(plan as PlanRecord) : null,
         blocks: blocks as unknown as BlockRecord[],
         logs: logs as unknown as ReadingLogRecord[],

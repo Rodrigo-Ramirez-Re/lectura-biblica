@@ -6,7 +6,9 @@ import {
   DeleteAllData,
   ExportBackup,
   ImportBackup,
+  PostponeBackupReminder,
   PreviewBackup,
+  SetBackupReminder,
 } from './backup.use-cases';
 import { AdvanceBlocks, StartDefaultPlan } from './plan.use-cases';
 import { LogReading } from './today.use-cases';
@@ -35,6 +37,9 @@ async function setup() {
     importBackup: new ImportBackup(journal),
     deleteAll: new DeleteAllData(journal),
     reminder: new CheckBackupReminder(journal, clock),
+    setReminder: new SetBackupReminder(journal, journal),
+    postpone: new PostponeBackupReminder(journal, journal, clock),
+    log,
   };
 }
 
@@ -48,7 +53,7 @@ describe('ExportBackup (LB-013)', () => {
     expect(file.fileName).toBe('lectura-biblica-respaldo-2026-12-08.json');
     expect(file.type).toBe('application/json');
     expect(JSON.parse(file.content)).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       app: 'lectura-biblica',
       plan: { name: 'Un libro al mes' },
     });
@@ -111,10 +116,56 @@ describe('ImportBackup and DeleteAllData (LB-013)', () => {
 describe('CheckBackupReminder (LB-013)', () => {
   it('reminds after 7 days of logs without a backup, and not right after exporting', async () => {
     const { reminder, exportBackup } = await setup();
-    expect(await reminder.execute()).toBe(true);
+    expect(await reminder.execute()).toEqual({ lastBackupAt: null });
 
     await exportBackup.execute();
 
-    expect(await reminder.execute()).toBe(false);
+    expect(await reminder.execute()).toBeNull();
+  });
+});
+
+describe('backup reminder settings (LB-031)', () => {
+  it('says when the last backup was', async () => {
+    const { reminder, exportBackup, clock, log } = await setup();
+    await exportBackup.execute();
+
+    clock.set('2026-12-20');
+    await log.execute({ chapters: 3, date: day('2026-12-20') });
+    clock.set('2027-01-20');
+
+    expect(await reminder.execute()).toEqual({ lastBackupAt: '2026-12-08T12:00:00.000Z' });
+  });
+
+  it('reminds as often as chosen', async () => {
+    const { reminder, exportBackup, setReminder, clock, log, journal } = await setup();
+    await exportBackup.execute();
+    clock.set('2026-12-16');
+    await log.execute({ chapters: 3, date: day('2026-12-16') });
+    expect(await reminder.execute()).toBeNull();
+
+    await setReminder.execute(7);
+
+    expect(journal.journal.settings.backupEveryDays).toBe(7);
+    expect(await reminder.execute()).not.toBeNull();
+  });
+
+  it('never reminds once turned off', async () => {
+    const { reminder, setReminder } = await setup();
+
+    await setReminder.execute(null);
+
+    expect(await reminder.execute()).toBeNull();
+  });
+
+  it('stays away for 7 days after "Ahora no"', async () => {
+    const { reminder, postpone, clock } = await setup();
+
+    await postpone.execute();
+
+    expect(await reminder.execute()).toBeNull();
+    clock.set('2026-12-14');
+    expect(await reminder.execute()).toBeNull();
+    clock.set('2026-12-15');
+    expect(await reminder.execute()).not.toBeNull();
   });
 });

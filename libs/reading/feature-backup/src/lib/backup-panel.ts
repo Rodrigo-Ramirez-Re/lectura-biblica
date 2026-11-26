@@ -6,8 +6,14 @@ import {
   ExportBackup,
   ImportBackup,
   PreviewBackup,
+  SetBackupReminder,
 } from '@lectura/reading-application';
-import { JournalReader, type BackupError, type BackupSummary } from '@lectura/reading-domain';
+import {
+  JournalReader,
+  type BackupError,
+  type BackupInterval,
+  type BackupSummary,
+} from '@lectura/reading-domain';
 import {
   ButtonComponent,
   CardComponent,
@@ -16,6 +22,9 @@ import {
 } from '@lectura/ui-components';
 
 const CONFIRM_WORD = 'BORRAR';
+
+/** The select's values: an interval in days, or never. */
+type ReminderChoice = `${BackupInterval}` | 'never';
 
 /** Export, import and delete the data on this device (LB-013). Lives on Acerca de. */
 @Component({
@@ -42,6 +51,21 @@ const CONFIRM_WORD = 'BORRAR';
       >
         Exportar respaldo
       </button>
+
+      <lb-form-field
+        label="Recordarme hacer un respaldo"
+        i18n-label="@@reading.backup.reminder"
+        [hint]="reminder() === 'never' ? reminderOff : undefined"
+        [error]="reminderError()"
+      >
+        <select lbControl [value]="reminder()" (change)="chooseReminder($event)">
+          @for (option of reminderOptions; track option.value) {
+            <option [value]="option.value" [selected]="option.value === reminder()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </lb-form-field>
 
       <lb-form-field
         label="Importar respaldo"
@@ -149,10 +173,21 @@ export class BackupPanel {
   private readonly previewBackup = inject(PreviewBackup);
   private readonly importBackup = inject(ImportBackup);
   private readonly deleteAllData = inject(DeleteAllData);
+  private readonly setReminder = inject(SetBackupReminder);
   private readonly router = inject(Router);
 
   protected readonly confirmWord = CONFIRM_WORD;
   protected readonly lastBackupAt = signal<Date | null>(null);
+  protected readonly reminder = signal<ReminderChoice>('30');
+  protected readonly reminderError = signal<string | undefined>(undefined);
+  protected readonly reminderOff = $localize`:@@reading.backup.reminder-off:Los recordatorios están desactivados: tú decides cuándo exportar.`;
+  protected readonly reminderOptions: readonly { value: ReminderChoice; label: string }[] = [
+    { value: '7', label: $localize`:@@reading.backup.reminder-7:Cada semana` },
+    { value: '14', label: $localize`:@@reading.backup.reminder-14:Cada 2 semanas` },
+    { value: '30', label: $localize`:@@reading.backup.reminder-30:Cada mes` },
+    { value: '90', label: $localize`:@@reading.backup.reminder-90:Cada 3 meses` },
+    { value: 'never', label: $localize`:@@reading.backup.reminder-never:Nunca` },
+  ];
   protected readonly preview = signal<BackupSummary | null>(null);
   protected readonly error = signal<string | undefined>(undefined);
   protected readonly confirmation = signal('');
@@ -172,6 +207,24 @@ export class BackupPanel {
   protected async export(): Promise<void> {
     await this.exportBackup.execute();
     await this.loadLastBackup();
+  }
+
+  /** Shown once saved; if saving fails the select goes back to what is stored. */
+  protected async chooseReminder(event: Event): Promise<void> {
+    const select = event.target as HTMLSelectElement;
+    const choice = select.value as ReminderChoice;
+    try {
+      await this.setReminder.execute(
+        choice === 'never' ? null : (Number(choice) as BackupInterval),
+      );
+      this.reminderError.set(undefined);
+      this.reminder.set(choice);
+    } catch {
+      select.value = this.reminder();
+      this.reminderError.set(
+        $localize`:@@reading.backup.reminder-error:No se pudo guardar. Inténtalo de nuevo.`,
+      );
+    }
   }
 
   protected async choose(event: Event): Promise<void> {
@@ -211,7 +264,8 @@ export class BackupPanel {
   }
 
   private async loadLastBackup(): Promise<void> {
-    const { lastBackupAt } = (await this.reader.load()).settings;
+    const { lastBackupAt, backupEveryDays } = (await this.reader.load()).settings;
     this.lastBackupAt.set(lastBackupAt ? new Date(lastBackupAt) : null);
+    this.reminder.set(backupEveryDays === null ? 'never' : `${backupEveryDays}`);
   }
 }
