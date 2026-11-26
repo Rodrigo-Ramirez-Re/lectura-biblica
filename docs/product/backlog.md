@@ -80,6 +80,12 @@ Configurable donation link, install help (Android, iPhone, desktop), accessibili
 
 One content file per book, a "Material de estudio" book section, reading practices and guide questions, highlighted during the book's block.
 
+| ID                                       | Story                                                    | Depends on |
+| ---------------------------------------- | -------------------------------------------------------- | ---------- |
+| [[stories/LB-035-study-content\|LB-035]] | Study material files, checked and compiled at build time | 009        |
+| [[stories/LB-036-study-section\|LB-036]] | "Material de estudio" on the book page                   | 035        |
+| [[stories/LB-037-study-today\|LB-037]]   | Study material on Hoy while its book is being read       | 036, 012   |
+
 ## Phase 6 — Sync (E7, optional)
 
 Sync between devices through an external free-tier service, only if needed.
