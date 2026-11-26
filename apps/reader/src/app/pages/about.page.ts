@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { StorageGuard } from '@lectura/shared-kernel';
 import { BackupPanel } from '@lectura/reading-feature-backup';
+import { RouterLink } from '@angular/router';
 import { CardComponent } from '@lectura/ui-components';
 import { APP_SETTINGS } from '../app-config';
+import { InstallPrompt } from '../pwa/install-prompt';
 import { DonationSection } from '../support/donation.section';
 import { ThemeService, type ThemeChoice } from '../theme/theme';
 
 @Component({
   selector: 'lb-about-page',
-  imports: [CardComponent, BackupPanel, DonationSection],
+  imports: [RouterLink, CardComponent, BackupPanel, DonationSection],
   template: `
     <h1 class="font-display text-heading-1" i18n="@@reader.about.title">Acerca de</h1>
 
@@ -44,6 +46,15 @@ import { ThemeService, type ThemeChoice } from '../theme/theme';
             aplicación por un tiempo. Instálala y exporta respaldos para protegerlos.
           </p>
         }
+        @if (!installed()) {
+          <a
+            routerLink="/instalar"
+            class="self-start rounded-control font-semibold text-primary underline focus-visible:focus-ring"
+            i18n="@@reader.about.install-link"
+          >
+            Cómo instalar la aplicación
+          </a>
+        }
       </section>
 
       <lb-backup-panel />
@@ -77,6 +88,7 @@ import { ThemeService, type ThemeChoice } from '../theme/theme';
 })
 export class AboutPage {
   protected readonly theme = inject(ThemeService);
+  protected readonly installed = inject(InstallPrompt).installed;
   protected readonly appName = inject(APP_SETTINGS).appName;
 
   protected readonly options: readonly { value: ThemeChoice; label: string }[] = [
