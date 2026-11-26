@@ -55,3 +55,5 @@ npx playwright install        # once, downloads Chromium, Firefox and WebKit for
 Any single target: `npx nx <target> <project>` (e.g. `npx nx test shared-kernel`). Project graph: `npx nx graph`.
 
 `test` also measures coverage and fails below 90 % (LB-034); reports land in `coverage/` (see `docs/conventions/testing.md`).
+
+Lighthouse (LB-033): `npx nx run reader:lighthouse` builds the Pages site, measures Hoy, Avance, Libros and Acerca de three times each and fails below the budgets in `apps/reader/lighthouserc.cjs`. Reports land in `dist/lighthouse`. It needs Chrome; with Edge only, set `CHROME_PATH` to `msedge.exe` first.

@@ -16,12 +16,14 @@ function site(with404 = true) {
   return root;
 }
 
-async function serve(root: string) {
-  const server = createPagesServer({ root, base: BASE });
+async function serve(root: string, deepLinkStatus?: 200 | 404) {
+  const server = createPagesServer({ root, base: BASE, deepLinkStatus });
   await new Promise<void>((resolve) => server.listen(0, resolve));
   const { port } = server.address() as AddressInfo;
   return {
-    get: (path: string) => fetch(`http://localhost:${port}${path}`, { redirect: 'manual' }),
+    root,
+    get: (path: string, headers: Record<string, string> = {}) =>
+      fetch(`http://localhost:${port}${path}`, { redirect: 'manual', headers }),
     close: () => new Promise((resolve) => server.close(resolve)),
   };
 }
@@ -61,6 +63,45 @@ describe('GitHub Pages emulation (LB-008)', () => {
     const response = await server.get(`${BASE}libros/salmos`);
     expect(response.status).toBe(404);
     expect(await response.text()).toBe('<p>index</p>');
+  });
+
+  it('can answer a deep link with status 200, for tools that refuse a 404 page (LB-033)', async () => {
+    server = await serve(site(), 200);
+
+    const response = await server.get(`${BASE}avance`);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('<p>index</p>');
+  });
+
+  it('still answers 404 outside the base path when deep links get 200 (LB-033)', async () => {
+    server = await serve(site(), 200);
+
+    expect((await server.get('/otro-sitio/')).status).toBe(404);
+  });
+
+  it('compresses text with gzip when the browser accepts it, as Pages does (LB-033)', async () => {
+    server = await serve(site());
+
+    const response = await server.get(`${BASE}main.js`, { 'accept-encoding': 'gzip' });
+    expect(response.headers.get('content-encoding')).toBe('gzip');
+    expect(response.headers.get('vary')).toBe('accept-encoding');
+    // fetch decodes gzip by itself: the body arrives as the original text.
+    expect(await response.text()).toBe('console.log(1)');
+  });
+
+  it('sends text as is to a client that does not accept gzip (LB-033)', async () => {
+    server = await serve(site());
+
+    const response = await server.get(`${BASE}main.js`, { 'accept-encoding': 'identity' });
+    expect(response.headers.get('content-encoding')).toBeNull();
+  });
+
+  it('never compresses images (LB-033)', async () => {
+    server = await serve(site());
+    writeFileSync(join(server.root, 'icons', 'icon.png'), 'png');
+
+    const response = await server.get(`${BASE}icons/icon.png`, { 'accept-encoding': 'gzip' });
+    expect(response.headers.get('content-encoding')).toBeNull();
   });
 
   it('serves nothing outside the base path', async () => {

@@ -1,4 +1,5 @@
 // Serves the production build like GitHub Pages: `node tools/pages/src/serve.mjs [port]`.
+// `--deep-links-200` answers deep links with status 200, for Lighthouse (LB-033).
 import { join } from 'node:path';
 import { createPagesServer } from './pages-server.mjs';
 import { BASE_HREF } from './site.mjs';
@@ -6,6 +7,8 @@ import { BASE_HREF } from './site.mjs';
 const port = Number(process.argv[2] ?? 4210);
 const root = join(import.meta.dirname, '../../../dist/apps/reader/browser');
 
-createPagesServer({ root, base: BASE_HREF }).listen(port, () => {
+const deepLinkStatus = process.argv.includes('--deep-links-200') ? 200 : 404;
+
+createPagesServer({ root, base: BASE_HREF, deepLinkStatus }).listen(port, () => {
   console.log(`Serving ${root} at http://localhost:${port}${BASE_HREF}`);
 });

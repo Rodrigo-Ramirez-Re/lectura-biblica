@@ -1,6 +1,7 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, sep } from 'node:path';
+import { createGzip } from 'node:zlib';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -17,19 +18,28 @@ const TYPES = {
 /**
  * Serves a static build the way GitHub Pages serves a project site: only under `base`, a folder
  * answers with its index.html, and a missing file answers with 404.html and status 404.
+ * `deepLinkStatus: 200` answers deep links under `base` with the same page and status 200, for
+ * tools such as Lighthouse that refuse to measure a 404 page (LB-033); browsers render both alike.
  */
-export function createPagesServer({ root, base }) {
-  const send = (response, status, file) => {
+export function createPagesServer({ root, base, deepLinkStatus = 404 }) {
+  // Pages compresses text for browsers that accept it; without it, measured load times are wrong.
+  const send = (request, response, status, file) => {
+    const type = TYPES[extname(file)] ?? 'application/octet-stream';
+    const gzip =
+      /^(text\/|application\/(json|manifest)|image\/svg)/.test(type) &&
+      /\bgzip\b/.test(request.headers['accept-encoding'] ?? '');
     response.writeHead(status, {
-      'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
+      'content-type': type,
       'cache-control': 'no-cache',
+      ...(gzip ? { 'content-encoding': 'gzip', vary: 'accept-encoding' } : {}),
     });
-    createReadStream(file).pipe(response);
+    const body = createReadStream(file);
+    (gzip ? body.pipe(createGzip()) : body).pipe(response);
   };
 
-  const notFound = (response) => {
+  const notFound = (request, response, status = 404) => {
     const page = join(root, '404.html');
-    if (existsSync(page)) return send(response, 404, page);
+    if (existsSync(page)) return send(request, response, status, page);
     response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('Not found');
   };
 
@@ -39,15 +49,15 @@ export function createPagesServer({ root, base }) {
       response.writeHead(301, { location: base }).end();
       return;
     }
-    if (!path.startsWith(base)) return notFound(response);
+    if (!path.startsWith(base)) return notFound(request, response);
 
     const file = normalize(join(root, path.slice(base.length)));
     if (!file.startsWith(normalize(root + sep)) && file !== normalize(root))
-      return notFound(response);
+      return notFound(request, response);
 
     const target =
       existsSync(file) && statSync(file).isDirectory() ? join(file, 'index.html') : file;
-    if (!existsSync(target)) return notFound(response);
-    send(response, 200, target);
+    if (!existsSync(target)) return notFound(request, response, deepLinkStatus);
+    send(request, response, 200, target);
   });
 }

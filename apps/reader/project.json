@@ -125,6 +125,14 @@
       "options": {
         "command": "node tools/pages/src/serve.mjs 4210"
       }
+    },
+    "lighthouse": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["pages"],
+      "cache": false,
+      "options": {
+        "command": "lhci autorun --config=apps/reader/lighthouserc.cjs"
+      }
     }
   }
 }

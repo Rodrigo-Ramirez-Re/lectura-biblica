@@ -11,6 +11,34 @@ test.describe('PWA (LB-007)', () => {
     expect(manifest.display).toBe('standalone');
   });
 
+  test('has what browsers need to install it (LB-033)', async ({ page, request }) => {
+    await page.goto('./');
+    const href = await page.locator('link[rel="manifest"]').getAttribute('href');
+    const manifestUrl = new URL(href ?? '', page.url()).href;
+    const manifest = await (await request.get(manifestUrl)).json();
+
+    expect(manifest).toMatchObject({
+      name: 'Lectura bíblica',
+      short_name: 'Lectura',
+      start_url: './',
+      scope: './',
+      display: 'standalone',
+      lang: 'es',
+    });
+    expect(manifest.theme_color).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(manifest.background_color).toMatch(/^#[0-9a-f]{6}$/i);
+    const icons: { src: string; sizes: string; purpose: string }[] = manifest.icons;
+    expect(icons.map((icon) => `${icon.sizes} ${icon.purpose}`)).toEqual(
+      expect.arrayContaining(['192x192 any', '512x512 any', '512x512 maskable']),
+    );
+    for (const icon of icons) {
+      const response = await request.get(new URL(icon.src, manifestUrl).href);
+      expect(response.ok(), icon.src).toBe(true);
+      expect(response.headers()['content-type']).toBe('image/png');
+    }
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+  });
+
   test('works offline after the first visit', async ({ page, context }) => {
     await page.goto('./');
     await page.evaluate(() => navigator.serviceWorker.ready);

@@ -2,7 +2,7 @@
 id: LB-033
 title: Lighthouse in CI
 epic: E5
-status: ready
+status: done
 phase: 4
 depends_on: [LB-032]
 ---
@@ -55,16 +55,27 @@ Feature: Lighthouse in CI
 
 ## Open questions
 
-- [ ] Performance budget on noisy CI machines — _Recommendation:_ median of 3 runs at 90; if it proves flaky, lower it in the config and say so in the story, never skip the job.
-- [ ] Accessibility at 100 — _Recommendation:_ yes: LB-032 leaves every screen clean, and any drop is a real regression.
-- [ ] Upload target — _Recommendation:_ the filesystem plus a CI artifact; `temporary-public-storage` would publish the reports on Google's servers (spec §5 privacy).
+- [x] Performance budget on noisy CI machines — _Adopted:_ median of 3 runs at 90; if it proves flaky, lower it in the config and say so in the story, never skip the job.
+- [x] Accessibility at 100 — _Adopted:_ yes: LB-032 leaves every screen clean, and any drop is a real regression.
+- [x] Upload target — _Adopted:_ the filesystem plus a CI artifact; `temporary-public-storage` would publish the reports on Google's servers (spec §5 privacy).
 
 ## Decisions
 
+- All three open questions were adopted as recommended:
+  - Performance at 90 (median of 3 runs, Lighthouse's simulated mobile).
+  - Accessibility at 100, best practices at 95, SEO at 90.
+  - Reports go to the filesystem and a 7-day CI artifact, never to `temporary-public-storage`.
+- `@lhci/cli` 0.16.1 (Lighthouse 13) runs as the `reader:lighthouse` Nx target, which builds the Pages site first. CI has a `lighthouse` job on `ubuntu-latest`, whose Google Chrome it finds on its own, running `nx affected -t lighthouse`.
+- Deep links: GitHub Pages answers `/avance` with the app's page and status 404, and Lighthouse refuses to measure a 404 page. The local Pages server gained `deepLinkStatus`, still 404 by default, and Lighthouse starts it with `--deep-links-200`. The document is the same, so browsers render both alike.
+- The first runs scored 0.83–0.89 on Libros and Acerca de, and first paint swung between 0.7 s and 3.5 s. The cause was the local server: it sent the 364 KB main script uncompressed, while Pages gzips text. The server now compresses text for clients that accept gzip, as Pages does. Medians went to 0.94–0.97, so the 90 budget holds without lowering it.
+- The PWA category Lighthouse 12 removed is covered by e2e. A new test checks the manifest (name, short name, relative `start_url` and `scope`, standalone, `lang`, colours), that the 192, 512 and maskable icons are served as PNG, and the apple-touch-icon. The existing tests already check offline after the first visit and that no request leaves the origin.
+- Locally the target needs Chrome; with Edge only, set `CHROME_PATH` (README).
+- `npm audit` reports 18 advisories in development tooling that were there before (Nx, Storybook, `sharp`, `minimatch`). None comes from Lighthouse CI or ships to production (`npm audit --omit=dev`: 0).
+
 ## Definition of done
 
-- [ ] All scenarios covered by tests (unit/component/e2e)
-- [ ] Lint, boundaries, tests, build green
-- [ ] `lb-review` passed
-- [ ] Works offline on the sub-path build
-- [ ] Docs updated (README commands, testing conventions)
+- [x] All scenarios covered by tests (unit/component/e2e)
+- [x] Lint, boundaries, tests, build green
+- [x] `lb-review` passed
+- [x] Works offline on the sub-path build
+- [x] Docs updated (README commands, testing conventions)
