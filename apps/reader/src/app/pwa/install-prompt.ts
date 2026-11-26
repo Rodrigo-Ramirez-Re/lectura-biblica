@@ -40,7 +40,12 @@ export class InstallPrompt {
     if (!offer) return false;
     // An offer can be shown only once; the browser fires a new one if the person says no.
     this.offer.set(null);
-    await offer.prompt();
+    try {
+      await offer.prompt();
+    } catch {
+      // The browser may refuse to show it; the steps on the page still work.
+      return false;
+    }
     const { outcome } = await offer.userChoice;
     if (outcome === 'accepted') this.installed.set(true);
     return outcome === 'accepted';

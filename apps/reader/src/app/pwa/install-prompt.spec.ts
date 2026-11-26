@@ -43,6 +43,14 @@ describe('InstallPrompt (LB-030)', () => {
     expect(service.canInstall()).toBe(false);
   });
 
+  it('answers no when the browser refuses to open its dialog', async () => {
+    offerToInstall('accepted').mockRejectedValueOnce(new DOMException('', 'NotAllowedError'));
+
+    await expect(service.install()).resolves.toBe(false);
+
+    expect(service.installed()).toBe(false);
+  });
+
   it('knows when the app was installed from the browser menu', () => {
     offerToInstall('accepted');
 
